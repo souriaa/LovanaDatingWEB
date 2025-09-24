@@ -53,6 +53,7 @@ function PayPlanCard({
 
   const [upgradeText, setUpgradeText] = useState(`Upgrade from ${weeklyPrice}`);
   const [loading, setLoading] = useState(true);
+  const [activePlan, setActivePlan] = useState(null);
 
   useEffect(() => {
     const fetchProfilePlan = async () => {
@@ -70,6 +71,7 @@ function PayPlanCard({
             ? new Date(plan.plan_due_date)
             : null;
 
+          setActivePlan(plan.plan_id);
           if (plan.plan_id === planId) {
             if (dueDate && now < dueDate) {
               setUpgradeText(`Plan expired on ${dueDate.toLocaleDateString()}`);
@@ -112,7 +114,15 @@ function PayPlanCard({
       >
         <Text style={styles.premiumTitle}>{title}</Text>
         <Text style={styles.premiumSubtitle}>{subtitle}</Text>
-        <View style={styles.activeBadge}>
+        <View
+          style={styles.activeBadge}
+          {...(activePlan !== planId
+            ? {
+                onTouchEnd: () =>
+                  router.push(`/plans/get-plans?planId=${planId}`),
+              }
+            : {})}
+        >
           {loading ? (
             <ActivityIndicator size="small" color="#111827" />
           ) : (
