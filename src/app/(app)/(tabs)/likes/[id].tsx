@@ -5,6 +5,8 @@ import { transformPublicProfile } from "@/utils/profile";
 import { Image } from "expo-image";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { createConversation } from "~/service/messageService";
+import { getProfile } from "~/service/userService";
 
 const Page = () => {
   const { id } = useLocalSearchParams();
@@ -14,8 +16,6 @@ const Page = () => {
   const { data } = useLikes();
   const like = data.find((like) => like.id === id);
   let profile;
-
-  console.log(like);
 
   const handleRemove = () => {
     if (like) {
@@ -31,16 +31,42 @@ const Page = () => {
   };
 
   const handleMatch = () => {
-    if (like) {
-      match(like.id, {
-        onSuccess: () => {
-          router.back();
-        },
-        onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
-        },
-      });
-    }
+    if (!like) return;
+
+    match(like.id, {
+      onSuccess: async () => {
+        try {
+          const currentUser = await getProfile();
+          if (!currentUser) {
+            console.error("❌ No user found");
+            return;
+          }
+
+          console.log("currentUser.id:", currentUser.id);
+          console.log("like.profile.id:", like.profile?.id);
+
+          const conversation = await createConversation({
+            userIds: [currentUser.id, like.profile.id],
+            isGroup: false,
+          });
+
+          if (conversation?.success) {
+            const conversationId = conversation.data.id;
+            router.push(`/matches?conversationId=${conversationId}`);
+          } else {
+            console.error(
+              "❌ Failed to create conversation:",
+              conversation?.message
+            );
+          }
+        } catch (err) {
+          console.error("Error creating conversation:", err);
+        }
+      },
+      onError: () => {
+        Alert.alert("Error", "Something went wrong, please try again later");
+      },
+    });
   };
 
   if (!like) {

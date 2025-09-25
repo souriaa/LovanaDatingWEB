@@ -44,10 +44,10 @@ export const useLikeProfile = () => {
       photo,
     }: {
       profile: string;
-      answer: string | undefined;
-      photo: string | undefined;
+      answer?: string;
+      photo?: string;
     }) => {
-      const { error } = await supabase.rpc("like_profile", {
+      const { data, error } = await supabase.rpc("like_profile", {
         profile,
         answer,
         photo,
@@ -56,6 +56,8 @@ export const useLikeProfile = () => {
       if (error) {
         throw error;
       }
+
+      return data ?? true;
     },
   });
 };
