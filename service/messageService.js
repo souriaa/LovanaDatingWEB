@@ -13,6 +13,8 @@ export const fetchConversations = async (userId) => {
           title,
           created_at,
           created_by,
+          first_message_sent,
+          expiration_at,
           members:conversation_members (
             user_id,
             profiles (
@@ -50,7 +52,6 @@ export const fetchConversations = async (userId) => {
       );
       const lastMessage = sortedMessages?.[0] || null;
 
-
       let otherUser = null;
       if (conv.members?.length) {
         const otherMember = conv.members.find(
@@ -80,10 +81,12 @@ export const fetchConversations = async (userId) => {
             body: lastMessage.body,
             created_at: lastMessage.created_at,
             sender_id: lastMessage.sender_id,
-            files: lastMessage.files
+            files: lastMessage.files,
           }
           : null,
         other_user: otherUser,
+        first_message_sent: conv.first_message_sent,
+        expiration_at: conv.expiration_at,
       };
     });
 
@@ -94,11 +97,12 @@ export const fetchConversations = async (userId) => {
   }
 };
 
-export const createConversation = async ({ userIds, isGroup = false, title }) => {
+
+export const createConversation = async ({ userIds, isGroup = false, title, first_message_sent = false,}) => {
   try {
     const { data: conversation, error } = await supabase
       .from("conversations")
-      .insert([{ is_group: isGroup, title, created_by: userIds[0] }])
+      .insert([{ is_group: isGroup, title, created_by: userIds[0], first_message_sent }])
       .select()
       .single();
 
@@ -242,16 +246,36 @@ export const fetchMessages = async (conversation_id) => {
 };
 
 
-export const sendMessage = async ({ conversation_id, sender_id, body, files = [], reply_to_id = null }) => {
+export const sendMessage = async ({
+  conversation_id,
+  sender_id,
+  body,
+  files = [],
+  reply_to_id = null,
+  creator_id,
+}) => {
   try {
-    const { data, error } = await supabase
+    // 1️⃣ Insert message một lần
+    const { data: messageData, error: insertError } = await supabase
       .from("messages")
       .insert([{ conversation_id, sender_id, body, files, reply_to_id }])
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
+    if (insertError) throw insertError;
+
+    // 2️⃣ Nếu sender là creator và first_message_sent chưa true, cập nhật
+    if (creator_id && creator_id === sender_id) {
+      const { error: updateError } = await supabase
+        .from("conversations")
+        .update({ first_message_sent: true })
+        .eq("id", conversation_id)
+        .eq("first_message_sent", false); // chỉ update khi chưa gửi lần nào
+
+      if (updateError) throw updateError;
+    }
+
+    return messageData;
   } catch (err) {
     console.error("Error sending message:", err.message || err);
     throw err;
@@ -440,5 +464,25 @@ export const deleteConversationById = async (conversationId) => {
   } catch (err) {
     console.error("Unexpected error deleting conversation:", err);
     return false;
+  }
+};
+
+export const getConversationCreatorAndMessageFirst = async (conversationId) => {
+  try {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("created_by, first_message_sent")
+      .eq("id", conversationId)
+      .single();
+
+    if (error) {
+      console.error("Failed to fetch conversation info:", error.message);
+      return null;
+    }
+
+    return data; // { created_by: string, first_message_sent: boolean }
+  } catch (err) {
+    console.error("Unexpected error fetching conversation info:", err);
+    return null;
   }
 };

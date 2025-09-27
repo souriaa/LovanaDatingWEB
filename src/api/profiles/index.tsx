@@ -62,6 +62,26 @@ export const useLikeProfile = () => {
   });
 };
 
+export const useSuperlikeProfile = () => {
+  return useMutation({
+    mutationFn: async ({
+      profile,
+    }: {
+      profile: string;
+    }) => {
+      const { data, error } = await supabase.rpc("super_like_profile", {
+        profile,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data ?? true;
+    },
+  });
+};
+
 export const useReviewProfiles = () => {
   return useMutation({
     mutationFn: async () => {

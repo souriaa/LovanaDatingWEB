@@ -19,7 +19,7 @@ import Animated, {
 import { theme } from "../../../../../constants/theme";
 import { getProfile } from "../../../../../service/userService";
 import { fetchConversations } from "../../../../../service/messageService";
-import { Image } from "expo-image";
+import { CountdownCircle } from "@/components/countdown-circle";
 
 const ConversationRow = React.memo(({ item, userId }) => {
   const otherUser = item.other_user || {};
@@ -56,10 +56,13 @@ const ConversationRow = React.memo(({ item, userId }) => {
     >
       <TouchableOpacity style={styles.item} onPress={handlePress}>
         <View style={styles.left}>
-          <Image
-            source={{ uri: otherUser.photo_url }}
-            style={styles.headerAvatar}
-          />
+          <CountdownCircle
+            expirationAt={item.expiration_at}
+            firstMessageSent={item.first_message_sent}
+            avatarUrl={otherUser.photo_url}
+            size={48}
+            strokeWidth={3}
+          ></CountdownCircle>
           {!seen && <View style={styles.unreadDot} />}
         </View>
 

@@ -1,3 +1,4 @@
+import { Loader } from "@/components/loader";
 import { useAuth } from "@/store/auth";
 import { EditProvider } from "@/store/edit";
 import { Redirect, Stack } from "expo-router";
@@ -7,7 +8,7 @@ export default function Layout() {
   const { session, isLoading } = useAuth();
 
   if (isLoading) {
-    return <Text>Loading...</Text>;
+    return <Loader />;
   }
 
   if (!session) {

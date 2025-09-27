@@ -3,6 +3,7 @@ import {
   useProfiles,
   useReviewProfiles,
   useSkipProfile,
+  useSuperlikeProfile,
 } from "@/api/profiles";
 import { Empty } from "@/components/empty";
 import { Fab } from "@/components/fab";
@@ -26,6 +27,7 @@ export default function Page() {
   const { mutate: skip, isPending: skipPending } = useSkipProfile();
   const { mutate: review, isPending: reviewPending } = useReviewProfiles();
   const { mutate: like, isPending: likePending } = useLikeProfile();
+  const { mutate: superlike, isPending: superlikePending } = useSuperlikeProfile();
   const queryClient = useQueryClient();
 
   const hasProfiles = data && data.length > 0;
@@ -140,7 +142,31 @@ export default function Page() {
     }
   };
 
-  if (isFetching || skipPending || reviewPending || likePending) {
+  const handleSuperlike = () => {
+    if (!profile) return;
+
+    superlike(
+      { profile: profile.id },
+      {
+        onSuccess: () => {
+          if (hasProfiles && currentIndex < data.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+          } else if (hasProfiles) {
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
+            setCurrentIndex(0);
+          }
+        },
+        onError: () => {
+          Alert.alert(
+            "Error",
+            "Something went wrong with superlike. Please try again."
+          );
+        },
+      }
+    );
+  };  
+
+  if (isFetching || skipPending || reviewPending || likePending || superlikePending) {
     return <Loader />;
   }
 
@@ -180,6 +206,13 @@ export default function Page() {
         onPress={handleSkip}
         iconName="close"
         className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-5 left-5"
+        iconClassName="text-black text-4xl"
+        loaderClassName="text-black"
+      />
+      <Fab
+        onPress={handleSuperlike}
+        iconName="star-outline"
+        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-5 right-5"
         iconClassName="text-black text-4xl"
         loaderClassName="text-black"
       />

@@ -6,12 +6,42 @@ import { useRefreshOnFocus } from "@/hooks/refetch";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { FlatList, Pressable, Text, View } from "react-native";
+import { getProfile } from "../../../../../service/userService";
+import { getInteractionsByTargetId } from "../../../../../service/interactionService";
+import { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Page() {
   const { data, isFetching, isError, refetch } = useLikes();
+  const [interactionMap, setInteractionMap] = useState<Record<string, number>>(
+    {}
+  );
   useRefreshOnFocus(refetch);
 
+  useEffect(() => {
+    const fetchInteractions = async () => {
+      const profile = await getProfile();
+      if (!profile) return;
+
+      const interactions = await getInteractionsByTargetId(profile.id);
+      if (!interactions) return;
+
+      const map: Record<string, number> = {};
+      interactions.forEach((i) => {
+        map[i.actor_id] = i.status_id;
+      });
+
+      setInteractionMap(map);
+    };
+
+    fetchInteractions();
+  }, []);
+
   const renderHeader = () => {
+    if (data.length === 0) return null;
+
+    const firstProfileId = data[0].profile.id;
+    const isSuperLike = interactionMap[firstProfileId] === 7;
     return (
       <View className="gap-5 bg-white ">
         <Text className="text-3xl font-poppins-semibold">Likes You</Text>
@@ -20,9 +50,20 @@ export default function Page() {
             <Link href={`/likes/${data[0].id}`} asChild>
               <Pressable className="bg-white flex-1 rounded-lg overflow-hidden border border-neutral-200">
                 <View className="p-4 gap-5">
-                  <Text className="text-base font-poppins-light">{`Liked your ${
-                    data[0].photo_url ? "photo" : "answer"
-                  }`}</Text>
+                  <Text className="text-base font-poppins-light">
+                    {isSuperLike ? (
+                      <View
+                        style={{ flexDirection: "row" }}
+                      >
+                        <Ionicons name="star-outline" size={20} color="gold" />
+                        <Text className="font-poppins-semibold" style={{ marginLeft: 4, fontSize: 16 }}>
+                          Super Liked You
+                        </Text>
+                      </View>
+                    ) : (
+                      `Liked your ${data[0].photo_url ? "photo" : "answer"}`
+                    )}
+                  </Text>
                   <Text className="text-xl font-poppins-medium">
                     {data[0].profile.first_name}
                   </Text>
@@ -76,9 +117,11 @@ export default function Page() {
       <FlatList
         data={data.length > 1 ? data.slice(1) : []}
         renderItem={({ item, index }) => {
+          const isSuperLike = interactionMap[item.profile.id] === 7;
+
           return (
             <>
-              <LikeCard like={item} />
+              <LikeCard like={item} isSuperLike={isSuperLike} />
               {data.length % 2 === 0 && index === data.length - 2 && (
                 <View className="flex-1" />
               )}

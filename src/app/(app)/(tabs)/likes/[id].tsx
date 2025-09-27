@@ -5,6 +5,7 @@ import { transformPublicProfile } from "@/utils/profile";
 import { Image } from "expo-image";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { getInteractionByActorAndTarget } from "~/service/interactionService";
 import { createConversation } from "~/service/messageService";
 import { getProfile } from "~/service/userService";
 
@@ -30,40 +31,58 @@ const Page = () => {
     }
   };
 
-  const handleMatch = () => {
+  const handleMatch = async () => {
     if (!like) return;
 
-    match(like.id, {
-      onSuccess: async () => {
-        try {
-          const currentUser = await getProfile();
-          if (!currentUser) {
-            console.error("❌ No user found");
-            return;
-          }
+    try {
+      const currentUser = await getProfile();
+      if (!currentUser) {
+        console.error("❌ No user found");
+        return;
+      }
 
-          const conversation = await createConversation({
-            userIds: [currentUser.id, like.profile.id],
-            isGroup: false,
-          });
+      // 👉 Lấy interaction trước khi gọi match
+      const interaction = await getInteractionByActorAndTarget(
+        like.profile.id,
+        currentUser.id
+      );
 
-          if (conversation?.success) {
-            const conversationId = conversation.data.id;
-            router.push(`/matches?conversationId=${conversationId}`);
-          } else {
-            console.error(
-              "❌ Failed to create conversation:",
-              conversation?.message
-            );
+      console.log("interaction", interaction);
+
+      const firstMessageSent = interaction?.status_id === 7;
+
+      console.log("firstMessageSent", firstMessageSent);
+
+      // Sau đó mới gọi match
+      match(like.id, {
+        onSuccess: async () => {
+          try {
+            const conversation = await createConversation({
+              userIds: [currentUser.id, like.profile.id],
+              isGroup: false,
+              first_message_sent: firstMessageSent,
+            });
+
+            if (conversation?.success) {
+              const conversationId = conversation.data.id;
+              router.push(`/matches?conversationId=${conversationId}`);
+            } else {
+              console.error(
+                "❌ Failed to create conversation:",
+                conversation?.message
+              );
+            }
+          } catch (err) {
+            console.error("Error creating conversation:", err);
           }
-        } catch (err) {
-          console.error("Error creating conversation:", err);
-        }
-      },
-      onError: () => {
-        Alert.alert("Error", "Something went wrong, please try again later");
-      },
-    });
+        },
+        onError: () => {
+          Alert.alert("Error", "Something went wrong, please try again later");
+        },
+      });
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
   };
 
   if (!like) {

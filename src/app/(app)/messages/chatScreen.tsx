@@ -28,13 +28,13 @@ import {
   markConversationAsSeen,
   markConversationAsUnseen,
   sendMessage,
-  deleteConversationById
+  getConversationCreatorAndMessageFirst,
 } from "../../../../service/messageService";
 import {
   getSupabaseFileUrl,
   uploadFile,
 } from "../../../../service/imageService";
-import { getInteractionIdByActorAndTarget } from "../../../../service/interactionService";
+import { getInteractionByActorAndTarget } from "../../../../service/interactionService";
 import Header from "@/components/Header";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -65,6 +65,7 @@ export default function ChatScreen() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [showSheet, setShowSheet] = useState(false);
   const [sheetMessage, setSheetMessage] = useState(null);
+  const [conversationInfo, setConversationInfo] = useState(null);
 
   const { height } = Dimensions.get("window");
   const slideAnim = useRef(new Animated.Value(height)).current;
@@ -83,8 +84,13 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!conversationId || !userId) return;
+
     getOtherUserInConversation(conversationId, userId)
       .then(setOtherUser)
+      .catch(console.warn);
+
+    getConversationCreatorAndMessageFirst(conversationId)
+      .then(setConversationInfo)
       .catch(console.warn);
   }, [conversationId, userId]);
 
@@ -193,12 +199,15 @@ export default function ChatScreen() {
     if (!userId || !otherUser?.id) return;
 
     const fetchInteractionId = async () => {
-      const id = await getInteractionIdByActorAndTarget(userId, otherUser.id);
-      setInteractionId(id);
+      const interaction = await getInteractionByActorAndTarget(userId, otherUser.id);
+      setInteractionId(interaction.id);
     };
 
     fetchInteractionId();
   }, [userId, otherUser]);
+
+  console.log(interactionId);
+  
 
   const handleTextChange = (value) => {
     setText(value);
@@ -238,29 +247,32 @@ export default function ChatScreen() {
       }
     }
 
-    // Send message
-    const newMessage = await sendMessage({
-      conversation_id: conversationId,
-      sender_id: userId,
-      body: text.trim(),
-      files: fileData || [],
-      reply_to_id: replyingTo?.id || null,
-    });
+    try {
+      const newMessage = await sendMessage({
+        conversation_id: conversationId,
+        sender_id: userId,
+        body: text.trim(),
+        files: fileData || [],
+        reply_to_id: replyingTo?.id || null,
+        creator_id: conversationInfo?.created_by,
+      });
 
-    // Update UI immediately
-    setMessages((prev) => [
-      ...prev,
-      { ...newMessage, reply_to: replyingTo || null },
-    ]);
+      setText("");
+      setSelectedFile(null);
+      setReplyingTo(null);
+      inputRef.current?.clear();
 
-    // Reset input and selected file
-    setText("");
-    setSelectedFile(null);
-    setReplyingTo(null);
-    inputRef.current?.clear();
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        return [...prev, { ...newMessage, reply_to: replyingTo || null }];
+      });
 
-    if (otherUser?.id)
-      await markConversationAsUnseen(conversationId, otherUser.id);
+      if (otherUser?.id) {
+        await markConversationAsUnseen(conversationId, otherUser.id);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err.message || err);
+    }
   };
 
   const handleToggleTime = (messageId) => {
@@ -595,31 +607,47 @@ export default function ChatScreen() {
             )}
           </View>
 
-          <View style={styles.inputBar}>
-            <TouchableOpacity onPress={handlePickFile} style={styles.uploadBtn}>
-              <Ionicons
-                name="attach-outline"
-                size={28}
-                color={theme.colors.primary}
-              />
-            </TouchableOpacity>
+          {conversationInfo?.created_by === userId ||
+          conversationInfo?.first_message_sent ? (
+            <View style={styles.inputBar}>
+              <TouchableOpacity
+                onPress={handlePickFile}
+                style={styles.uploadBtn}
+              >
+                <Ionicons
+                  name="attach-outline"
+                  size={28}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
 
-            <Input
-              inputRef={inputRef}
-              onChangeText={handleTextChange}
-              placeholder="Message"
-              placeholderTextColor={theme.colors.textLighterGray}
-              containerStyle={styles.input}
-            />
-
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-              <Ionicons
-                name="send-outline"
-                size={28}
-                color={theme.colors.primary}
+              <Input
+                inputRef={inputRef}
+                onChangeText={handleTextChange}
+                placeholder="Message"
+                placeholderTextColor={theme.colors.textLighterGray}
+                containerStyle={styles.input}
               />
-            </TouchableOpacity>
-          </View>
+
+              <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
+                <Ionicons
+                  name="send-outline"
+                  size={28}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.waitingContainer}>
+              <Text style={styles.waitingText}>
+                Waiting for{" "}
+                {otherUser?.first_name || otherUser?.last_name
+                  ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+                  : null}{" "}
+                to start the converation!
+              </Text>
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
       {showSheet && (
@@ -956,5 +984,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 10,
     fontFamily: "Poppins-Regular",
+  },
+  waitingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  waitingText: {
+    fontSize: 16,
+    fontFamily: "Poppins-SemiBold",
+    color: theme.colors.textLighterGray,
+    textAlign: "center",
   },
 });

@@ -706,6 +706,12 @@ export type Database = {
         }
         Returns: string
       }
+      super_like_profile: {
+        Args: {
+          profile: string
+        }
+        Returns: string
+      }
       match: {
         Args: {
           interaction: string
