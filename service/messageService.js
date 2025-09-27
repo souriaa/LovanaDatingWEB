@@ -33,7 +33,8 @@ export const fetchConversations = async (userId) => {
             id,
             body,
             created_at,
-            sender_id
+            sender_id,
+            files
           )
         )
       `)
@@ -44,13 +45,12 @@ export const fetchConversations = async (userId) => {
     const conversations = data.map((cm) => {
       const conv = cm.conversation || {};
 
-      // Sort messages by created_at descending
       const sortedMessages = conv.messages?.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
       const lastMessage = sortedMessages?.[0] || null;
 
-      // Get other user in conversation (exclude current user)
+
       let otherUser = null;
       if (conv.members?.length) {
         const otherMember = conv.members.find(
@@ -80,6 +80,7 @@ export const fetchConversations = async (userId) => {
             body: lastMessage.body,
             created_at: lastMessage.created_at,
             sender_id: lastMessage.sender_id,
+            files: lastMessage.files
           }
           : null,
         other_user: otherUser,
@@ -92,7 +93,6 @@ export const fetchConversations = async (userId) => {
     return [];
   }
 };
-
 
 export const createConversation = async ({ userIds, isGroup = false, title }) => {
   try {
@@ -210,25 +210,43 @@ export const fetchAvailableUsersFilterByFriend = async (currentUserId) => {
 
 export const fetchMessages = async (conversation_id) => {
   try {
-    const { data, error } = await supabase
+    const { data: messages, error: messagesError } = await supabase
       .from("messages")
       .select("*, sender:profiles(id, first_name, last_name, phone, user_id)")
       .eq("conversation_id", conversation_id)
       .order("created_at", { ascending: true });
 
-    if (error) throw error;
-    return data || [];
+    if (messagesError) throw messagesError;
+
+    const replyIds = messages.map(m => m.reply_to_id).filter(Boolean);
+    let repliesMap = {};
+    if (replyIds.length > 0) {
+      const { data: replyData, error: replyError } = await supabase
+        .from("messages")
+        .select("id, body, created_at, sender:profiles(id, first_name, last_name, phone, user_id)")
+        .in("id", replyIds);
+
+      if (replyError) throw replyError;
+
+      repliesMap = Object.fromEntries(replyData.map(r => [r.id, r]));
+    }
+
+    return messages.map(m => ({
+      ...m,
+      reply_to: m.reply_to_id ? repliesMap[m.reply_to_id] || null : null,
+    }));
   } catch (err) {
     console.error("Error fetching messages:", err.message || err);
     return [];
   }
 };
 
-export const sendMessage = async ({ conversation_id, sender_id, body, files = [] }) => {
+
+export const sendMessage = async ({ conversation_id, sender_id, body, files = [], reply_to_id = null }) => {
   try {
     const { data, error } = await supabase
       .from("messages")
-      .insert([{ conversation_id, sender_id, body, files }])
+      .insert([{ conversation_id, sender_id, body, files, reply_to_id }])
       .select()
       .single();
 
@@ -403,5 +421,24 @@ export const fetchConversationSeenStatus = async (conversationId, currentUserId,
   } catch (err) {
     console.error("Error fetching conversation seen status:", err.message || err);
     return { currentUser: null, otherUser: null };
+  }
+};
+
+export const deleteConversationById = async (conversationId) => {
+  try {
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .eq("id", conversationId);
+
+    if (error) {
+      console.error("Failed to delete conversation:", error.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Unexpected error deleting conversation:", err);
+    return false;
   }
 };

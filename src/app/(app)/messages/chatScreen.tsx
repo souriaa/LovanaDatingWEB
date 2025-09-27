@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -27,10 +28,20 @@ import {
   markConversationAsSeen,
   markConversationAsUnseen,
   sendMessage,
+  deleteConversationById
 } from "../../../../service/messageService";
+import {
+  getSupabaseFileUrl,
+  uploadFile,
+} from "../../../../service/imageService";
+import { getInteractionIdByActorAndTarget } from "../../../../service/interactionService";
 import Header from "@/components/Header";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
+import { SwipeableMessage } from "@/components/swipeable-message";
+import * as DocumentPicker from "expo-document-picker";
+import { Animated, TouchableWithoutFeedback } from "react-native";
+import { useUnmatch } from "@/api/profiles";
 
 export default function ChatScreen() {
   const { conversationId, userId } = useLocalSearchParams();
@@ -46,10 +57,19 @@ export default function ChatScreen() {
   });
   const [statusText, setStatusText] = useState("");
   const [toggledTimeIds, setToggledTimeIds] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef(null);
   const typingChannel = useRef(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [showSheet, setShowSheet] = useState(false);
+  const [sheetMessage, setSheetMessage] = useState(null);
+
+  const { height } = Dimensions.get("window");
+  const slideAnim = useRef(new Animated.Value(height)).current;
+  const [interactionId, setInteractionId] = useState(null);
+  const { mutate } = useUnmatch();
 
   // --- Fetch messages ---
   const getMessages = async () => {
@@ -169,6 +189,17 @@ export default function ChatScreen() {
       markConversationAsSeen(conversationId, userId).catch(console.error);
   }, [lastMessage, conversationId, userId]);
 
+  useEffect(() => {
+    if (!userId || !otherUser?.id) return;
+
+    const fetchInteractionId = async () => {
+      const id = await getInteractionIdByActorAndTarget(userId, otherUser.id);
+      setInteractionId(id);
+    };
+
+    fetchInteractionId();
+  }, [userId, otherUser]);
+
   const handleTextChange = (value) => {
     setText(value);
     if (!isTyping && userId) {
@@ -191,20 +222,45 @@ export default function ChatScreen() {
   };
 
   const handleSend = async () => {
-    if (!text.trim() || !userId || !conversationId) return;
-    try {
-      await sendMessage({
-        conversation_id: conversationId,
-        sender_id: userId,
-        body: text.trim(),
-      });
-      setText("");
-      inputRef.current?.clear();
-      if (otherUser?.id)
-        await markConversationAsUnseen(conversationId, otherUser.id);
-    } catch (err) {
-      console.warn(err);
+    if (!text.trim() && !selectedFile) return;
+
+    let fileData = null;
+
+    if (selectedFile) {
+      try {
+        const res = await uploadFile("messages", selectedFile.uri, true);
+        if (!res.success) throw new Error(res.msg);
+
+        fileData = [res.data];
+      } catch (err) {
+        console.error("Failed to upload file:", err);
+        return;
+      }
     }
+
+    // Send message
+    const newMessage = await sendMessage({
+      conversation_id: conversationId,
+      sender_id: userId,
+      body: text.trim(),
+      files: fileData || [],
+      reply_to_id: replyingTo?.id || null,
+    });
+
+    // Update UI immediately
+    setMessages((prev) => [
+      ...prev,
+      { ...newMessage, reply_to: replyingTo || null },
+    ]);
+
+    // Reset input and selected file
+    setText("");
+    setSelectedFile(null);
+    setReplyingTo(null);
+    inputRef.current?.clear();
+
+    if (otherUser?.id)
+      await markConversationAsUnseen(conversationId, otherUser.id);
   };
 
   const handleToggleTime = (messageId) => {
@@ -214,10 +270,9 @@ export default function ChatScreen() {
         : [...prev, messageId]
     );
   };
-
   // --- Group messages ---
   const GROUP_WINDOW_MS = 2 * 60 * 1000;
-  const TIME_SHOW_MS = 30 * 60 * 1000;
+  const TIME_SHOW_MS = 10 * 60 * 1000;
 
   const annotated = useMemo(() => {
     const sorted = [...messages].sort(
@@ -251,12 +306,48 @@ export default function ChatScreen() {
   }, [messages]);
   const displayed = useMemo(() => [...annotated].reverse(), [annotated]);
 
+  const handleReply = (message) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const openSheet = (message) => {
+    setSheetMessage(message);
+    setShowSheet(true);
+    Animated.timing(slideAnim, {
+      toValue: height * 0.8,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const closeSheet = () => {
+    Animated.timing(slideAnim, {
+      toValue: height,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      setShowSheet(false);
+      setSheetMessage(null);
+    });
+  };
+
+  const openHeaderSheet = () => {
+    setSheetMessage(null);
+    setShowSheet(true);
+    Animated.timing(slideAnim, {
+      toValue: height * 0.8,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  };
+
   const renderItem = ({ item, index }) => {
     const isMine = String(item.sender_id) === String(userId);
 
-    // kiểu bubble
-    let bubbleStyle =
-      item.isFirstInGroup && item.isLastInGroup
+    let bubbleStyle = item.reply_to
+      ? styles.singleBubble
+      : item.isFirstInGroup && item.isLastInGroup
         ? styles.singleBubble
         : item.isFirstInGroup
           ? isMine
@@ -270,46 +361,126 @@ export default function ChatScreen() {
               ? styles.middleBubbleMine
               : styles.middleBubble;
 
-    // kiểm tra xem đây có phải message cuối cùng
-    // const isLastMessage = index === 0; // nếu dùng inverted FlatList, index 0 là message cuối cùng
-    // nếu không inverted, dùng: index === messages.length - 1
-
     const showTimestamp = item.showTime || toggledTimeIds.includes(item.id);
+
+    const formatTimestamp = (dateStr) => {
+      const date = new Date(dateStr);
+      const now = new Date();
+
+      const isSameDay =
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+      if (isSameDay) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      const dayDiff = (now - date) / (1000 * 60 * 60 * 24);
+
+      if (dayDiff < 7) {
+        return `${date.toLocaleDateString("vi-VN", { weekday: "long" })} ${date.toLocaleTimeString(
+          [],
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        )}`;
+      }
+
+      return date.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
 
     return (
       <View>
         {showTimestamp && (
           <Text style={styles.timestamp}>
-            {new Date(item.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatTimestamp(item.created_at)}
           </Text>
         )}
 
-        <Pressable onPress={() => handleToggleTime(item.id)}>
-          <View
-            style={[
-              styles.messageContainer,
-              isMine ? styles.myMessage : styles.theirMessage,
-              bubbleStyle,
-            ]}
+        <SwipeableMessage onReply={() => handleReply(item)} isMine={isMine}>
+          <Pressable
+            onPress={() => handleToggleTime(item.id)}
+            onLongPress={() => openSheet(item)} // giữ để mở sheet
+            delayLongPress={300}
           >
-            <Text
-              style={[
-                styles.messageText,
-                {
-                  color: isMine
-                    ? theme.colors.textLight
-                    : theme.colors.textDarkGray,
-                },
-              ]}
-            >
-              {item.body}
-            </Text>
-          </View>
-        </Pressable>
+            {/* Reply Bubble */}
+            {item.reply_to && (
+              <View
+                style={[
+                  styles.messageContainer,
+                  isMine ? styles.myMessageReply : styles.theirMessageReply,
+                  styles.replyBubble,
+                ]}
+              >
+                <Text style={styles.messageText}>
+                  {item.reply_to.sender?.first_name}
+                </Text>
+                <Text
+                  style={[
+                    styles.messageText,
+                    { color: theme.colors.textDarkGray },
+                  ]}
+                >
+                  {item.reply_to.body}
+                </Text>
+              </View>
+            )}
 
+            {/* Image Preview from Supabase */}
+            {item.files?.map((filePath, i) => (
+              <View
+                key={i}
+                style={{
+                  alignSelf: isMine ? "flex-end" : "flex-start",
+                  marginTop: 5,
+                }}
+              >
+                <Image
+                  source={getSupabaseFileUrl(filePath)}
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
+              </View>
+            ))}
+
+            {/* Message Bubble */}
+            {!!item.body && (
+              <View
+                style={[
+                  styles.messageContainer,
+                  isMine ? styles.myMessage : styles.theirMessage,
+                  bubbleStyle,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.messageText,
+                    {
+                      color: isMine
+                        ? theme.colors.textLight
+                        : theme.colors.textDarkGray,
+                    },
+                  ]}
+                >
+                  {item.body}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </SwipeableMessage>
+
+        {/* Status Seen */}
         {index === 0 && statusText !== "" && (
           <View style={styles.statusSeen}>
             <Text style={styles.typingText}>{statusText}</Text>
@@ -317,6 +488,21 @@ export default function ChatScreen() {
         )}
       </View>
     );
+  };
+
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "image/*",
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      setSelectedFile(file); // chỉ lưu file, chưa upload
+    } catch (err) {
+      console.error("Failed to pick file:", err);
+    }
   };
 
   return (
@@ -341,7 +527,7 @@ export default function ChatScreen() {
                     : null}
                 </Text>
               </Header>
-              <Pressable onPress={() => router.push("")}>
+              <Pressable onPress={openHeaderSheet}>
                 <Ionicons
                   name="ellipsis-vertical"
                   size={28}
@@ -366,24 +552,66 @@ export default function ChatScreen() {
             }}
           />
 
-          {/* Typing & seen */}
+          {/* Typing */}
           <View style={styles.statusTyping}>
             <Text style={styles.typingText}>
               {typingUsers.length > 0
-                ? `${otherUser?.first_name || "Someone"} is typing...`
+                ? `${otherUser?.first_name.trim() || "Someone"} is typing...`
                 : ""}
             </Text>
           </View>
 
           {/* Input */}
+          {replyingTo && (
+            <View style={styles.replyPreview}>
+              <View style={styles.replyPreviewInfo}>
+                <Text style={styles.replyAuthor}>
+                  {replyingTo.sender?.first_name || "Unknown"}
+                </Text>
+                <Text style={styles.replyBody} numberOfLines={1}>
+                  {replyingTo.body}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                <Ionicons
+                  name="close"
+                  size={20}
+                  color={theme.colors.textDarkGray}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+          <View style={{ marginBottom: 4 }}>
+            {selectedFile && selectedFile.uri && (
+              <View style={styles.filePreview}>
+                <Image
+                  source={{ uri: selectedFile.uri }}
+                  style={styles.filePreviewImage}
+                />
+                <TouchableOpacity onPress={() => setSelectedFile(null)}>
+                  <Ionicons name="close-circle" size={20} color="red" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           <View style={styles.inputBar}>
+            <TouchableOpacity onPress={handlePickFile} style={styles.uploadBtn}>
+              <Ionicons
+                name="attach-outline"
+                size={28}
+                color={theme.colors.primary}
+              />
+            </TouchableOpacity>
+
             <Input
               inputRef={inputRef}
               onChangeText={handleTextChange}
-              placeholder="Type a message..."
+              placeholder="Message"
               placeholderTextColor={theme.colors.textLighterGray}
               containerStyle={styles.input}
             />
+
             <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
               <Ionicons
                 name="send-outline"
@@ -394,11 +622,117 @@ export default function ChatScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+      {showSheet && (
+        <TouchableWithoutFeedback onPress={closeSheet}>
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.3)",
+            }}
+          >
+            <Animated.View
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: slideAnim,
+                height: height * 0.2,
+                backgroundColor: "white",
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                padding: 16,
+              }}
+            >
+              {sheetMessage ? (
+                <>
+                  <Text
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      handleReply(sheetMessage);
+                      closeSheet();
+                    }}
+                  >
+                    Reply
+                  </Text>
+                  <Text
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet();
+                    }}
+                  >
+                    Copy
+                  </Text>
+                  <Text
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet();
+                    }}
+                  >
+                    Report
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet();
+                    }}
+                  >
+                    Report{" "}
+                    {otherUser.first_name || otherUser.last_name
+                      ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
+                      : null}
+                  </Text>
+                  <Text
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      closeSheet();
+                      const userName =
+                        otherUser.first_name || otherUser.last_name
+                          ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
+                          : "this user";
+
+                      Alert.alert(
+                        "Are you sure?",
+                        `Unmatching will delete the match for both you and ${userName}`,
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          {
+                            text: "Unmatch",
+                            onPress: async () => {
+                              mutate(interactionId, {
+                                onSuccess: async () => {
+                                  router.navigate("/matches/");
+                                },
+                                onError: (err) => {
+                                  Alert.alert(
+                                    "Error",
+                                    "Something went wrong, please try again later."
+                                  );
+                                },
+                              });
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    Unmatch
+                  </Text>
+                </>
+              )}
+            </Animated.View>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
     </View>
   );
 }
-
-const { height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -434,11 +768,13 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
   },
   timestamp: {
+    marginTop: 20,
     textAlign: "center",
     fontFamily: "Poppins-Regular",
+    fontSize: 12,
   },
   messageContainer: {
-    marginVertical: 2,
+    marginVertical: 1,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: theme.radius.xxl,
@@ -506,14 +842,11 @@ const styles = StyleSheet.create({
   statusSeen: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    paddingHorizontal: 16,
-    marginVertical: 4,
   },
   statusTyping: {
     flexDirection: "row",
     justifyContent: "flex-start",
     paddingHorizontal: 16,
-    marginVertical: 4,
   },
   typingText: {
     fontSize: 13,
@@ -537,10 +870,91 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   sendBtn: {
-    width: 42,
-    height: 42,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: theme.radius.round,
+  },
+  replyContainer: {
+    opacity: 0.8,
+    backgroundColor: theme.colors.backgroundGray,
+    flexShrink: 1,
+  },
+  replyAuthor: {
+    fontWeight: "600",
+    fontSize: 12,
+    fontFamily: "Poppins-SemiBold",
+  },
+  replyBody: {
+    fontSize: 12,
+    fontFamily: "Poppins-Regular",
+  },
+  replyMine: {
+    alignItems: "flex-end",
+  },
+  replyBubble: {
+    marginBottom: -20,
+    paddingBottom: 18,
+  },
+  myMessageReply: {
+    alignSelf: "flex-end",
+    backgroundColor: theme.colors.backgroundGray,
+    opacity: 0.5,
+    borderBottomRightRadius: 0,
+  },
+  theirMessageReply: {
+    alignSelf: "flex-start",
+    backgroundColor: theme.colors.backgroundGray,
+    opacity: 0.5,
+    borderBottomLeftRadius: 0,
+  },
+  replyPreview: {
+    display: "flex",
+    flexDirection: "row",
+    backgroundColor: theme.colors.backgroundLighterGray,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 4,
+    borderRadius: theme.radius.md,
+    justifyContent: "space-between",
+  },
+  replyPreviewInfo: {},
+  replyPreviewCloseBtn: {
+    padding: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadBtn: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.radius.round,
+  },
+  filePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 4,
+    backgroundColor: theme.colors.backgroundLighterGray,
+    borderRadius: theme.radius.md,
+  },
+  filePreviewImage: {
+    width: 50,
+    height: 50,
+    borderRadius: theme.radius.sm,
+    marginRight: 8,
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+  },
+  sheetOption: {
+    fontSize: 16,
+    paddingVertical: 10,
+    fontFamily: "Poppins-Regular",
   },
 });

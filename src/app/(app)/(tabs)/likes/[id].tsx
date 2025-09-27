@@ -42,9 +42,6 @@ const Page = () => {
             return;
           }
 
-          console.log("currentUser.id:", currentUser.id);
-          console.log("like.profile.id:", like.profile?.id);
-
           const conversation = await createConversation({
             userIds: [currentUser.id, like.profile.id],
             isGroup: false,

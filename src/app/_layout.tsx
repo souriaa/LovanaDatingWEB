@@ -14,6 +14,7 @@ import LottieView from "lottie-react-native";
 import { cssInterop } from "nativewind";
 import { useEffect } from "react";
 import MapView from "react-native-maps";
+import { GestureHandlerRootView } from "react-native-gesture-handler"; // 👈 thêm vào
 import "../../global.css";
 
 cssInterop(VideoView, { className: { target: "style" } });
@@ -41,33 +42,35 @@ export default function Layout() {
   }
 
   return (
-    <SendbirdUIKitContainer
-      appId={process.env.EXPO_PUBLIC_SENDBIRD_APP_ID!}
-      chatOptions={{ localCacheStorage: AsyncStorage }}
-      platformServices={platformServices}
-    >
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen
-              name="(app)"
-              options={{
-                animation: "none",
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SendbirdUIKitContainer
+        appId={process.env.EXPO_PUBLIC_SENDBIRD_APP_ID!}
+        chatOptions={{ localCacheStorage: AsyncStorage }}
+        platformServices={platformServices}
+      >
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
               }}
-            />
-            <Stack.Screen
-              name="(auth)"
-              options={{
-                animation: "none",
-              }}
-            />
-          </Stack>
-        </AuthProvider>
-      </QueryClientProvider>
-    </SendbirdUIKitContainer>
+            >
+              <Stack.Screen
+                name="(app)"
+                options={{
+                  animation: "none",
+                }}
+              />
+              <Stack.Screen
+                name="(auth)"
+                options={{
+                  animation: "none",
+                }}
+              />
+            </Stack>
+          </AuthProvider>
+        </QueryClientProvider>
+      </SendbirdUIKitContainer>
+    </GestureHandlerRootView>
   );
 }

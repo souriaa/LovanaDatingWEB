@@ -80,9 +80,13 @@ const ConversationRow = React.memo(({ item, userId }) => {
               ellipsizeMode="tail"
             >
               {item.last_message
-                ? item.last_message.sender_id === userId
-                  ? `You: ${item.last_message.body}`
-                  : item.last_message.body
+                ? item.last_message.body && item.last_message.body.length > 0
+                  ? item.last_message.sender_id === userId
+                    ? `You: ${item.last_message.body}`
+                    : item.last_message.body
+                  : item.last_message.sender_id === userId
+                    ? "You: Send an image"
+                    : "Send an image"
                 : "No message yet"}
             </Text>
             <Text>
@@ -322,6 +326,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     textAlign: "center",
     marginTop: 20,
+    fontFamily: "Poppins-SemiBold",
   },
   errorText: {
     fontSize: 16,

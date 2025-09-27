@@ -18,6 +18,7 @@ import { getLikes } from "../../service/likeService";
 import { getPlans } from "../../service/planService";
 import { getProfile } from "~/service/userService";
 import { getProfilePlansByUser } from "../../service/profilePlanService";
+import { now } from "moment";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -153,10 +154,18 @@ export default function MyPayPlan() {
         if (profile?.id) {
           const profilePlans = await getProfilePlansByUser(profile.id);
           if (profilePlans && profilePlans.length > 0) {
-            const activePlanId = profilePlans[0].plan_id;
-            orderedPlans = data.sort((a, b) =>
-              a.id === activePlanId ? -1 : b.id === activePlanId ? 1 : 0
-            );
+            const plan = profilePlans[0];
+            const planDueDate = new Date(plan.plan_due_date);
+            const now = new Date();
+
+            if (planDueDate > now) {
+              const activePlanId = plan.plan_id;
+              orderedPlans = data.sort((a, b) =>
+                a.id === activePlanId ? -1 : b.id === activePlanId ? 1 : 0
+              );
+            } else {
+              orderedPlans = data;
+            }
           }
         }
 
