@@ -140,6 +140,7 @@ export default function MyPayPlan() {
   const [loading, setLoading] = useState(true);
   const { data: profile } = useMyProfile();
   const [superLikes, setSuperLikes] = useState<number | null>(null);
+  const [timeExtender, setTimeExtender] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
@@ -186,6 +187,7 @@ export default function MyPayPlan() {
       try {
         const data = await getLikes(profile.id);
         setSuperLikes(data?.super_likes_remaining ?? 0);
+        setTimeExtender(data?.time_extend_remaining ?? 0);
       } catch (err) {
         console.error("Error loading super likes:", err);
       } finally {
@@ -202,9 +204,14 @@ export default function MyPayPlan() {
         {/* Perks row */}
         <View style={styles.perksRow}>
           <View style={styles.perkCard}>
-            <Ionicons name="flash" size={24} color={theme.colors.primary} />
-            <Text style={styles.perkTitle}>SuperSwipe</Text>
+            <Ionicons name="star-outline" size={24} color={theme.colors.primary} />
+            <Text style={styles.perkTitle}>Super Likes</Text>
             <Text style={styles.perkSubtitle}>{superLikes}</Text>
+          </View>
+          <View style={styles.perkCard}>
+            <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
+            <Text style={styles.perkTitle}>Time Extender</Text>
+            <Text style={styles.perkSubtitle}>{timeExtender}</Text>
           </View>
         </View>
 
@@ -301,7 +308,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginHorizontal: 4,
-    maxWidth: "50%",
+    maxWidth: "40%",
   },
   perkTitle: {
     fontSize: 14,

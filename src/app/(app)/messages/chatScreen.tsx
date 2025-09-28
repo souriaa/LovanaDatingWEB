@@ -42,6 +42,7 @@ import { SwipeableMessage } from "@/components/swipeable-message";
 import * as DocumentPicker from "expo-document-picker";
 import { Animated, TouchableWithoutFeedback } from "react-native";
 import { useUnmatch } from "@/api/profiles";
+import { Loader } from "@/components/loader";
 
 export default function ChatScreen() {
   const { conversationId, userId } = useLocalSearchParams();
@@ -70,6 +71,7 @@ export default function ChatScreen() {
   const { height } = Dimensions.get("window");
   const slideAnim = useRef(new Animated.Value(height)).current;
   const [interactionId, setInteractionId] = useState(null);
+  const [loadingConversationInfo, setLoadingConversationInfo] = useState(true);
   const { mutate } = useUnmatch();
 
   // --- Fetch messages ---
@@ -89,9 +91,11 @@ export default function ChatScreen() {
       .then(setOtherUser)
       .catch(console.warn);
 
+    setLoadingConversationInfo(true);
     getConversationCreatorAndMessageFirst(conversationId)
       .then(setConversationInfo)
-      .catch(console.warn);
+      .catch(console.warn)
+      .finally(() => setLoadingConversationInfo(false));
   }, [conversationId, userId]);
 
   useEffect(() => {
@@ -199,15 +203,15 @@ export default function ChatScreen() {
     if (!userId || !otherUser?.id) return;
 
     const fetchInteractionId = async () => {
-      const interaction = await getInteractionByActorAndTarget(userId, otherUser.id);
+      const interaction = await getInteractionByActorAndTarget(
+        userId,
+        otherUser.id
+      );
       setInteractionId(interaction.id);
     };
 
     fetchInteractionId();
   }, [userId, otherUser]);
-
-  console.log(interactionId);
-  
 
   const handleTextChange = (value) => {
     setText(value);
@@ -423,7 +427,7 @@ export default function ChatScreen() {
         <SwipeableMessage onReply={() => handleReply(item)} isMine={isMine}>
           <Pressable
             onPress={() => handleToggleTime(item.id)}
-            onLongPress={() => openSheet(item)} // giữ để mở sheet
+            onLongPress={() => openSheet(item)}
             delayLongPress={300}
           >
             {/* Reply Bubble */}
@@ -607,8 +611,10 @@ export default function ChatScreen() {
             )}
           </View>
 
-          {conversationInfo?.created_by === userId ||
-          conversationInfo?.first_message_sent ? (
+          {loadingConversationInfo ? (
+            <Loader />
+          ) : conversationInfo?.created_by === userId ||
+            conversationInfo?.first_message_sent ? (
             <View style={styles.inputBar}>
               <TouchableOpacity
                 onPress={handlePickFile}

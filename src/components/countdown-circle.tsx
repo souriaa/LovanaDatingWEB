@@ -4,6 +4,7 @@ import Svg, { Circle } from "react-native-svg";
 import { theme } from "~/constants/theme";
 
 export const CountdownCircle = ({
+  createdAt,
   expirationAt,
   firstMessageSent,
   avatarUrl,
@@ -14,12 +15,20 @@ export const CountdownCircle = ({
   const circumference = 2 * Math.PI * radius;
 
   const [timeLeft, setTimeLeft] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    if (!firstMessageSent) return; // ⛔ nếu chưa gửi tin nhắn thì không cần timer
+    if (!firstMessageSent) return;
+
+    const start = new Date(createdAt);
+    const exp = new Date(expirationAt);
+
+    // tổng thời gian = expiration - created
+    const total = Math.max(exp - start, 0);
+    setDuration(total);
+
     const updateTime = () => {
       const now = new Date();
-      const exp = new Date(expirationAt);
       const diff = Math.max(exp - now, 0);
       setTimeLeft(diff);
     };
@@ -27,19 +36,19 @@ export const CountdownCircle = ({
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [expirationAt, firstMessageSent]);
+  }, [createdAt, expirationAt, firstMessageSent]);
 
-  const progress =
-    firstMessageSent && expirationAt
-      ? timeLeft / (new Date(expirationAt) - new Date()) || 0
-      : 0;
-
+  // progress = còn lại / tổng
+  const progress = duration > 0 ? timeLeft / duration : 0;
   const strokeDashoffset = circumference * (1 - progress);
+
   const strokeColor =
-    timeLeft <= 5 * 60 * 1000 ? theme.colors.primaryDark : theme.colors.primary;
+    timeLeft <= 5 * 60 * 1000
+      ? theme.colors.primaryDark
+      : theme.colors.primaryLight;
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View style={{ width: size, height: size, }}>
       {firstMessageSent && (
         <Svg width={size} height={size}>
           <Circle
@@ -81,10 +90,10 @@ export const CountdownCircle = ({
           source={{ uri: avatarUrl }}
           style={{
             width: firstMessageSent
-              ? size - strokeWidth * 1.5
+              ? size - strokeWidth * 3
               : size - strokeWidth * 3,
             height: firstMessageSent
-              ? size - strokeWidth * 1.5
+              ? size - strokeWidth * 3
               : size - strokeWidth * 3,
             borderRadius: (size - strokeWidth * 2) / 2,
           }}

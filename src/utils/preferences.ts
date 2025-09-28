@@ -1,4 +1,5 @@
 import { PrivateProfile } from "@/api/my-profile/types";
+import { getProfile, getProfileById, toggleIncognito } from "~/service/userService";
 
 export const memberPreferences = [
   {
@@ -44,3 +45,29 @@ export const memberPreferences = [
     route: "/preferences/ethnicity",
   },
 ];
+
+export const incognitoPreference = {
+  title: "Incognito Mode",
+  getValue: async () => {
+    try {
+      const profile = await getProfile();
+      if (!profile) return "Unknown";
+      const fullProfile = await getProfileById(profile.id);
+      return fullProfile.is_incognito ? "Enabled" : "Disabled";
+    } catch (err) {
+      console.error("Failed to fetch incognito status:", err);
+      return "Unknown";
+    }
+  },
+  toggle: async (value: boolean) => {
+    try {
+      const profile = await getProfile();
+      if (!profile) return null;
+      const updated = await toggleIncognito(profile.id, value);
+      return updated.is_incognito;
+    } catch (err) {
+      console.error("Failed to toggle incognito:", err);
+      return null;
+    }
+  },
+};

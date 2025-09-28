@@ -57,11 +57,12 @@ const ConversationRow = React.memo(({ item, userId }) => {
       <TouchableOpacity style={styles.item} onPress={handlePress}>
         <View style={styles.left}>
           <CountdownCircle
+            createdAt={item.created_at}
             expirationAt={item.expiration_at}
             firstMessageSent={item.first_message_sent}
             avatarUrl={otherUser.photo_url}
-            size={48}
-            strokeWidth={3}
+            size={60}
+            strokeWidth={5}
           ></CountdownCircle>
           {!seen && <View style={styles.unreadDot} />}
         </View>

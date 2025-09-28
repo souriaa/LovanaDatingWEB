@@ -30,3 +30,32 @@ export async function getProfile() {
 
   return data;
 }
+
+export async function getProfileById(profileId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", profileId)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function toggleIncognito(profileId, value) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ is_incognito: value })
+    .eq("id", profileId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}

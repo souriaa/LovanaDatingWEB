@@ -98,7 +98,6 @@ serve(async (req) => {
     let profilePlanResult;
 
     if (existingPlan) {
-      // Update nếu đã có
       const { data: updatedProfilePlan, error: updateError } = await supabase
         .from("profile_plans")
         .update(planData)

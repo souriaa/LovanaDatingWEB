@@ -4,7 +4,7 @@ export const getLikes = async (userId) => {
   try {
     const { data, error } = await supabase
       .from("likes_remain")
-      .select("likes_remaining, super_likes_remaining")
+      .select("likes_remaining, super_likes_remaining, time_extend_remaining")
       .eq("user_id", userId)
       .single();
 
