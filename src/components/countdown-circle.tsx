@@ -1,44 +1,59 @@
 import React, { useEffect, useState } from "react";
-import { View, Image } from "react-native";
+import { View, Image, TouchableWithoutFeedback } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { theme } from "~/constants/theme";
+import { setConversationStatus } from "../../service/messageService"; // import hàm update
 
 export const CountdownCircle = ({
+  conversationId,
   createdAt,
   expirationAt,
   firstMessageSent,
   avatarUrl,
   size = 48,
   strokeWidth = 4,
+  conversationStatus,
+  onPressAvatar
 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
   const [timeLeft, setTimeLeft] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
-    if (!firstMessageSent) return;
+    if (firstMessageSent) return;
 
     const start = new Date(createdAt);
     const exp = new Date(expirationAt);
 
-    // tổng thời gian = expiration - created
     const total = Math.max(exp - start, 0);
     setDuration(total);
 
-    const updateTime = () => {
+    const updateTime = async () => {
       const now = new Date();
       const diff = Math.max(exp - now, 0);
       setTimeLeft(diff);
+
+      if (diff === 0 && !expired) {
+        setExpired(true);
+        try {
+          await setConversationStatus(conversationId, false);
+          console.log(
+            `Conversation ${conversationId} expired -> status = false`
+          );
+        } catch (err) {
+          console.error("Failed to update conversation status:", err);
+        }
+      }
     };
 
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [createdAt, expirationAt, firstMessageSent]);
+  }, [createdAt, expirationAt, firstMessageSent, conversationId, expired]);
 
-  // progress = còn lại / tổng
   const progress = duration > 0 ? timeLeft / duration : 0;
   const strokeDashoffset = circumference * (1 - progress);
 
@@ -48,8 +63,8 @@ export const CountdownCircle = ({
       : theme.colors.primaryLight;
 
   return (
-    <View style={{ width: size, height: size, }}>
-      {firstMessageSent && (
+    <View style={{ width: size, height: size }}>
+      {!firstMessageSent && (
         <Svg width={size} height={size}>
           <Circle
             cx={size / 2}
@@ -75,30 +90,31 @@ export const CountdownCircle = ({
           />
         </Svg>
       )}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: size,
-          height: size,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Image
-          source={{ uri: avatarUrl }}
+      <TouchableWithoutFeedback onPress={onPressAvatar}>
+        <View
           style={{
-            width: firstMessageSent
-              ? size - strokeWidth * 3
-              : size - strokeWidth * 3,
-            height: firstMessageSent
-              ? size - strokeWidth * 3
-              : size - strokeWidth * 3,
-            borderRadius: (size - strokeWidth * 2) / 2,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: size,
+            height: size,
+            justifyContent: "center",
+            alignItems: "center",
           }}
-        />
-      </View>
+        >
+          <Image
+            source={{ uri: avatarUrl }}
+            style={[
+              {
+                width: size - strokeWidth * 3,
+                height: size - strokeWidth * 3,
+                borderRadius: (size - strokeWidth * 2) / 2,
+              },
+              !conversationStatus && { opacity: 0.5 },
+            ]}
+          />
+        </View>
+      </TouchableWithoutFeedback>
     </View>
   );
 };

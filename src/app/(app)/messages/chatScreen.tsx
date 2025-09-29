@@ -29,6 +29,7 @@ import {
   markConversationAsUnseen,
   sendMessage,
   getConversationCreatorAndMessageFirst,
+  extendConversationTime,
 } from "../../../../service/messageService";
 import {
   getSupabaseFileUrl,
@@ -68,13 +69,16 @@ export default function ChatScreen() {
   const [sheetMessage, setSheetMessage] = useState(null);
   const [conversationInfo, setConversationInfo] = useState(null);
 
-  const { height } = Dimensions.get("window");
-  const slideAnim = useRef(new Animated.Value(height)).current;
+  const { height: screenHeight } = Dimensions.get("window");
   const [interactionId, setInteractionId] = useState(null);
   const [loadingConversationInfo, setLoadingConversationInfo] = useState(true);
+  const [showExtendSheet, setShowExtendSheet] = useState(false);
   const { mutate } = useUnmatch();
 
-  // --- Fetch messages ---
+  const headerHeight = 88;
+  const height = screenHeight - headerHeight;
+  const slideAnim = useRef(new Animated.Value(height)).current;
+
   const getMessages = async () => {
     try {
       const data = await fetchMessages(conversationId);
@@ -143,9 +147,29 @@ export default function ChatScreen() {
       )
       .subscribe();
 
+    const conversationChannel = supabase
+      .channel(`public:conversations:id=eq.${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `id=eq.${conversationId}`,
+        },
+        (payload) => {
+          setConversationInfo((prev) => ({
+            ...prev,
+            ...payload.new,
+          }));
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(seenChannel);
+      supabase.removeChannel(conversationChannel);
     };
   }, [conversationId]);
 
@@ -331,7 +355,7 @@ export default function ChatScreen() {
     setSheetMessage(message);
     setShowSheet(true);
     Animated.timing(slideAnim, {
-      toValue: height * 0.8,
+      toValue: height * 0.65,
       duration: 400,
       useNativeDriver: false,
     }).start();
@@ -352,11 +376,59 @@ export default function ChatScreen() {
     setSheetMessage(null);
     setShowSheet(true);
     Animated.timing(slideAnim, {
-      toValue: height * 0.8,
+      toValue: height * 0.65,
       duration: 400,
       useNativeDriver: false,
     }).start();
   };
+
+  const openExtendSheet = () => {
+    setShowExtendSheet(true);
+    Animated.timing(slideAnim, {
+      toValue: height * 0.7,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const closeExtendSheet = () => {
+    Animated.timing(slideAnim, {
+      toValue: height,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      setShowExtendSheet(false);
+    });
+  };
+
+  async function handleExtendTime(
+    userId,
+    conversationId,
+    setConversationInfo,
+    closeExtendSheet
+  ) {
+    if (!userId || !conversationId) {
+      Alert.alert("Error", "Invalid user or conversation.");
+      return;
+    }
+    try {
+      const updatedConversation = await extendConversationTime(
+        userId,
+        conversationId
+      );
+      setConversationInfo((prev) => ({
+        ...prev,
+        expiration_at: updatedConversation.expiration_at,
+      }));
+      closeExtendSheet();
+      Alert.alert("Success", "Conversation time extended by 24 hours!");
+    } catch (err) {
+      Alert.alert(
+        "Failed",
+        err.message || "Unable to extend time. Check your remaining extends."
+      );
+    }
+  }
 
   const renderItem = ({ item, index }) => {
     const isMine = String(item.sender_id) === String(userId);
@@ -613,6 +685,29 @@ export default function ChatScreen() {
 
           {loadingConversationInfo ? (
             <Loader />
+          ) : conversationInfo?.status === false ? (
+            <View style={styles.waitingContainer}>
+              {conversationInfo?.created_by === userId ||
+              conversationInfo?.first_message_sent ? (
+                <Text style={styles.waitingText}>Response time is over</Text>
+              ) : (
+                <>
+                  <Text style={styles.waitingText}>Response time is over</Text>
+                  <TouchableOpacity
+                    style={styles.extendBtn}
+                    onPress={openExtendSheet}
+                  >
+                    <Text style={styles.extendBtnText}>
+                      Extend{" "}
+                      {otherUser?.first_name || otherUser?.last_name
+                        ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+                        : null}
+                      's time
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           ) : conversationInfo?.created_by === userId ||
             conversationInfo?.first_message_sent ? (
             <View style={styles.inputBar}>
@@ -661,24 +756,30 @@ export default function ChatScreen() {
           <View
             style={{
               position: "absolute",
-              top: 0,
+              top: 88,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.3)",
+              alignItems: "center",
             }}
           >
             <Animated.View
               style={{
                 position: "absolute",
-                left: 0,
-                right: 0,
                 top: slideAnim,
-                height: height * 0.2,
+                width: "90%",
+                height: height,
                 backgroundColor: "white",
                 borderTopLeftRadius: 16,
                 borderTopRightRadius: 16,
                 padding: 16,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
               }}
             >
               {sheetMessage ? (
@@ -760,6 +861,110 @@ export default function ChatScreen() {
                   </Text>
                 </>
               )}
+            </Animated.View>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
+      {showExtendSheet && (
+        <TouchableWithoutFeedback onPress={closeExtendSheet}>
+          <View
+            style={{
+              position: "absolute",
+              top: 88,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: "center",
+            }}
+          >
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: slideAnim,
+                width: "90%", 
+                height: height,
+                backgroundColor: "white",
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
+              }}
+            >
+              <View
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    width: 100,
+                    height: 100,
+                  }}
+                >
+                  <Image
+                    source={{ uri: otherUser.photo_url }}
+                    style={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: theme.radius.round,
+                    }}
+                  />
+                  <Ionicons
+                    name="time-outline"
+                    size={30}
+                    style={{
+                      backgroundColor: "white",
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      borderWidth: 1,
+                      borderColor: "white",
+                      borderRadius: theme.radius.round,
+                    }}
+                  />
+                </View>
+              </View>
+              <Text style={styles.extendText}>
+                Extend {otherUser?.first_name || otherUser?.last_name}'s
+                response time by 24 hours?
+              </Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 20,
+                  justifyContent: "center",
+                }}
+              >
+                <TouchableOpacity
+                  style={styles.extendSheetButton}
+                  onPress={() => {
+                    handleExtendTime(
+                      userId,
+                      conversationId,
+                      setConversationInfo,
+                      closeExtendSheet
+                    );
+                  }}
+                >
+                  <Text style={styles.extendSheetButtonText}>Extend</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.extendSheetButton}
+                  onPress={closeExtendSheet}
+                >
+                  <Text style={styles.extendSheetButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </Animated.View>
           </View>
         </TouchableWithoutFeedback>
@@ -1003,5 +1208,39 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
     color: theme.colors.textLighterGray,
     textAlign: "center",
+  },
+  extendBtn: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  extendBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
+  },
+  extendText: {
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    textAlign: "center",
+    marginTop: 10,
+  },
+  extendSheetButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  extendSheetButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
   },
 });

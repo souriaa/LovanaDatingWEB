@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { FC } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,6 +10,7 @@ interface Props {
   secondaryText?: string;
   onPrimaryPress?: () => void;
   onSecondaryPress?: () => void;
+  secondaryDisabled?: boolean;
 }
 
 export const Empty: FC<Props> = ({
@@ -18,6 +20,7 @@ export const Empty: FC<Props> = ({
   onSecondaryPress,
   primaryText,
   secondaryText,
+  secondaryDisabled = false,
 }) => {
   return (
     <SafeAreaView className="flex-1 p-5 bg-white justify-center gap-8">
@@ -41,14 +44,25 @@ export const Empty: FC<Props> = ({
           </Pressable>
         )}
         {secondaryText && (
-          <Pressable
-            className="h-14 bg-white items-center justify-center rounded-full border border-neutral-400"
-            onPress={onSecondaryPress}
-          >
-            <Text className="text-black text-base font-poppins-medium ">
-              {secondaryText}
-            </Text>
-          </Pressable>
+          <View className="relative">
+            <Text className="text-center font-poppins-medium">OR</Text>
+            <Pressable
+              className="h-14 bg-white items-center justify-center rounded-full border border-neutral-400"
+              onPress={secondaryDisabled ? undefined : onSecondaryPress}
+              style={{ opacity: secondaryDisabled ? 0.5 : 1 }}
+            >
+              <Text className="text-black text-base font-poppins-medium">
+                {secondaryText}
+              </Text>
+            </Pressable>
+            {secondaryDisabled && (
+              <Link href="/lovana" asChild>
+                <Text className="text-center text-xs text-gray-500 italic underline pt-1">
+                  Premium only*
+                </Text>
+              </Link>
+            )}
+          </View>
         )}
       </View>
     </SafeAreaView>

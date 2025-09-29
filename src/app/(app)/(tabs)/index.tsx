@@ -18,6 +18,8 @@ import * as Location from "expo-location";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
+import { getProfilePlansByUser } from "~/service/profilePlanService";
+import { getProfile } from "~/service/userService";
 
 export default function Page() {
   const { data, isFetching, error, refetch } = useProfiles();
@@ -27,7 +29,10 @@ export default function Page() {
   const { mutate: skip, isPending: skipPending } = useSkipProfile();
   const { mutate: review, isPending: reviewPending } = useReviewProfiles();
   const { mutate: like, isPending: likePending } = useLikeProfile();
-  const { mutate: superlike, isPending: superlikePending } = useSuperlikeProfile();
+  const { mutate: superlike, isPending: superlikePending } =
+    useSuperlikeProfile();
+  const [loading, setLoading] = useState(true);
+  const [canUsePremium, setCanUsePremium] = useState(false);
   const queryClient = useQueryClient();
 
   const hasProfiles = data && data.length > 0;
@@ -35,6 +40,42 @@ export default function Page() {
   const profile = hasProfiles
     ? transformPublicProfile(data[currentIndex])
     : null;
+
+  useEffect(() => {
+    const fetchProfilePlan = async () => {
+      try {
+        const profile = await getProfile();
+        if (!profile?.id) return;
+
+        const profilePlans = await getProfilePlansByUser(profile.id);
+
+        if (profilePlans && profilePlans.length > 0) {
+          const now = new Date();
+          const validPlans = profilePlans.filter((plan) => {
+            if (!plan.plan_due_date) return true;
+            const dueDate = new Date(plan.plan_due_date);
+            return now <= dueDate;
+          });
+
+          if (validPlans.length > 0) {
+            const plan = validPlans[0];
+            setCanUsePremium(plan.plan_id !== 1);
+          } else {
+            setCanUsePremium(false);
+          }
+        } else {
+          setCanUsePremium(false);
+        }
+      } catch (err) {
+        console.error("fetchProfilePlan error:", err);
+        setCanUsePremium(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfilePlan();
+  }, []);
 
   useEffect(() => {
     const updateProfileWithLocation = async () => {
@@ -164,9 +205,15 @@ export default function Page() {
         },
       }
     );
-  };  
+  };
 
-  if (isFetching || skipPending || reviewPending || likePending || superlikePending) {
+  if (
+    isFetching ||
+    skipPending ||
+    reviewPending ||
+    likePending ||
+    superlikePending
+  ) {
     return <Loader />;
   }
 
@@ -185,11 +232,12 @@ export default function Page() {
     return (
       <Empty
         title="You've seen everyone for now"
-        subTitle="Try changing your filters so more people match your criteria - or check back later!"
+        subTitle="Try changing your filters..."
         primaryText="Change filters"
         secondaryText="Review skipped profiles"
         onPrimaryPress={() => router.push("/preferences")}
         onSecondaryPress={handleReview}
+        secondaryDisabled={!canUsePremium} 
       />
     );
   }

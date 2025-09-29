@@ -15,6 +15,8 @@ export const fetchConversations = async (userId) => {
           created_by,
           first_message_sent,
           expiration_at,
+          status,
+          is_extended,
           members:conversation_members (
             user_id,
             profiles (
@@ -87,6 +89,8 @@ export const fetchConversations = async (userId) => {
         other_user: otherUser,
         first_message_sent: conv.first_message_sent,
         expiration_at: conv.expiration_at,
+        conversation_status: conv.status,
+        conversation_is_extended: conv.is_extended
       };
     });
 
@@ -98,7 +102,7 @@ export const fetchConversations = async (userId) => {
 };
 
 
-export const createConversation = async ({ userIds, isGroup = false, title, first_message_sent = false,}) => {
+export const createConversation = async ({ userIds, isGroup = false, title, first_message_sent = false, }) => {
   try {
     const { data: conversation, error } = await supabase
       .from("conversations")
@@ -255,7 +259,6 @@ export const sendMessage = async ({
   creator_id,
 }) => {
   try {
-    // 1️⃣ Insert message một lần
     const { data: messageData, error: insertError } = await supabase
       .from("messages")
       .insert([{ conversation_id, sender_id, body, files, reply_to_id }])
@@ -264,13 +267,12 @@ export const sendMessage = async ({
 
     if (insertError) throw insertError;
 
-    // 2️⃣ Nếu sender là creator và first_message_sent chưa true, cập nhật
     if (creator_id && creator_id === sender_id) {
       const { error: updateError } = await supabase
         .from("conversations")
         .update({ first_message_sent: true })
         .eq("id", conversation_id)
-        .eq("first_message_sent", false); // chỉ update khi chưa gửi lần nào
+        .eq("first_message_sent", false);
 
       if (updateError) throw updateError;
     }
@@ -328,7 +330,6 @@ export const getOtherUserInConversation = async (conversationId, currentUserId) 
     return null;
   }
 };
-
 
 export const getConversationBySenderAndReceiver = async (currentId, otherId) => {
   try {
@@ -471,7 +472,7 @@ export const getConversationCreatorAndMessageFirst = async (conversationId) => {
   try {
     const { data, error } = await supabase
       .from("conversations")
-      .select("created_by, first_message_sent")
+      .select("created_by, first_message_sent, status")
       .eq("id", conversationId)
       .single();
 
@@ -480,9 +481,86 @@ export const getConversationCreatorAndMessageFirst = async (conversationId) => {
       return null;
     }
 
-    return data; // { created_by: string, first_message_sent: boolean }
+    return data;
   } catch (err) {
     console.error("Unexpected error fetching conversation info:", err);
     return null;
   }
 };
+
+export async function setConversationStatus(conversationId, newStatus) {
+  const { data, error } = await supabase
+    .from("conversations")
+    .update({ status: newStatus })
+    .eq("id", conversationId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function extendConversationTime(userId, conversationId) {
+  try {
+    const { data: likeData, error: likeError } = await supabase
+      .from("likes_remain")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (likeError) throw likeError;
+    if (!likeData) throw new Error("User likes_remain record not found");
+
+    if (likeData.time_extend_remaining <= 0) {
+      throw new Error("No remaining extend credits");
+    }
+
+    const { data: updatedLikes, error: updateLikeError } = await supabase
+      .from("likes_remain")
+      .update({ time_extend_remaining: likeData.time_extend_remaining - 1 })
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (updateLikeError) throw updateLikeError;
+
+    const { data: convData, error: convError } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("id", conversationId)
+      .single();
+
+    if (convError) throw convError;
+    if (!convData) throw new Error("Conversation not found");
+
+    const now = new Date();
+    const createdAt = new Date(convData.created_at);
+    const expirationAt = new Date(convData.expiration_at);
+
+    let newExpiration;
+
+    if (createdAt.getTime() + 24 * 60 * 60 * 1000 >= now.getTime()) {
+      newExpiration = new Date(expirationAt.getTime() + 24 * 60 * 60 * 1000);
+    } else {
+      newExpiration = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    }
+
+    const { data: updatedConversation, error: updateConvError } = await supabase
+      .from("conversations")
+      .update({
+        expiration_at: newExpiration,
+        status: true,
+        is_extended: true
+      })
+      .eq("id", conversationId)
+      .select()
+      .single();
+
+    if (updateConvError) throw updateConvError;
+
+    return updatedConversation;
+  } catch (err) {
+    console.error("Error extending conversation time:", err.message || err);
+    throw err;
+  }
+}

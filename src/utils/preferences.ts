@@ -12,20 +12,20 @@ export const memberPreferences = [
     },
     route: "/preferences/gender",
   },
-  {
-    title: "My neighborhood",
-    getValue: (profile: PrivateProfile) => {
-      return profile?.neighborhood || "None";
-    },
-    route: "/preferences/neighborhood",
-  },
-  {
-    title: "Maximum distance",
-    getValue: (profile: PrivateProfile) => {
-      return `${profile?.max_distance_km} km`;
-    },
-    route: "/preferences/distance",
-  },
+  // {
+  //   title: "My neighborhood",
+  //   getValue: (profile: PrivateProfile) => {
+  //     return profile?.neighborhood || "None";
+  //   },
+  //   route: "/preferences/neighborhood",
+  // },
+  // {
+  //   title: "Maximum distance",
+  //   getValue: (profile: PrivateProfile) => {
+  //     return `${profile?.max_distance_km} km`;
+  //   },
+  //   route: "/preferences/distance",
+  // },
   {
     title: "Age range",
     getValue: (profile: PrivateProfile) => {
@@ -33,17 +33,17 @@ export const memberPreferences = [
     },
     route: "/preferences/age",
   },
-  {
-    title: "Ethnicity",
-    getValue: (profile: PrivateProfile) => {
-      return (
-        profile?.ethnicity_preferences
-          .map((ethnicity) => ethnicity.name)
-          .join(", ") || "Open to all"
-      );
-    },
-    route: "/preferences/ethnicity",
-  },
+  // {
+  //   title: "Ethnicity",
+  //   getValue: (profile: PrivateProfile) => {
+  //     return (
+  //       profile?.ethnicity_preferences
+  //         .map((ethnicity) => ethnicity.name)
+  //         .join(", ") || "Open to all"
+  //     );
+  //   },
+  //   route: "/preferences/ethnicity",
+  // },
 ];
 
 export const incognitoPreference = {

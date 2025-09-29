@@ -23,13 +23,13 @@ export const vitals = [
     },
     route: "/profile/height",
   },
-  {
-    title: "Location",
-    getValue: (profile: PrivateProfile) => {
-      return profile?.neighborhood || "None";
-    },
-    route: "/profile/location",
-  },
+  // {
+  //   title: "Location",
+  //   getValue: (profile: PrivateProfile) => {
+  //     return profile?.neighborhood || "None";
+  //   },
+  //   route: "/profile/location",
+  // },
   {
     title: "Ethnicity",
     getValue: (profile: PrivateProfile) => {
