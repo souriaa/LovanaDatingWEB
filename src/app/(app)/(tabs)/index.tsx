@@ -253,14 +253,14 @@ export default function Page() {
       <Fab
         onPress={handleSkip}
         iconName="close"
-        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-5 left-5"
+        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-20 left-5"
         iconClassName="text-black text-4xl"
         loaderClassName="text-black"
       />
       <Fab
         onPress={handleSuperlike}
         iconName="star-outline"
-        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-5 right-5"
+        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-20 right-5"
         iconClassName="text-black text-4xl"
         loaderClassName="text-black"
       />

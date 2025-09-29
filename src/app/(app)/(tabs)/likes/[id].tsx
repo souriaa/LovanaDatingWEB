@@ -125,7 +125,7 @@ const Page = () => {
       </ScrollView>
 
       <Fab
-        className="absolute bottom-5 left-5 bg-white  shadow-sm h-20"
+        className="absolute bottom-20 left-5 bg-white  shadow-sm h-20"
         iconClassName="text-black text-4xl"
         iconName="close"
         onPress={handleRemove}
@@ -134,7 +134,7 @@ const Page = () => {
         disabled={removePending || matchPending}
       />
       <Fab
-        className="absolute bottom-5 right-5 bg-white  shadow-sm h-20"
+        className="absolute bottom-20 right-5 bg-white  shadow-sm h-20"
         iconClassName="text-black text-4xl"
         iconName="chatbox-outline"
         onPress={handleMatch}

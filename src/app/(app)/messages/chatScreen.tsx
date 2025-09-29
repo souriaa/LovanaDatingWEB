@@ -141,7 +141,7 @@ export default function ChatScreen() {
         (payload) => {
           setSeenStatus((prev) => ({
             ...prev,
-            otherUser: { isSeen: payload.new.isSeen },
+            otherUser: { is_seen: payload.new.is_seen },
           }));
         }
       )
@@ -204,7 +204,7 @@ export default function ChatScreen() {
     if (!lastMessage) return;
     setStatusText(
       lastMessage.sender_id === userId
-        ? seenStatus.otherUser?.isSeen
+        ? seenStatus.otherUser?.is_seen
           ? "Seen"
           : "Sent"
         : ""
