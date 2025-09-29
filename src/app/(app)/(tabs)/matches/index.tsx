@@ -1,25 +1,25 @@
-import { supabase } from "@/lib/supabase";
-import { router, Stack, useFocusEffect } from "expo-router";
-import moment from "moment";
-import React, { useCallback, useEffect, useState } from "react";
-import { Loader } from "@/components/loader";
+import { CountdownCircle } from '@/components/countdown-circle';
+import { Loader } from '@/components/loader';
+import { supabase } from '@/lib/supabase';
+import { router, Stack, useFocusEffect } from 'expo-router';
+import moment from 'moment';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import Animated, {
-  FadeIn,
-  FadeOut,
-  LinearTransition,
-} from "react-native-reanimated";
-import { theme } from "../../../../../constants/theme";
-import { getProfile } from "../../../../../service/userService";
-import { fetchConversations } from "../../../../../service/messageService";
-import { CountdownCircle } from "@/components/countdown-circle";
+} from 'react-native';
+import { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import { theme } from '../../../../../constants/theme';
+import { fetchConversations } from '../../../../../service/messageService';
+import { getProfile } from '../../../../../service/userService';
+import { useTabBar } from '../../../../context/tabBarContext';
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const ConversationRow = React.memo(({ item, userId }) => {
   const otherUser = item.other_user || {};
@@ -29,14 +29,14 @@ const ConversationRow = React.memo(({ item, userId }) => {
     const created = moment(createdAt);
     const now = moment();
 
-    if (created.isSame(now, "day")) {
-      return created.format("h:mm A");
-    } else if (created.isSame(now.clone().subtract(1, "day"), "day")) {
-      return "Yesterday";
-    } else if (created.isSame(now, "week")) {
-      return created.format("dddd");
+    if (created.isSame(now, 'day')) {
+      return created.format('h:mm A');
+    } else if (created.isSame(now.clone().subtract(1, 'day'), 'day')) {
+      return 'Yesterday';
+    } else if (created.isSame(now, 'week')) {
+      return created.format('dddd');
     } else {
-      return created.format("MMM D");
+      return created.format('MMM D');
     }
   };
 
@@ -70,8 +70,8 @@ const ConversationRow = React.memo(({ item, userId }) => {
         <View style={styles.messageContainer}>
           <Text style={[styles.name, !seen && styles.unreadText]}>
             {otherUser.first_name || otherUser.last_name
-              ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
-              : "Unknown"}
+              ? `${otherUser.first_name || ''} ${otherUser.last_name || ''}`.trim()
+              : 'Unknown'}
           </Text>
           <View style={styles.metaRow}>
             <Text
@@ -89,16 +89,16 @@ const ConversationRow = React.memo(({ item, userId }) => {
                     ? `You: ${item.last_message.body}`
                     : item.last_message.body
                   : item.last_message.sender_id === userId
-                    ? "You: Send an image"
-                    : "Send an image"
-                : "No message yet"}
+                    ? 'You: Send an image'
+                    : 'Send an image'
+                : 'No message yet'}
             </Text>
             <Text>
               {item.last_message ? (
                 <>
                   <Text style={[styles.dot, !seen && styles.unreadText]}>
-                    {" "}
-                    •{" "}
+                    {' '}
+                    •{' '}
                   </Text>
                   <Text style={[styles.time, !seen && styles.unreadText]}>
                     {formatTimeAgo(item.last_message.created_at)}
@@ -119,14 +119,17 @@ export default function ConversationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const scrollOffset = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const { tabBarOpacity } = useTabBar();
 
   const CustomHeader = () => {
     return (
       <Stack.Screen
         options={{
-          headerTitle: "",
+          headerTitle: '',
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: "white" },
+          headerStyle: { backgroundColor: 'white' },
         }}
       />
     );
@@ -148,10 +151,10 @@ export default function ConversationsScreen() {
     if (!user?.id) return;
 
     const messageSub = supabase
-      .channel("public:messages")
+      .channel('public:messages')
       .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const newMessage = payload.new;
           if (newMessage.sender_id !== user.id) {
@@ -168,10 +171,10 @@ export default function ConversationsScreen() {
       .subscribe();
 
     const memberSub = supabase
-      .channel("public:conversation_members")
+      .channel('public:conversation_members')
       .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "conversation_members" },
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversation_members' },
         (payload) => {
           const updatedMember = payload.new;
 
@@ -209,7 +212,7 @@ export default function ConversationsScreen() {
       setConversations(data);
       setError(null);
     } catch (err) {
-      console.warn("Failed to fetch conversations:", err);
+      console.warn('Failed to fetch conversations:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -234,6 +237,39 @@ export default function ConversationsScreen() {
     [user]
   );
 
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+    {
+      useNativeDriver: true,
+      listener: (event) => {
+        const currentScrollY = event.nativeEvent.contentOffset.y;
+        if (currentScrollY <= 0) {
+          Animated.timing(tabBarOpacity, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        } else if (
+          currentScrollY > lastScrollY.current &&
+          currentScrollY > 50
+        ) {
+          Animated.timing(tabBarOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        } else if (currentScrollY < lastScrollY.current) {
+          Animated.timing(tabBarOpacity, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        }
+        lastScrollY.current = currentScrollY;
+      },
+    }
+  );
+
   return (
     <View style={styles.container} className="gap-5 bg-white">
       <CustomHeader />
@@ -241,7 +277,7 @@ export default function ConversationsScreen() {
       {!user ? (
         <Loader />
       ) : (
-        <FlatList
+        <AnimatedFlatList
           data={conversations}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
@@ -266,6 +302,8 @@ export default function ConversationsScreen() {
           ListFooterComponent={
             error && <Text style={styles.errorText}>Error: {error}</Text>
           }
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         />
       )}
     </View>
@@ -278,11 +316,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   item: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     paddingVertical: 14,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderBottomWidth: 2,
     borderColor: theme.colors.backgroundGray,
     gap: 12,
@@ -291,7 +329,7 @@ const styles = StyleSheet.create({
   itemWrapper: {
     marginBottom: 5,
   },
-  left: { position: "relative" },
+  left: { position: 'relative' },
   headerAvatar: {
     width: 48,
     height: 48,
@@ -302,15 +340,15 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     color: theme.colors.textDark,
-    fontFamily: "Poppins-Regular",
+    fontFamily: 'Poppins-Regular',
   },
   lastMessage: {
-    color: "gray",
+    color: 'gray',
     fontSize: 16,
-    fontFamily: "Poppins-Regular",
+    fontFamily: 'Poppins-Regular',
   },
   unreadDot: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
     width: 14,
@@ -318,29 +356,29 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.round,
     backgroundColor: theme.colors.primary,
     borderWidth: 2,
-    borderColor: "white",
+    borderColor: 'white',
   },
   unreadText: {
     color: theme.colors.primary,
-    fontFamily: "Poppins-Bold",
+    fontFamily: 'Poppins-Bold',
   },
-  emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   noData: {
     fontSize: 16,
     color: theme.colors.text,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 20,
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: 'Poppins-SemiBold',
   },
   errorText: {
     fontSize: 16,
-    color: theme.colors.error || "red",
-    textAlign: "center",
+    color: theme.colors.error || 'red',
+    textAlign: 'center',
     marginTop: 20,
   },
   metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   messagePreview: {
     flexShrink: 1,
@@ -348,10 +386,10 @@ const styles = StyleSheet.create({
   },
   dot: {
     marginHorizontal: 4,
-    color: "gray",
+    color: 'gray',
   },
   time: {
-    color: "gray",
-    fontFamily: "Poppins-Regular",
+    color: 'gray',
+    fontFamily: 'Poppins-Regular',
   },
 });

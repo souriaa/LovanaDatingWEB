@@ -4,20 +4,20 @@ import {
   useReviewProfiles,
   useSkipProfile,
   useSuperlikeProfile,
-} from "@/api/profiles";
-import { Empty } from "@/components/empty";
-import { Fab } from "@/components/fab";
-import { Loader } from "@/components/loader";
-import { ProfileView } from "@/components/profile-view";
-import { useRefreshOnFocus } from "@/hooks/refetch";
-import { supabase } from "@/lib/supabase";
-import { transformPublicProfile } from "@/utils/profile";
-import { Ionicons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import * as Location from "expo-location";
-import { Link, router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+} from '@/api/profiles';
+import { Empty } from '@/components/empty';
+import { Fab } from '@/components/fab';
+import { Loader } from '@/components/loader';
+import { ProfileView } from '@/components/profile-view';
+import { useRefreshOnFocus } from '@/hooks/refetch';
+import { supabase } from '@/lib/supabase';
+import { transformPublicProfile } from '@/utils/profile';
+import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import * as Location from 'expo-location';
+import { Link, router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, View } from 'react-native';
 
 export default function Page() {
   const { data, isFetching, error, refetch } = useProfiles();
@@ -27,7 +27,8 @@ export default function Page() {
   const { mutate: skip, isPending: skipPending } = useSkipProfile();
   const { mutate: review, isPending: reviewPending } = useReviewProfiles();
   const { mutate: like, isPending: likePending } = useLikeProfile();
-  const { mutate: superlike, isPending: superlikePending } = useSuperlikeProfile();
+  const { mutate: superlike, isPending: superlikePending } =
+    useSuperlikeProfile();
   const queryClient = useQueryClient();
 
   const hasProfiles = data && data.length > 0;
@@ -44,35 +45,35 @@ export default function Page() {
           error: authError,
         } = await supabase.auth.getUser();
         if (authError || !user) {
-          console.log("❌ No user found:", authError);
+          console.log('❌ No user found:', authError);
           return;
         }
 
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          console.log("Location permission not granted");
+        if (status !== 'granted') {
+          console.log('Location permission not granted');
           return;
         }
 
         const { coords } = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = coords;
 
-        console.log("Got location:", latitude, longitude);
+        console.log('Got location:', latitude, longitude);
 
         const { error: updateError } = await supabase
-          .from("profiles")
+          .from('profiles')
           .update({
             latitude,
             longitude,
             updated_at: new Date(),
           })
-          .eq("user_id", user.id);
+          .eq('user_id', user.id);
 
         if (updateError) {
-          console.error("Unexpected error updating location:", updateError);
+          console.error('Unexpected error updating location:', updateError);
         }
       } catch (err) {
-        console.error("Unexpected error updating location:", err);
+        console.error('Unexpected error updating location:', err);
       }
     };
 
@@ -87,13 +88,13 @@ export default function Page() {
             setCurrentIndex(currentIndex + 1);
           } else if (hasProfiles) {
             queryClient.invalidateQueries({
-              queryKey: ["profiles"],
+              queryKey: ['profiles'],
             });
             setCurrentIndex(0);
           }
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          Alert.alert('Error', 'Something went wrong, please try again later');
         },
       });
     }
@@ -103,22 +104,22 @@ export default function Page() {
     review(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: ["profiles"],
+          queryKey: ['profiles'],
         });
       },
       onError: () => {
-        Alert.alert("Error", "Something went wrong, please try again later");
+        Alert.alert('Error', 'Something went wrong, please try again later');
       },
     });
   };
 
-  const handleLike = (id: string, type: "answer" | "photo") => {
+  const handleLike = (id: string, type: 'answer' | 'photo') => {
     if (profile) {
       like(
         {
           profile: profile?.id,
-          answer: type === "answer" ? id : undefined,
-          photo: type === "photo" ? id : undefined,
+          answer: type === 'answer' ? id : undefined,
+          photo: type === 'photo' ? id : undefined,
         },
         {
           onSuccess: () => {
@@ -126,15 +127,15 @@ export default function Page() {
               setCurrentIndex(currentIndex + 1);
             } else if (hasProfiles) {
               queryClient.invalidateQueries({
-                queryKey: ["profiles"],
+                queryKey: ['profiles'],
               });
               setCurrentIndex(0);
             }
           },
           onError: () => {
             Alert.alert(
-              "Error",
-              "Something went wrong, please try again later"
+              'Error',
+              'Something went wrong, please try again later'
             );
           },
         }
@@ -152,21 +153,27 @@ export default function Page() {
           if (hasProfiles && currentIndex < data.length - 1) {
             setCurrentIndex(currentIndex + 1);
           } else if (hasProfiles) {
-            queryClient.invalidateQueries({ queryKey: ["profiles"] });
+            queryClient.invalidateQueries({ queryKey: ['profiles'] });
             setCurrentIndex(0);
           }
         },
         onError: () => {
           Alert.alert(
-            "Error",
-            "Something went wrong with superlike. Please try again."
+            'Error',
+            'Something went wrong with superlike. Please try again.'
           );
         },
       }
     );
-  };  
+  };
 
-  if (isFetching || skipPending || reviewPending || likePending || superlikePending) {
+  if (
+    isFetching ||
+    skipPending ||
+    reviewPending ||
+    likePending ||
+    superlikePending
+  ) {
     return <Loader />;
   }
 
@@ -188,16 +195,16 @@ export default function Page() {
         subTitle="Try changing your filters so more people match your criteria - or check back later!"
         primaryText="Change filters"
         secondaryText="Review skipped profiles"
-        onPrimaryPress={() => router.push("/preferences")}
+        onPrimaryPress={() => router.push('/preferences')}
         onSecondaryPress={handleReview}
       />
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white" style={{ paddingBottom: 90 }}>
       <ScrollView className="flex-1 px-5">
-        <Link href={"/preferences"} suppressHighlighting>
+        <Link href={'/preferences'} suppressHighlighting>
           <Ionicons name="options-outline" className="text-3xl" />
         </Link>
         {profile && <ProfileView profile={profile} onLike={handleLike} />}
