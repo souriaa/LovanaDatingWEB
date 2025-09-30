@@ -101,12 +101,12 @@ export default function GetPlan() {
       }
       router.back();
       router.push({
-        pathname: "/plans/qr-page",
+        pathname: "/qr/qr-page",
         params: {
-          userId: userId?.id,
           paymentId: data.id,
           amount: amount.toString(),
           currency: plan.currency,
+          type: "plan",
         },
       });
     } catch (err) {
@@ -151,6 +151,7 @@ export default function GetPlan() {
           contentContainerStyle={styles.planRow}
           showsHorizontalScrollIndicator={false}
         >
+          {/* Week */}
           <TouchableOpacity
             style={[
               styles.planCard,
@@ -161,11 +162,38 @@ export default function GetPlan() {
           >
             <Text style={styles.planLabelTitle}>1</Text>
             <Text style={styles.planLabel}>Week</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_weekly).toLocaleString() + " " + plan.currency}
-            </Text>
+
+            {plan.price_weekly_discount_percent > 0 ? (
+              <View style={{ alignItems: "center" }}>
+                {/* Giá gốc */}
+                <Text style={[styles.planPrice, styles.discountPrice]}>
+                  {Number(plan.price_weekly).toLocaleString()} {plan.currency}
+                </Text>
+
+                {/* Giá sau giảm */}
+                <Text style={[styles.planPrice, { color: "red" }]}>
+                  {Number(
+                    plan.price_weekly *
+                      (1 - plan.price_weekly_discount_percent / 100)
+                  ).toLocaleString()}{" "}
+                  {plan.currency}
+                </Text>
+
+                {/* Box SAVE */}
+                <View style={styles.planDiscountPercent}>
+                  <Text style={styles.planDiscountPercentText}>
+                    SAVE {plan.price_weekly_discount_percent}%
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.planPrice}>
+                {Number(plan.price_weekly).toLocaleString()} {plan.currency}
+              </Text>
+            )}
           </TouchableOpacity>
 
+          {/* Month */}
           <TouchableOpacity
             style={[
               styles.planCard,
@@ -175,13 +203,35 @@ export default function GetPlan() {
           >
             <Text style={styles.planLabelTitle}>1</Text>
             <Text style={styles.planLabel}>Month</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_monthly).toLocaleString() +
-                " " +
-                plan.currency}
-            </Text>
+
+            {plan.price_monthly_discount_percent > 0 ? (
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.planPrice, styles.discountPrice]}>
+                  {Number(plan.price_monthly).toLocaleString()} {plan.currency}
+                </Text>
+
+                <Text style={[styles.planPrice, { color: "red" }]}>
+                  {Number(
+                    plan.price_monthly *
+                      (1 - plan.price_monthly_discount_percent / 100)
+                  ).toLocaleString()}{" "}
+                  {plan.currency}
+                </Text>
+
+                <View style={styles.planDiscountPercent}>
+                  <Text style={styles.planDiscountPercentText}>
+                    SAVE {plan.price_monthly_discount_percent}%
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.planPrice}>
+                {Number(plan.price_monthly).toLocaleString()} {plan.currency}
+              </Text>
+            )}
           </TouchableOpacity>
 
+          {/* Year */}
           <TouchableOpacity
             style={[
               styles.planCard,
@@ -191,9 +241,32 @@ export default function GetPlan() {
           >
             <Text style={styles.planLabelTitle}>1</Text>
             <Text style={styles.planLabel}>Year</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_yearly).toLocaleString() + " " + plan.currency}
-            </Text>
+
+            {plan.price_yearly_discount_percent > 0 ? (
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.planPrice, styles.discountPrice]}>
+                  {Number(plan.price_yearly).toLocaleString()} {plan.currency}
+                </Text>
+
+                <Text style={[styles.planPrice, { color: "red" }]}>
+                  {Number(
+                    plan.price_yearly *
+                      (1 - plan.price_yearly_discount_percent / 100)
+                  ).toLocaleString()}{" "}
+                  {plan.currency}
+                </Text>
+
+                <View style={styles.planDiscountPercent}>
+                  <Text style={styles.planDiscountPercentText}>
+                    SAVE {plan.price_yearly_discount_percent}%
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.planPrice}>
+                {Number(plan.price_yearly).toLocaleString()} {plan.currency}
+              </Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
 
@@ -247,7 +320,7 @@ const styles = StyleSheet.create({
   },
   planRow: {
     marginBottom: 80,
-    height: 160,
+    height: 180,
     paddingTop: 20,
   },
   planCard: {
@@ -271,9 +344,26 @@ const styles = StyleSheet.create({
   },
   planPrice: {
     fontSize: 16,
-    marginTop: 6,
     fontFamily: "Poppins-Bold",
     textAlign: "center",
+    marginTop: 10,
+  },
+  discountPrice: {
+    textDecorationLine: "line-through",
+    color: "gray",
+    fontSize: 12,
+    marginTop: 0,
+  },
+  planDiscountPercent: {
+    backgroundColor: "#FFEAEA",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  planDiscountPercentText: {
+    fontSize: 12,
+    color: "red",
+    fontFamily: "Poppins-SemiBold",
   },
   continueBtn: {
     backgroundColor: "#111827",

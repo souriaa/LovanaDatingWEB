@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -203,16 +204,42 @@ export default function MyPayPlan() {
       <ScrollView>
         {/* Perks row */}
         <View style={styles.perksRow}>
-          <View style={styles.perkCard}>
-            <Ionicons name="star-outline" size={24} color={theme.colors.primary} />
+          <TouchableOpacity
+            style={styles.perkCard}
+            onPress={() =>
+              router.push({
+                pathname: "/consumables/get-consumables",
+                params: { consumableId: 1 },
+              })
+            }
+          >
+            <Ionicons
+              name="star-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
             <Text style={styles.perkTitle}>Super Likes</Text>
             <Text style={styles.perkSubtitle}>{superLikes}</Text>
-          </View>
-          <View style={styles.perkCard}>
-            <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+
+          {/* Time Extender */}
+          <TouchableOpacity
+            style={styles.perkCard}
+            onPress={() =>
+              router.push({
+                pathname: "/consumables/get-consumables",
+                params: { consumableId: 2 },
+              })
+            }
+          >
+            <Ionicons
+              name="time-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
             <Text style={styles.perkTitle}>Time Extender</Text>
             <Text style={styles.perkSubtitle}>{timeExtender}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Plans */}

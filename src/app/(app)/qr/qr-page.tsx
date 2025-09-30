@@ -2,15 +2,15 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 
 export default function QRPage() {
-  const { paymentId, planName, amount, currency } = useLocalSearchParams<{
+  const { paymentId, amount, currency, type } = useLocalSearchParams<{
     paymentId: string;
-    planName: string;
     amount: string;
     currency: string;
+    type: "plan" | "consumable";
   }>();
   const router = useRouter();
 
-  const qrUrl = `https://qr.sepay.vn/img?acc=VQRQAEKJS2386&bank=MBBank&amount=${amount}&des=${paymentId}`;
+  const qrUrl = `https://qr.sepay.vn/img?acc=VQRQAEKJS2386&bank=MBBank&amount=${amount}&des=${type}${paymentId}`;
 
   return (
     <View style={styles.container}>

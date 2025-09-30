@@ -1,4 +1,3 @@
-// supabase/functions/sepayWebhook/index.ts
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -13,11 +12,18 @@ serve(async (req) => {
 
   try {
     const payload = await req.json();
-    console.log("SePay Webhook payload:", payload);
+    // console.log("SePay Webhook payload:", payload);
 
     const content = payload.content || "";
-    const match = content.match(/([0-9a-fA-F]{32}|[0-9a-fA-F-]{36})/);
-    const paymentId = match ? match[0] : null;
+    const typeMatch = content.match(/\b(plan|consumable)([0-9a-fA-F]{32})\b/);
+
+    if (!typeMatch) {
+      console.error("Không tìm thấy paymentId/type trong content");
+      return new Response("PaymentId/type not found", { status: 400 });
+    }
+
+    const type = typeMatch[1];
+    const paymentId = typeMatch[2];
 
     if (!paymentId) {
       console.error("Không tìm thấy paymentId trong content");
@@ -36,7 +42,6 @@ serve(async (req) => {
 
     const formattedPaymentId = formatUuid(paymentId);
 
-    // Step 1: Update payments
     const updateData = {
       sepay_id: payload.id,
       gateway: payload.gateway,
@@ -56,85 +61,170 @@ serve(async (req) => {
       status: "success",
     };
 
-    const { data: updatedPayments, error: paymentError } = await supabase
-      .from("payments")
+    let tableName: string;
+    let selectFields: string;
+
+    if (type === "plan") {
+      tableName = "payments";
+      selectFields = "id, user_id, plan_id, plan_due_date";
+    } else if (type === "consumable") {
+      tableName = "consumable_payments";
+      selectFields = "id, user_id, consumable_id, consumable_amount";
+    }
+
+    const { data: updatedPayment, error: paymentError } = await supabase
+      .from(tableName)
       .update(updateData)
       .eq("id", formattedPaymentId)
-      .select("id, user_id, plan_id, plan_due_date")
+      .select(selectFields)
       .single();
 
-    if (paymentError || !updatedPayments) {
+    if (paymentError || !updatedPayment) {
       console.error("Update payments error:", paymentError);
       return new Response("Database update failed", { status: 500 });
     }
 
-    const { id: payment_id, user_id, plan_id, plan_due_date } = updatedPayments;
-    console.log("Updated payment =>", updatedPayments);
+    // console.log("Updated payment =>", updatedPayment);
 
-    if (!user_id || !plan_id) {
-      console.error("Payment missing user_id or plan_id");
-      return new Response("Missing user_id or plan_id", { status: 400 });
-    }
-
-    // Step 2: Check profile_plans for this user
-    const { data: existingPlan, error: checkError } = await supabase
-      .from("profile_plans")
-      .select("id")
-      .eq("user_id", user_id)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error checking profile_plans:", checkError);
-      return new Response("Check profile_plans failed", { status: 500 });
-    }
-
-    const planData = {
-      plan_id,
-      plan_due_date,
-      payment_id,
-      user_id,
-    };
-
-    let profilePlanResult;
-
-    if (existingPlan) {
-      const { data: updatedProfilePlan, error: updateError } = await supabase
-        .from("profile_plans")
-        .update(planData)
-        .eq("id", existingPlan.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Update profile_plans error:", updateError);
-        return new Response("Update profile_plans failed", { status: 500 });
+    if (type === "plan") {
+      const {
+        id: payment_id,
+        user_id,
+        plan_id,
+        plan_due_date,
+      } = updatedPayment;
+      if (!user_id || !plan_id) {
+        return new Response("Missing user_id or plan_id", { status: 400 });
       }
 
-      profilePlanResult = updatedProfilePlan;
-    } else {
-      // Insert nếu chưa có
-      const { data: newProfilePlan, error: insertError } = await supabase
+      const { data: existingPlan, error: checkError } = await supabase
         .from("profile_plans")
-        .insert([planData])
-        .select()
-        .single();
+        .select("id")
+        .eq("user_id", user_id)
+        .maybeSingle();
 
-      if (insertError) {
-        console.error("Insert profile_plans error:", insertError);
-        return new Response("Insert profile_plans failed", { status: 500 });
+      if (checkError) {
+        return new Response("Check profile_plans failed", { status: 500 });
       }
 
-      profilePlanResult = newProfilePlan;
+      const planData = { plan_id, plan_due_date, payment_id, user_id };
+      let profilePlanResult;
+
+      if (existingPlan) {
+        const { data: updatedProfilePlan, error: updateError } = await supabase
+          .from("profile_plans")
+          .update(planData)
+          .eq("id", existingPlan.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          return new Response("Update profile_plans failed", { status: 500 });
+        }
+
+        profilePlanResult = updatedProfilePlan;
+      } else {
+        const { data: newProfilePlan, error: insertError } = await supabase
+          .from("profile_plans")
+          .insert([planData])
+          .select()
+          .single();
+
+        if (insertError) {
+          return new Response("Insert profile_plans failed", { status: 500 });
+        }
+
+        profilePlanResult = newProfilePlan;
+      }
+
+      return new Response(
+        JSON.stringify({
+          received: true,
+          payment: updatedPayment,
+          profile_plan: profilePlanResult,
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    return new Response(
-      JSON.stringify({
-        received: true,
-        payment: updatedPayments,
-        profile_plan: profilePlanResult,
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
+    if (type === "consumable") {
+      const {
+        id: payment_id,
+        user_id,
+        consumable_id,
+        consumable_amount,
+      } = updatedPayment;
+
+      if (!user_id || !consumable_id) {
+        return new Response("Missing user_id or consumable_id", {
+          status: 400,
+        });
+      }
+
+      const { data: likesData, error: likesError } = await supabase
+        .from("likes_remain")
+        .select("*")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (likesError) {
+        return new Response("Fetch likes_remain failed", { status: 500 });
+      }
+
+      if (!likesData) {
+        console.warn(
+          "No likes_remain record for user, skipping update (no insert allowed)"
+        );
+      } else {
+        const updatedLikes: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+
+        switch (consumable_id) {
+          case 1:
+            updatedLikes.super_likes_remaining =
+              likesData.super_likes_remaining + Number(consumable_amount);
+            break;
+          case 2:
+            updatedLikes.time_extend_remaining =
+              (likesData.time_extend_remaining || 0) +
+              Number(consumable_amount);
+            break;
+          default:
+            console.warn(
+              `Unknown consumable_id ${consumable_id}, nothing to update`
+            );
+            return new Response("Unknown consumable_id, no update done", {
+              status: 400,
+            });
+        }
+
+        const { data: updatedLikesData, error: updateLikesError } =
+          await supabase
+            .from("likes_remain")
+            .update(updatedLikes)
+            .eq("user_id", user_id)
+            .select()
+            .single();
+
+        if (updateLikesError) {
+          return new Response("Update likes_remain failed", { status: 500 });
+        }
+
+        // console.log("Updated likes_remain =>", updatedLikesData);
+
+        return new Response(
+          JSON.stringify({
+            received: true,
+            payment: updatedPayment,
+            likes_remain: updatedLikesData,
+          }),
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    return new Response("Unknown type", { status: 400 });
   } catch (err) {
     console.error("Webhook error:", err);
     return new Response("Bad Request", { status: 400 });
