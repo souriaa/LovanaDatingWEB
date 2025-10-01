@@ -15,7 +15,7 @@ import {
 import colors from "tailwindcss/colors";
 
 export default function Page() {
-  const [method, setMethod] = useState<"phone" | "email">("phone");
+  const [method, setMethod] = useState<"phone" | "email">("email");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const phoneRef = useRef<TextInput>(null);
@@ -87,7 +87,7 @@ export default function Page() {
       <StatusBar barStyle={"dark-content"} />
       <View className="flex-1 justify-center">
         {/* Toggle Method */}
-        <View className="flex-row mb-6">
+        {/* <View className="flex-row mb-6">
           <Pressable
             className={`flex-1 py-3 border-b-2 ${
               method === "phone" ? "border-black" : "border-gray-200"
@@ -116,7 +116,7 @@ export default function Page() {
               Email
             </Text>
           </Pressable>
-        </View>
+        </View> */}
 
         {/* Title */}
         <View className="flex-1">

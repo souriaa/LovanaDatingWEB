@@ -18,7 +18,7 @@ export const ProfileItem: FC<Props> = ({ children, item, type, onLike }) => {
         <Fab
           className="absolute bottom-5 right-5 bg-white shadow-sm"
           iconName="heart-outline"
-          iconClassName="text-fuchsia-900 text-4xl"
+          iconClassName="text-red-900 text-4xl"
           onPress={() => onLike(item.id, type)}
         />
       )}

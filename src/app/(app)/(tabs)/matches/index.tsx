@@ -66,7 +66,7 @@ const ConversationRow = React.memo(
       setSheetConversation(item);
       setShowSheet(true);
       Animated.timing(slideAnim, {
-        toValue: height * 0.5,
+        toValue: height * 0.6,
         duration: 400,
         useNativeDriver: false,
       }).start();
@@ -243,9 +243,26 @@ export default function ConversationsScreen() {
       )
       .subscribe();
 
+    const convSub = supabase
+      .channel("public:conversations")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations" },
+        (payload) => {
+          const updatedConv = payload.new;
+          setConversations((prev) =>
+            prev.map((conv) =>
+              conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv
+            )
+          );
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(messageSub);
       supabase.removeChannel(memberSub);
+      supabase.removeChannel(convSub);
     };
   }, [user]);
 
@@ -438,7 +455,6 @@ export default function ConversationsScreen() {
                 elevation: 5,
               }}
             >
-              <Text style={styles.sheetOption}>View Conversation</Text>
               <Text style={styles.sheetOption}>Delete Conversation</Text>
               <Text style={styles.sheetOption}>Report</Text>
             </Animated.View>
@@ -505,7 +521,8 @@ export default function ConversationsScreen() {
               ) : avatarSheetData.creatorId === user.id ? (
                 <View style={{ alignItems: "center" }}>
                   <Text style={styles.extendText}>
-                    You cannot extend your own conversation. Start the conversation by making you're first move!
+                    You cannot extend your own conversation. Start the
+                    conversation by making you're first move!
                   </Text>
                 </View>
               ) : (
@@ -513,8 +530,18 @@ export default function ConversationsScreen() {
                   <Text style={styles.extendText}>
                     Extend{" "}
                     {avatarSheetData.first_name || avatarSheetData.last_name}'s
-                    response time by 24 hours?
+                    response time by 24 hours?{"\n"}
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: theme.colors.textLighterGray,
+                      }}
+                    >
+                      If the conversation remains inactive for 24 hours after
+                      expiration, it will be automatically deleted.
+                    </Text>
                   </Text>
+
                   <View
                     style={{
                       display: "flex",

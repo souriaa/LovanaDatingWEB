@@ -17,6 +17,12 @@ export const VideoBackground: FC<Props> = ({ source, children }) => {
     <View className="flex-1">
       <View className="absolute top-0 right-0 bottom-0 left-0">
         <VideoView className="flex-1" player={player} contentFit="cover" />
+
+        <View
+          className="absolute top-0 right-0 bottom-0 left-0"
+          style={{ backgroundColor: 'rgba(128,128,128,0.4)' }}
+        />
+
         <View className="absolute top-0 right-0 bottom-0 left-0">
           {children}
         </View>

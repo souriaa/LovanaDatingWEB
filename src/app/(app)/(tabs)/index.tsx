@@ -259,9 +259,9 @@ export default function Page() {
       />
       <Fab
         onPress={handleSuperlike}
-        iconName="star-outline"
+        iconName="star"
         className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-20 right-5"
-        iconClassName="text-black text-4xl"
+        iconClassName="text-red-900 text-4xl text-4xl"
         loaderClassName="text-black"
       />
     </View>

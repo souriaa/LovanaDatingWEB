@@ -38,7 +38,7 @@ export const List: FC<Props> = ({ title, data, profile, canUsePremium }) => {
               <Text
                 className={cn("text-base font-poppins-regular", {
                   "text-red-700":
-                    ["Name", "Age", "Location", "Gender"].includes(
+                    ["Name", "Age", "Gender"].includes(
                       item.title
                     ) && item.getValue(profile) === "None",
                 })}
@@ -48,7 +48,7 @@ export const List: FC<Props> = ({ title, data, profile, canUsePremium }) => {
               <Text
                 className={cn("text-base font-poppins-light", {
                   "text-red-700":
-                    ["Name", "Age", "Location", "Gender"].includes(
+                    ["Name", "Age", "Gender"].includes(
                       item.title
                     ) && item.getValue(profile) === "None",
                 })}

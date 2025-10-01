@@ -16,7 +16,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Input from "../../../components/Input";
 import { theme } from "../../../../constants/theme";
@@ -260,7 +260,7 @@ export default function ChatScreen() {
 
   const handleSend = async () => {
     if (!text.trim() && !selectedFile) return;
-
+    
     let fileData = null;
 
     if (selectedFile) {
@@ -587,7 +587,7 @@ export default function ChatScreen() {
       if (result.canceled) return;
 
       const file = result.assets[0];
-      setSelectedFile(file); // chỉ lưu file, chưa upload
+      setSelectedFile(file);
     } catch (err) {
       console.error("Failed to pick file:", err);
     }

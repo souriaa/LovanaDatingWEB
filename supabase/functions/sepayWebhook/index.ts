@@ -10,37 +10,63 @@ serve(async (req) => {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
+  function formatUuid(uuid: string) {
+    if (uuid.length === 32) {
+      return uuid.replace(
+        /([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})/,
+        "$1-$2-$3-$4-$5"
+      );
+    }
+    return uuid;
+  }
+
+  function calcDueDate(duration: string): string | null {
+    const now = new Date();
+    switch (duration) {
+      case "1w":
+        now.setDate(now.getDate() + 7);
+        break;
+      case "1m":
+        now.setMonth(now.getMonth() + 1);
+        break;
+      case "1y":
+        now.setFullYear(now.getFullYear() + 1);
+        break;
+      default:
+        return null;
+    }
+    return now.toISOString();
+  }
+
   try {
     const payload = await req.json();
     // console.log("SePay Webhook payload:", payload);
 
     const content = payload.content || "";
-    const typeMatch = content.match(/\b(plan|consumable)([0-9a-fA-F]{32})\b/);
+    const planMatch = content.match(/\bplan(\d+[wmy])([0-9a-fA-F]{32})\b/);
+    const consumMatch = content.match(/\bconsumable([0-9a-fA-F]{32})\b/);
 
-    if (!typeMatch) {
-      console.error("Không tìm thấy paymentId/type trong content");
+    let type: "plan" | "consumable" | null = null;
+    let paymentId = "";
+    let plan_due_date = "";
+
+    if (planMatch) {
+      type = "plan";
+      plan_due_date = planMatch[1];
+      paymentId = planMatch[2];
+    } else if (consumMatch) {
+      type = "consumable";
+      paymentId = consumMatch[1];
+    }
+
+    if (!type || !paymentId) {
+      console.error("Không tìm thấy type/paymentId trong content:", content);
       return new Response("PaymentId/type not found", { status: 400 });
     }
-
-    const type = typeMatch[1];
-    const paymentId = typeMatch[2];
-
-    if (!paymentId) {
-      console.error("Không tìm thấy paymentId trong content");
-      return new Response("PaymentId not found", { status: 400 });
-    }
-
-    function formatUuid(uuid: string) {
-      if (uuid.length === 32) {
-        return uuid.replace(
-          /([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})/,
-          "$1-$2-$3-$4-$5"
-        );
-      }
-      return uuid;
-    }
-
+    
     const formattedPaymentId = formatUuid(paymentId);
+
+    // console.log("type, plan_due_date, paymentId, formattedPaymentId", type, plan_due_date, paymentId, formattedPaymentId);
 
     const updateData = {
       sepay_id: payload.id,
@@ -66,7 +92,7 @@ serve(async (req) => {
 
     if (type === "plan") {
       tableName = "payments";
-      selectFields = "id, user_id, plan_id, plan_due_date";
+      selectFields = "id, user_id, plan_id";
     } else if (type === "consumable") {
       tableName = "consumable_payments";
       selectFields = "id, user_id, consumable_id, consumable_amount";
@@ -76,6 +102,7 @@ serve(async (req) => {
       .from(tableName)
       .update(updateData)
       .eq("id", formattedPaymentId)
+      .eq("status", "pending")
       .select(selectFields)
       .single();
 
@@ -87,14 +114,15 @@ serve(async (req) => {
     // console.log("Updated payment =>", updatedPayment);
 
     if (type === "plan") {
-      const {
-        id: payment_id,
-        user_id,
-        plan_id,
-        plan_due_date,
-      } = updatedPayment;
+      const { id: payment_id, user_id, plan_id } = updatedPayment;
+
       if (!user_id || !plan_id) {
         return new Response("Missing user_id or plan_id", { status: 400 });
+      }
+
+      const dueDate = calcDueDate(plan_due_date);
+      if (!dueDate) {
+        return new Response("Invalid plan_due_date", { status: 400 });
       }
 
       const { data: existingPlan, error: checkError } = await supabase
@@ -107,7 +135,12 @@ serve(async (req) => {
         return new Response("Check profile_plans failed", { status: 500 });
       }
 
-      const planData = { plan_id, plan_due_date, payment_id, user_id };
+      const planData = {
+        plan_id,
+        plan_due_date: dueDate,
+        payment_id,
+        user_id,
+      };
       let profilePlanResult;
 
       if (existingPlan) {

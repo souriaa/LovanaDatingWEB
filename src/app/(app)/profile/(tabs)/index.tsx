@@ -32,7 +32,7 @@ export default function Page() {
         <AnswerList profile={edits} />
       </View>
       <View className="pl-5 gap-10">
-        <List title="My Vitals" data={vitals} profile={edits} />
+        <List title="My Infomation" data={vitals} profile={edits} />
         <List title="Identity" data={identity} profile={edits} />
       </View>
     </ScrollView>

@@ -14,6 +14,7 @@ import { theme } from "~/constants/theme";
 import { getConsumableById } from "~/service/consumableService";
 import { getProfile } from "~/service/userService";
 import { supabase } from "@/lib/supabase";
+import { Loader } from "@/components/loader";
 
 export default function GetPlan() {
   const { consumableId } = useLocalSearchParams<{ consumableId: string }>();
@@ -38,7 +39,7 @@ export default function GetPlan() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>
+        <Loader />
       </SafeAreaView>
     );
   }
@@ -78,31 +79,55 @@ export default function GetPlan() {
 
       const amount = selectedPkg.price;
 
-      const { data, error: insertError } = await supabase
+      const { data: existingPayment, error: selectError } = await supabase
         .from("consumable_payments")
-        .insert([
-          {
-            user_id: userId?.id,
-            consumable_id: consumable.id,
-            consumable_amount: selectedPkg.quantity,
-            status: "pending",
-            currency: selectedPkg.currency,
-          },
-        ])
-        .select()
+        .select("*")
+        .eq("user_id", userId?.id)
+        .eq("consumable_id", consumable.id)
+        .eq("consumable_amount", selectedPkg.quantity)
+        .eq("status", "pending")
+        .eq("currency", selectedPkg.currency)
         .single();
 
-      if (insertError || !data) {
-        console.error("Insert error:", insertError);
-        Alert.alert("Payment Error", "Could not create payment row.");
+      if (selectError && selectError.code !== "PGRST116") {
+        console.error("Select error:", selectError);
+        Alert.alert("Payment Error", "Could not query payment row.");
         return;
+      }
+
+      let paymentRow;
+
+      if (existingPayment) {
+        paymentRow = existingPayment;
+      } else {
+        const { data, error: insertError } = await supabase
+          .from("consumable_payments")
+          .insert([
+            {
+              user_id: userId?.id,
+              consumable_id: consumable.id,
+              consumable_amount: selectedPkg.quantity,
+              status: "pending",
+              currency: selectedPkg.currency,
+            },
+          ])
+          .select()
+          .single();
+
+        if (insertError || !data) {
+          console.error("Insert error:", insertError);
+          Alert.alert("Payment Error", "Could not create payment row.");
+          return;
+        }
+
+        paymentRow = data;
       }
 
       router.back();
       router.push({
         pathname: "/qr/qr-page",
         params: {
-          paymentId: data.id,
+          paymentId: paymentRow.id,
           amount: amount.toString(),
           currency: selectedPkg.currency,
           type: "consumable",

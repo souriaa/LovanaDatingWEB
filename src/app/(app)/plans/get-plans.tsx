@@ -14,6 +14,7 @@ import { theme } from "~/constants/theme";
 import { getPlanById } from "~/service/planService";
 import { getProfile } from "~/service/userService";
 import { supabase } from "@/lib/supabase";
+import { Loader } from "@/components/loader";
 
 export default function GetPlan() {
   const { planId } = useLocalSearchParams<{ planId: string }>();
@@ -38,7 +39,7 @@ export default function GetPlan() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>
+        <Loader />
       </SafeAreaView>
     );
   }
@@ -54,6 +55,7 @@ export default function GetPlan() {
   const handleContinue = async () => {
     try {
       if (!plan) return;
+
       const {
         data: { user },
         error,
@@ -65,48 +67,70 @@ export default function GetPlan() {
 
       const userId = await getProfile();
 
-      // Determine selected price
       let amount = 0;
-      let dueDate = new Date();
+      let plan_due_date = "";
       if (selectedPlan === "week") {
         amount = plan.price_weekly;
-        dueDate.setDate(dueDate.getDate() + 7);
+        plan_due_date = "1w";
       }
       if (selectedPlan === "month") {
         amount = plan.price_monthly;
-        dueDate.setMonth(dueDate.getMonth() + 1);
+        plan_due_date = "1m";
       }
       if (selectedPlan === "year") {
         amount = plan.price_yearly;
-        dueDate.setFullYear(dueDate.getFullYear() + 1);
+        plan_due_date = "1y";
       }
 
-      const { data, error: insertError } = await supabase
+      const { data: existingPayment, error: checkError } = await supabase
         .from("payments")
-        .insert([
-          {
-            user_id: userId?.id,
-            plan_id: plan.id,
-            status: "pending",
-            plan_due_date: dueDate.toISOString(),
-          },
-        ])
-        .select()
-        .single();
+        .select("id")
+        .eq("user_id", userId?.id)
+        .eq("plan_id", plan.id)
+        .eq("status", "pending")
+        .maybeSingle();
 
-      if (insertError || !data) {
-        console.error("Insert error:", insertError);
-        Alert.alert("Payment Error", "Could not create payment row.");
+      if (checkError) {
+        console.error("Check error:", checkError);
+        Alert.alert("Payment Error", "Could not check existing payment.");
         return;
       }
+
+      let paymentId;
+
+      if (existingPayment) {
+        paymentId = existingPayment.id;
+      } else {
+        const { data: newPayment, error: insertError } = await supabase
+          .from("payments")
+          .insert([
+            {
+              user_id: userId?.id,
+              plan_id: plan.id,
+              status: "pending",
+            },
+          ])
+          .select()
+          .single();
+
+        if (insertError || !newPayment) {
+          console.error("Insert error:", insertError);
+          Alert.alert("Payment Error", "Could not create payment row.");
+          return;
+        }
+
+        paymentId = newPayment;
+      }
+
       router.back();
       router.push({
         pathname: "/qr/qr-page",
         params: {
-          paymentId: data.id,
+          paymentId: paymentId.id,
           amount: amount.toString(),
           currency: plan.currency,
           type: "plan",
+          plan_due_date,
         },
       });
     } catch (err) {
