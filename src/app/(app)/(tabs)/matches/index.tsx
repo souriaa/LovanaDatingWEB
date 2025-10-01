@@ -20,12 +20,14 @@ import ReAnimated, {
 import { theme } from "../../../../../constants/theme";
 import { getProfile } from "../../../../../service/userService";
 import {
+  deleteConversationById,
   extendConversationTime,
   fetchConversations,
 } from "../../../../../service/messageService";
 import { CountdownCircle } from "@/components/countdown-circle";
 import { Animated, TouchableWithoutFeedback, Dimensions } from "react-native";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 
 const ConversationRow = React.memo(
   ({
@@ -381,7 +383,12 @@ export default function ConversationsScreen() {
   return (
     <View style={styles.container} className="gap-5 bg-white">
       <CustomHeader />
-      <Text className="text-3xl font-poppins-semibold">Matches</Text>
+      <Text
+        className="text-3xl font-poppins-semibold"
+        style={{ color: theme.colors.primaryDark }}
+      >
+        Matches
+      </Text>
       {!user ? (
         <Loader />
       ) : (
@@ -455,8 +462,52 @@ export default function ConversationsScreen() {
                 elevation: 5,
               }}
             >
-              <Text style={styles.sheetOption}>Delete Conversation</Text>
-              <Text style={styles.sheetOption}>Report</Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!sheetConversation?.id) return;
+                  const conversationId = sheetConversation.id;
+                  try {
+                    await deleteConversationById(conversationId);
+                  } catch (err) {
+                    console.error("Delete failed:", err);
+                  }
+
+                  Animated.timing(slideAnim, {
+                    toValue: height,
+                    duration: 300,
+                    useNativeDriver: false,
+                  }).start(() => {
+                    setShowSheet(false);
+                    setSheetConversation(null);
+                  });
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color="red"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={[styles.sheetOption, { color: "red" }]}>
+                    Delete Conversation
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("Delete conversation pressed");
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="flag-outline"
+                    size={20}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.sheetOption}>Report</Text>
+                </View>
+              </TouchableOpacity>
             </Animated.View>
           </View>
         </TouchableWithoutFeedback>

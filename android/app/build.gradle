@@ -88,11 +88,11 @@ android {
 
     namespace "com.lovanadev"
     defaultConfig {
-        applicationId "com.lovanadev"
+        applicationId 'com.souriaa.lovana'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
     }
     signingConfigs {
         debug {

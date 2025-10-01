@@ -1,11 +1,11 @@
-import { useMyProfile } from '@/api/my-profile';
-import { Card } from '@/components/card';
-import MyPayPlan from '@/components/my-pay-plan';
-import { useTabBar } from '@/context/tabBarContext';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { Link, router, Stack } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMyProfile } from "@/api/my-profile";
+import { Card } from "@/components/card";
+import MyPayPlan from "@/components/my-pay-plan";
+import { useTabBar } from "@/context/tabBarContext";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { Link, router, Stack } from "expo-router";
+import { useRef, useState } from "react";
 import {
   Animated,
   Pressable,
@@ -13,17 +13,16 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import LovanaLogo from '~/assets/images/lovana-logo.svg';
-import { theme } from '~/constants/theme';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "~/constants/theme";
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 export default function Page() {
   const { data: profile } = useMyProfile();
-  const [selectedCard, setSelectedCard] = useState<'pay-plan' | 'safety'>(
-    'pay-plan'
+  const [selectedCard, setSelectedCard] = useState<"pay-plan" | "safety">(
+    "pay-plan"
   );
   const { tabBarOpacity } = useTabBar();
   const scrollOffset = useRef(new Animated.Value(0)).current;
@@ -72,12 +71,17 @@ export default function Page() {
         />
         <View className="px-5 border-b border-neutral-300">
           <View className="flex-row items-center justify-between">
-            <LovanaLogo width={64} />
+            <Text
+              className="text-2xl font-poppins-semibold"
+              style={{ color: theme.colors.primaryDark }}
+            >
+              Lovana
+            </Text>
             <View className="flex-row items-center gap-4">
-              <Link href={'/preferences'} suppressHighlighting>
+              <Link href={"/preferences"} suppressHighlighting>
                 <Ionicons name="options-outline" className="text-2xl" />
               </Link>
-              <Link href={'/settings'} suppressHighlighting>
+              <Link href={"/settings"} suppressHighlighting>
                 <Ionicons name="settings-outline" className="text-2xl" />
               </Link>
             </View>
@@ -85,7 +89,7 @@ export default function Page() {
           <View className="items-center gap-2 my-12">
             <Pressable
               className="h-32 aspect-square rounded-full border-4 p-1"
-              onPress={() => router.push('/profile')}
+              onPress={() => router.push("/profile")}
               style={{ borderColor: theme.colors.primaryDark }}
             >
               <Image
@@ -102,18 +106,18 @@ export default function Page() {
           <Card
             key="pay-plan"
             title="My Pay Plan"
-            selected={selectedCard === 'pay-plan'}
-            onPress={() => setSelectedCard('pay-plan')}
+            selected={selectedCard === "pay-plan"}
+            onPress={() => setSelectedCard("pay-plan")}
           />
           <Card
             key="safety"
             title="Safety & Wellbeing"
-            selected={selectedCard === 'safety'}
-            onPress={() => setSelectedCard('safety')}
+            selected={selectedCard === "safety"}
+            onPress={() => setSelectedCard("safety")}
           />
         </View>
-        {selectedCard === 'pay-plan' && <MyPayPlan />}
-        {selectedCard === 'safety' && (
+        {selectedCard === "pay-plan" && <MyPayPlan />}
+        {selectedCard === "safety" && (
           <View className="items-center mt-10">
             <Text className="text-lg font-semibold">
               Safety & Wellbeing coming soon...
@@ -127,9 +131,9 @@ export default function Page() {
 
 const styles = StyleSheet.create({
   cardsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingVertical: 10,
   },
 });

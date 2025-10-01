@@ -16,7 +16,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Input from "../../../components/Input";
 import { theme } from "../../../../constants/theme";
@@ -260,7 +260,7 @@ export default function ChatScreen() {
 
   const handleSend = async () => {
     if (!text.trim() && !selectedFile) return;
-    
+
     let fileData = null;
 
     if (selectedFile) {
@@ -784,49 +784,86 @@ export default function ChatScreen() {
             >
               {sheetMessage ? (
                 <>
-                  <Text
-                    style={styles.sheetOption}
+                  <TouchableOpacity
                     onPress={() => {
                       handleReply(sheetMessage);
                       closeSheet();
                     }}
                   >
-                    Reply
-                  </Text>
-                  <Text
-                    style={styles.sheetOption}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Ionicons
+                        name="arrow-undo-outline"
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.sheetOption}>Reply</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={() => {
                       closeSheet();
                     }}
                   >
-                    Copy
-                  </Text>
-                  <Text
-                    style={styles.sheetOption}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Ionicons
+                        name="copy-outline"
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.sheetOption}>Copy</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={() => {
                       closeSheet();
                     }}
                   >
-                    Report
-                  </Text>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Ionicons
+                        name="flag-outline"
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.sheetOption}>Report</Text>
+                    </View>
+                  </TouchableOpacity>
                 </>
               ) : (
                 <>
-                  <Text
-                    style={styles.sheetOption}
+                  <TouchableOpacity
                     onPress={() => {
                       closeSheet();
                     }}
                   >
-                    Report{" "}
-                    {otherUser.first_name || otherUser.last_name
-                      ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
-                      : null}
-                  </Text>
-                  <Text
-                    style={styles.sheetOption}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Ionicons
+                        name="flag-outline"
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.sheetOption}>
+                        Report{" "}
+                        {otherUser.first_name || otherUser.last_name
+                          ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
+                          : null}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={() => {
                       closeSheet();
+
                       const userName =
                         otherUser.first_name || otherUser.last_name
                           ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
@@ -857,8 +894,17 @@ export default function ChatScreen() {
                       );
                     }}
                   >
-                    Unmatch
-                  </Text>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Ionicons
+                        name="close-outline"
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.sheetOption}>Unmatch</Text>
+                    </View>
+                  </TouchableOpacity>
                 </>
               )}
             </Animated.View>
@@ -881,7 +927,7 @@ export default function ChatScreen() {
               style={{
                 position: "absolute",
                 top: slideAnim,
-                width: "90%", 
+                width: "90%",
                 height: height,
                 backgroundColor: "white",
                 borderTopLeftRadius: 16,

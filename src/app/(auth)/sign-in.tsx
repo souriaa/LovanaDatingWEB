@@ -2,8 +2,6 @@ import { VideoBackground } from "@/components/video-background";
 import { Link, Stack } from "expo-router";
 import { Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import colors from "tailwindcss/colors";
-import Logo from "~/assets/images/lovana-logo.svg";
 import { theme } from "~/constants/theme";
 
 export default function Page() {

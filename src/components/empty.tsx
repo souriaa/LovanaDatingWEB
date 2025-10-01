@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { FC } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "~/constants/theme";
 
 interface Props {
   title: string;
@@ -25,7 +26,10 @@ export const Empty: FC<Props> = ({
   return (
     <SafeAreaView className="flex-1 p-5 bg-white justify-center gap-8">
       <View className="gap-2">
-        <Text className="text-2xl font-playfair-semibold text-center">
+        <Text
+          className="text-2xl font-playfair-semibold text-center"
+          style={{ color: theme.colors.primaryDark }}
+        >
           {title}
         </Text>
         <Text className="text-base font-poppins-light text-center">
@@ -35,7 +39,8 @@ export const Empty: FC<Props> = ({
       <View className="gap-2 px-5">
         {primaryText && (
           <Pressable
-            className="h-14 bg-black items-center justify-center rounded-full w-full"
+            className="h-14 items-center justify-center rounded-full w-full"
+            style={{ backgroundColor: theme.colors.primaryDark }}
             onPress={onPrimaryPress}
           >
             <Text className="text-white text-base font-poppins-medium">

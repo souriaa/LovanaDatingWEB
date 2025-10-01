@@ -152,7 +152,6 @@ export default function MyPayPlan() {
 
         let orderedPlans = [...data];
 
-        // Put the active plan first
         if (profile?.id) {
           const profilePlans = await getProfilePlansByUser(profile.id);
           if (profilePlans && profilePlans.length > 0) {
@@ -200,7 +199,7 @@ export default function MyPayPlan() {
   }, [profile?.id]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white mt-5">
       <ScrollView>
         {/* Perks row */}
         <View style={styles.perksRow}>
