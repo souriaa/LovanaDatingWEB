@@ -1,4 +1,3 @@
-import { Like } from "@/api/profiles/types";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { FC } from "react";

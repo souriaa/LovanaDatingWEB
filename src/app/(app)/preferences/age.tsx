@@ -1,10 +1,10 @@
-import { useUpdateAgeRange } from "@/api/my-profile";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
 import { Slider } from "@miblanchard/react-native-slider";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, View } from "react-native";
+import { useUpdateAgeRange } from "../../../api/my-profile";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 const Page = () => {
   const { edits } = useEdit();

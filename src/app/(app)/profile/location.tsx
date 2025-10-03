@@ -1,11 +1,11 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { LocationView } from "@/components/location-view";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
-import { LocationData } from "@/types/location";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { LocationView } from "../../../components/location-view";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
+import { LocationData } from "../../../types/location";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();

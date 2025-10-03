@@ -1,6 +1,6 @@
-import { Answer } from "@/types/profile";
 import { FC } from "react";
 import { Text, View } from "react-native";
+import { Answer } from "../types/profile";
 
 interface Props {
   answer: Answer;

@@ -1,4 +1,6 @@
-import { useMyProfile } from "@/api/my-profile";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, Text, View } from "react-native";
+import { useMyProfile } from "../../api/my-profile";
 import {
   useChildren,
   useCovidVaccine,
@@ -10,9 +12,7 @@ import {
   usePronouns,
   useSexualities,
   useZodiacSigns,
-} from "@/api/options";
-import { Redirect } from "expo-router";
-import { ActivityIndicator, Text, View } from "react-native";
+} from "../../api/options";
 
 export default function Page() {
   const { isPending, isError } = useMyProfile();

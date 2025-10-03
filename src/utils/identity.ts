@@ -1,4 +1,4 @@
-import { PrivateProfile } from "@/api/my-profile/types";
+import { PrivateProfile } from "../api/my-profile/types";
 
 export const identity = [
   {

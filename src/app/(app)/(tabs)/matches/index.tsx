@@ -1,15 +1,18 @@
-import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { router, Stack, useFocusEffect } from "expo-router";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Loader } from "@/components/loader";
 import {
   Alert,
+  Animated,
+  Dimensions,
   FlatList,
   RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import ReAnimated, {
@@ -18,16 +21,15 @@ import ReAnimated, {
   LinearTransition,
 } from "react-native-reanimated";
 import { theme } from "../../../../../constants/theme";
-import { getProfile } from "../../../../../service/userService";
 import {
   deleteConversationById,
   extendConversationTime,
   fetchConversations,
 } from "../../../../../service/messageService";
-import { CountdownCircle } from "@/components/countdown-circle";
-import { Animated, TouchableWithoutFeedback, Dimensions } from "react-native";
-import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { getProfile } from "../../../../../service/userService";
+import { CountdownCircle } from "../../../../components/countdown-circle";
+import { Loader } from "../../../../components/loader";
+import { supabase } from "../../../../lib/supabase";
 
 const ConversationRow = React.memo(
   ({

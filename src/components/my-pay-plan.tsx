@@ -1,4 +1,3 @@
-import { useMyProfile } from "@/api/my-profile";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { MotiView } from "moti";
@@ -17,9 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../constants/theme";
 import { getLikes } from "../../service/likeService";
 import { getPlans } from "../../service/planService";
-import { getProfile } from "~/service/userService";
 import { getProfilePlansByUser } from "../../service/profilePlanService";
-import { now } from "moment";
+import { getProfile } from "../../service/userService";
+import { useMyProfile } from "../api/my-profile";
 
 const { width: screenWidth } = Dimensions.get("window");
 

@@ -1,10 +1,10 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
 import { router } from "expo-router";
 import { useState } from "react";
 import { TextInput, View } from "react-native";
 import colors from "tailwindcss/colors";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();

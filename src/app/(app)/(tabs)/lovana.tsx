@@ -1,7 +1,3 @@
-import { useMyProfile } from "@/api/my-profile";
-import { Card } from "@/components/card";
-import MyPayPlan from "@/components/my-pay-plan";
-import { useTabBar } from "@/context/tabBarContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link, router, Stack } from "expo-router";
@@ -15,7 +11,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { theme } from "~/constants/theme";
+import { theme } from "../../../../constants/theme";
+import { useMyProfile } from "../../../api/my-profile";
+import { Card } from "../../../components/card";
+import MyPayPlan from "../../../components/my-pay-plan";
+import { useTabBar } from "../../../context/tabBarContext";
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 

@@ -1,9 +1,9 @@
-import { Answer, PrivateProfile } from "@/api/my-profile/types";
-import { useEdit } from "@/store/edit";
 import { router } from "expo-router";
 import { FC, useEffect, useState } from "react";
 import { Dimensions, Text, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { Answer, PrivateProfile } from "../api/my-profile/types";
+import { useEdit } from "../store/edit";
 
 type Item = {
   key: string;

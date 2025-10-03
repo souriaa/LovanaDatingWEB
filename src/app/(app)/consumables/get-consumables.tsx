@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,11 +9,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { theme } from "~/constants/theme";
-import { getConsumableById } from "~/service/consumableService";
-import { getProfile } from "~/service/userService";
-import { supabase } from "@/lib/supabase";
-import { Loader } from "@/components/loader";
+import { theme } from "../../../../constants/theme";
+import { getConsumableById } from "../../../../service/consumableService";
+import { getProfile } from "../../../../service/userService";
+import { Loader } from "../../../components/loader";
+import { supabase } from "../../../lib/supabase";
 
 export default function GetPlan() {
   const { consumableId } = useLocalSearchParams<{ consumableId: string }>();

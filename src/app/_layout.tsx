@@ -1,6 +1,3 @@
-import { fonts } from "@/constants/fonts";
-import { platformServices } from "@/lib/sendbird";
-import { AuthProvider } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SendbirdUIKitContainer } from "@sendbird/uikit-react-native";
@@ -13,9 +10,12 @@ import { VideoView } from "expo-video";
 import LottieView from "lottie-react-native";
 import { cssInterop } from "nativewind";
 import { useEffect } from "react";
-import MapView from "react-native-maps";
 import { GestureHandlerRootView } from "react-native-gesture-handler"; // 👈 thêm vào
+import MapView from "react-native-maps";
 import "../../global.css";
+import { fonts } from "../constants/fonts";
+import { platformServices } from "../lib/sendbird";
+import { AuthProvider } from "../store/auth";
 
 cssInterop(VideoView, { className: { target: "style" } });
 cssInterop(Ionicons, { className: { target: "style" } });

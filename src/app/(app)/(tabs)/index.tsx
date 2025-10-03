@@ -1,25 +1,25 @@
-import {
-  useLikeProfile,
-  useProfiles,
-  useReviewProfiles,
-  useSkipProfile,
-  useSuperlikeProfile,
-} from "@/api/profiles";
-import { Empty } from "@/components/empty";
-import { Fab } from "@/components/fab";
-import { Loader } from "@/components/loader";
-import { ProfileView } from "@/components/profile-view";
-import { useRefreshOnFocus } from "@/hooks/refetch";
-import { supabase } from "@/lib/supabase";
-import { transformPublicProfile } from "@/utils/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
-import { getProfilePlansByUser } from "~/service/profilePlanService";
-import { getProfile } from "~/service/userService";
+import { getProfilePlansByUser } from "../../../../service/profilePlanService";
+import { getProfile } from "../../../../service/userService";
+import {
+  useLikeProfile,
+  useProfiles,
+  useReviewProfiles,
+  useSkipProfile,
+  useSuperlikeProfile,
+} from "../../../api/profiles";
+import { Empty } from "../../../components/empty";
+import { Fab } from "../../../components/fab";
+import { Loader } from "../../../components/loader";
+import { ProfileView } from "../../../components/profile-view";
+import { useRefreshOnFocus } from "../../../hooks/refetch";
+import { supabase } from "../../../lib/supabase";
+import { transformPublicProfile } from "../../../utils/profile";
 
 export default function Page() {
   const { data, isFetching, error, refetch } = useProfiles();
@@ -237,7 +237,7 @@ export default function Page() {
         secondaryText="Review skipped profiles"
         onPrimaryPress={() => router.push("/preferences")}
         onSecondaryPress={handleReview}
-        secondaryDisabled={!canUsePremium} 
+        secondaryDisabled={!canUsePremium}
       />
     );
   }

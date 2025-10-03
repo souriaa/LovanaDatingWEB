@@ -1,7 +1,7 @@
-import { Photo } from "@/types/profile";
 import { Image } from "expo-image";
 import { FC } from "react";
 import { View } from "react-native";
+import { Photo } from "../types/profile";
 
 interface Props {
   photo: Photo;

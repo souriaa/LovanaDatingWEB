@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
 import { Like, PublicProfile } from "./types";
 
 export const useProfiles = (page_size: number = 10) => {
@@ -64,11 +64,7 @@ export const useLikeProfile = () => {
 
 export const useSuperlikeProfile = () => {
   return useMutation({
-    mutationFn: async ({
-      profile,
-    }: {
-      profile: string;
-    }) => {
+    mutationFn: async ({ profile }: { profile: string }) => {
       const { data, error } = await supabase.rpc("super_like_profile", {
         profile,
       });

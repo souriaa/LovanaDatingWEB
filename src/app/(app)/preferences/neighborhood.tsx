@@ -1,11 +1,11 @@
-import { useUpdateLocation } from "@/api/my-profile";
-import { LocationView } from "@/components/location-view";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
-import { LocationData } from "@/types/location";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, View } from "react-native";
+import { useUpdateLocation } from "../../../api/my-profile";
+import { LocationView } from "../../../components/location-view";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
+import { LocationData } from "../../../types/location";
 
 export default function Page() {
   const { edits } = useEdit();

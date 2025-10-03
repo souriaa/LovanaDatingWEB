@@ -1,16 +1,18 @@
-import { List } from "@/components/list";
-import { useEdit } from "@/store/edit";
-import { memberPreferences, incognitoPreference } from "@/utils/preferences";
-import { Text, View, Switch, ActivityIndicator } from "react-native";
-import { useEffect, useState } from "react";
-import { theme } from "~/constants/theme";
-import { getProfilePlansByUser } from "~/service/profilePlanService";
-import { getProfile } from "~/service/userService";
-import { StackHeaderV2 } from "@/components/stack-header-v2";
-import { Pressable } from "react-native";
-import { Link } from "expo-router";
-import { cn } from "@/utils/cn";
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, Switch, Text, View } from "react-native";
+import { theme } from "../../../../constants/theme";
+import { getProfilePlansByUser } from "../../../../service/profilePlanService";
+import { getProfile } from "../../../../service/userService";
+import { List } from "../../../components/list";
+import { StackHeaderV2 } from "../../../components/stack-header-v2";
+import { useEdit } from "../../../store/edit";
+import { cn } from "../../../utils/cn";
+import {
+  incognitoPreference,
+  memberPreferences,
+} from "../../../utils/preferences";
 
 export default function Page() {
   const { edits } = useEdit();
@@ -197,7 +199,12 @@ export default function Page() {
         <Text className="text-sm text-gray-500 italic">
           Available on{" "}
           <Link href="/lovana" asChild>
-            <Text style={{color: theme.colors.primary}} className="text-500 underline">premium plans</Text>
+            <Text
+              style={{ color: theme.colors.primary }}
+              className="text-500 underline"
+            >
+              premium plans
+            </Text>
           </Link>{" "}
           and above only.
         </Text>

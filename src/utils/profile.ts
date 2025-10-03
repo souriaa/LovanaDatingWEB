@@ -1,6 +1,6 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { PublicProfile } from "@/api/profiles/types";
-import { Profile } from "@/types/profile";
+import { PrivateProfile } from "../api/my-profile/types";
+import { PublicProfile } from "../api/profiles/types";
+import { Profile } from "../types/profile";
 import { age } from "./age";
 
 const traitsMapping = [

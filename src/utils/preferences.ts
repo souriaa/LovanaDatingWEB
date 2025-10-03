@@ -1,5 +1,9 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { getProfile, getProfileById, toggleIncognito } from "~/service/userService";
+import {
+  getProfile,
+  getProfileById,
+  toggleIncognito,
+} from "../../service/userService";
+import { PrivateProfile } from "../api/my-profile/types";
 
 export const memberPreferences = [
   {

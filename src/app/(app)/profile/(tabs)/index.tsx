@@ -1,10 +1,10 @@
-import { AnswerList } from "@/components/answer-list";
-import { List } from "@/components/list";
-import { PhotoGrid } from "@/components/photo-grid";
-import { useEdit } from "@/store/edit";
-import { identity } from "@/utils/identity";
-import { vitals } from "@/utils/vitals";
 import { ScrollView, Text, View } from "react-native";
+import { AnswerList } from "../../../../components/answer-list";
+import { List } from "../../../../components/list";
+import { PhotoGrid } from "../../../../components/photo-grid";
+import { useEdit } from "../../../../store/edit";
+import { identity } from "../../../../utils/identity";
+import { vitals } from "../../../../utils/vitals";
 
 export default function Page() {
   const { edits, gridActive } = useEdit();

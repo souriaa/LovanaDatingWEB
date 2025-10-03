@@ -1,8 +1,8 @@
-import { Profile } from "@/types/profile";
-import { cn } from "@/utils/cn";
 import { Ionicons } from "@expo/vector-icons";
 import { FC } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { Profile } from "../types/profile";
+import { cn } from "../utils/cn";
 
 interface Props {
   profile: Profile;

@@ -1,4 +1,3 @@
-import { useUnmatch } from "@/api/profiles";
 import { Ionicons } from "@expo/vector-icons";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useGroupChannel } from "@sendbird/uikit-chat-hooks";
@@ -10,6 +9,7 @@ import {
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useContext } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
+import { useUnmatch } from "../../../api/profiles";
 
 const CustomHeader = () => {
   const { headerTitle } = useContext(GroupChannelContexts.Fragment);

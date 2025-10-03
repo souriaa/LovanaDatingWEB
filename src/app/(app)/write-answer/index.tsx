@@ -1,13 +1,13 @@
-import { Answer } from "@/api/my-profile/types";
-import { usePrompts } from "@/api/options";
-import { Prompt } from "@/api/options/types";
-import { StackHeaderV3 } from "@/components/stack-header-v3";
-import { useEdit } from "@/store/edit";
 import * as Crypto from "expo-crypto";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import colors from "tailwindcss/colors";
+import { Answer } from "../../../api/my-profile/types";
+import { usePrompts } from "../../../api/options";
+import { Prompt } from "../../../api/options/types";
+import { StackHeaderV3 } from "../../../components/stack-header-v3";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { data: prompts } = usePrompts();

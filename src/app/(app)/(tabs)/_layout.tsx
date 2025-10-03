@@ -1,14 +1,14 @@
-import { useMyProfile } from '@/api/my-profile';
-import { TabBarProvider, useTabBar } from '@/context/tabBarContext';
-import { cn } from '@/utils/cn';
-import { Ionicons } from '@expo/vector-icons';
-import { useConnection } from '@sendbird/uikit-react-native';
-import { BlurView } from 'expo-blur';
-import { Image } from 'expo-image';
-import { Tabs } from 'expo-router';
-import { useEffect } from 'react';
-import { View } from 'react-native';
-import colors from 'tailwindcss/colors';
+import { Ionicons } from "@expo/vector-icons";
+import { useConnection } from "@sendbird/uikit-react-native";
+import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
+import { Tabs } from "expo-router";
+import { useEffect } from "react";
+import { View } from "react-native";
+import colors from "tailwindcss/colors";
+import { useMyProfile } from "../../../api/my-profile";
+import { TabBarProvider, useTabBar } from "../../../context/tabBarContext";
+import { cn } from "../../../utils/cn";
 
 const TabsComponent = () => {
   const { tabBarOpacity } = useTabBar();
@@ -17,15 +17,15 @@ const TabsComponent = () => {
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          position: 'absolute',
+          position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           borderTopWidth: 0,
-          backgroundColor: '#000000',
-          overflow: 'hidden',
+          backgroundColor: "#000000",
+          overflow: "hidden",
           opacity: tabBarOpacity,
         },
         tabBarBackground: () => (
@@ -34,7 +34,7 @@ const TabsComponent = () => {
             intensity={80}
             style={{
               flex: 1,
-              height: '100%',
+              height: "100%",
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
             }}
@@ -44,8 +44,8 @@ const TabsComponent = () => {
         tabBarInactiveTintColor: colors.neutral[500],
         tabBarShowLabel: false,
         tabBarIconStyle: {
-          height: '100%',
-          justifyContent: 'center',
+          height: "100%",
+          justifyContent: "center",
         },
       }}
     >
@@ -55,7 +55,7 @@ const TabsComponent = () => {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" color={color} size={size + 5} />
           ),
-          headerTitle: '',
+          headerTitle: "",
           headerShadowVisible: false,
         }}
       />
@@ -89,7 +89,7 @@ const TabsComponent = () => {
                   height: size + 5,
                 }}
                 className={cn(
-                  focused && 'border border-white rounded-full p-0.5'
+                  focused && "border border-white rounded-full p-0.5"
                 )}
               >
                 <Image
