@@ -564,3 +564,48 @@ export async function extendConversationTime(userId, conversationId) {
     throw err;
   }
 }
+
+
+export const fetchOlderMessages = async (conversationId, oldestMessageId, limit = 20) => {
+  try {
+    const { data: oldestMessage, error: oldestError } = await supabase
+      .from("messages")
+      .select("created_at")
+      .eq("id", oldestMessageId)
+      .single();
+
+    if (oldestError) throw oldestError;
+    if (!oldestMessage) return [];
+
+    const { data: olderMessages, error } = await supabase
+      .from("messages")
+      .select("*, sender:profiles(id, first_name, last_name, phone, user_id)")
+      .eq("conversation_id", conversationId)
+      .lt("created_at", oldestMessage.created_at)
+      .order("created_at", { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+
+    const replyIds = olderMessages.map((m) => m.reply_to_id).filter(Boolean);
+    let repliesMap = {};
+    if (replyIds.length > 0) {
+      const { data: replyData, error: replyError } = await supabase
+        .from("messages")
+        .select("id, body, created_at, sender:profiles(id, first_name, last_name, phone, user_id)")
+        .in("id", replyIds);
+
+      if (replyError) throw replyError;
+
+      repliesMap = Object.fromEntries(replyData.map((r) => [r.id, r]));
+    }
+
+    return olderMessages.map((m) => ({
+      ...m,
+      reply_to: m.reply_to_id ? repliesMap[m.reply_to_id] || null : null,
+    }));
+  } catch (err) {
+    console.error("Error fetching older messages:", err.message || err);
+    return [];
+  }
+};
