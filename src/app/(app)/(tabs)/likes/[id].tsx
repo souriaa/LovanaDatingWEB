@@ -1,13 +1,13 @@
-import { useLikes, useMatch, useRemoveLike } from "@/api/profiles";
-import { Fab } from "@/components/fab";
-import { ProfileView } from "@/components/profile-view";
-import { transformPublicProfile } from "@/utils/profile";
 import { Image } from "expo-image";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { getInteractionByActorAndTarget } from "~/service/interactionService";
-import { createConversation } from "~/service/messageService";
-import { getProfile } from "~/service/userService";
+import { getInteractionByActorAndTarget } from "../../../../../service/interactionService";
+import { createConversation } from "../../../../../service/messageService";
+import { getProfile } from "../../../../../service/userService";
+import { useLikes, useMatch, useRemoveLike } from "../../../../api/profiles";
+import { Fab } from "../../../../components/fab";
+import { ProfileView } from "../../../../components/profile-view";
+import { transformPublicProfile } from "../../../../utils/profile";
 
 const Page = () => {
   const { id } = useLocalSearchParams();

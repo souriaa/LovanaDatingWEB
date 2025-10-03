@@ -1,11 +1,11 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { useGenders } from "@/api/options";
-import { RadioList } from "@/components/radio-list";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { useGenders } from "../../../api/options";
+import { RadioList } from "../../../components/radio-list";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();

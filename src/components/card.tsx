@@ -1,4 +1,4 @@
-import React, { FC, forwardRef } from "react";
+import { FC, forwardRef } from "react";
 import {
   Pressable,
   PressableProps,
@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { theme } from "~/constants/theme";
+import { theme } from "../../constants/theme";
 
 interface Props extends PressableProps {
   title: string;

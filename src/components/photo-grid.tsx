@@ -1,11 +1,11 @@
-import { Photo, PrivateProfile } from "@/api/my-profile/types";
-import { useEdit } from "@/store/edit";
 import * as Crypto from "expo-crypto";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { FC, useEffect, useState } from "react";
 import { Dimensions, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { Photo, PrivateProfile } from "../api/my-profile/types";
+import { useEdit } from "../store/edit";
 
 type Item = {
   key: string;

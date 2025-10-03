@@ -2,7 +2,7 @@ import { Link } from "expo-router";
 import { FC } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { theme } from "~/constants/theme";
+import { theme } from "../../constants/theme";
 
 interface Props {
   title: string;

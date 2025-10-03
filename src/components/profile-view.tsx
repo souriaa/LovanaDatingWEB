@@ -1,6 +1,6 @@
-import { Profile } from "@/types/profile";
 import { FC } from "react";
 import { ScrollView, Text } from "react-native";
+import { Profile } from "../types/profile";
 import { ProfileAnswer } from "./profile-answer";
 import { ProfileItem } from "./profile-item";
 import { ProfilePhoto } from "./profile-photo";

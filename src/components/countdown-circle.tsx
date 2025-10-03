@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { View, Image, TouchableWithoutFeedback } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, TouchableWithoutFeedback, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import { theme } from "~/constants/theme";
+import { theme } from "../../constants/theme";
 import { setConversationStatus } from "../../service/messageService"; // import hàm update
 
 export const CountdownCircle = ({
@@ -13,7 +13,7 @@ export const CountdownCircle = ({
   size = 48,
   strokeWidth = 4,
   conversationStatus,
-  onPressAvatar
+  onPressAvatar,
 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;

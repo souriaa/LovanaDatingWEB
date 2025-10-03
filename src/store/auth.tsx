@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { useConnection } from "@sendbird/uikit-react-native";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -8,6 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { supabase } from "../lib/supabase";
 
 type AuthContextType = {
   session: Session | null;

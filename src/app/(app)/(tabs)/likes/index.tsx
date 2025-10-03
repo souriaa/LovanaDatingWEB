@@ -1,15 +1,15 @@
-import { useLikes } from "@/api/profiles";
-import { Empty } from "@/components/empty";
-import { LikeCard } from "@/components/like-card";
-import { Loader } from "@/components/loader";
-import { useRefreshOnFocus } from "@/hooks/refetch";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { FlatList, Pressable, Text, View } from "react-native";
-import { getProfile } from "../../../../../service/userService";
-import { getInteractionsByTargetId } from "../../../../../service/interactionService";
 import { useEffect, useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { FlatList, Pressable, Text, View } from "react-native";
+import { getInteractionsByTargetId } from "../../../../../service/interactionService";
+import { getProfile } from "../../../../../service/userService";
+import { useLikes } from "../../../../api/profiles";
+import { Empty } from "../../../../components/empty";
+import { LikeCard } from "../../../../components/like-card";
+import { Loader } from "../../../../components/loader";
+import { useRefreshOnFocus } from "../../../../hooks/refetch";
 
 export default function Page() {
   const { data, isFetching, isError, refetch } = useLikes();
@@ -52,11 +52,12 @@ export default function Page() {
                 <View className="p-4 gap-5">
                   <Text className="text-base font-poppins-light">
                     {isSuperLike ? (
-                      <View
-                        style={{ flexDirection: "row" }}
-                      >
+                      <View style={{ flexDirection: "row" }}>
                         <Ionicons name="star-outline" size={20} color="gold" />
-                        <Text className="font-poppins-semibold" style={{ marginLeft: 4, fontSize: 16 }}>
+                        <Text
+                          className="font-poppins-semibold"
+                          style={{ marginLeft: 4, fontSize: 16 }}
+                        >
                           Super Liked You
                         </Text>
                       </View>

@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import { useMutation } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
 
 export const useSignInWithOtp = () => {
   return useMutation({

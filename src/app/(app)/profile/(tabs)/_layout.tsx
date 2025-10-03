@@ -1,12 +1,12 @@
-import { useMyProfile, useUpdateProfile } from "@/api/my-profile";
-import { StackHeaderV3 } from "@/components/stack-header-v3";
-import { MaterialTopTabs } from "@/layouts/material-top-tabs";
-import { useEdit } from "@/store/edit";
 import { router, Stack } from "expo-router";
 import { isEqual } from "lodash";
 import { Alert } from "react-native";
 import colors from "tailwindcss/colors";
-import { theme } from "~/constants/theme";
+import { theme } from "../../../../../constants/theme";
+import { useMyProfile, useUpdateProfile } from "../../../../api/my-profile";
+import { StackHeaderV3 } from "../../../../components/stack-header-v3";
+import { MaterialTopTabs } from "../../../../layouts/material-top-tabs";
+import { useEdit } from "../../../../store/edit";
 
 export default function Layout() {
   const { data: profile } = useMyProfile();

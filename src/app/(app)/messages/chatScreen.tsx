@@ -1,13 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import { Image } from "expo-image";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -16,34 +14,31 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import Input from "../../../components/Input";
 import { theme } from "../../../../constants/theme";
-import { supabase } from "../../../lib/supabase";
-import {
-  fetchConversationSeenStatus,
-  fetchMessages,
-  getOtherUserInConversation,
-  markConversationAsSeen,
-  markConversationAsUnseen,
-  sendMessage,
-  getConversationCreatorAndMessageFirst,
-  extendConversationTime,
-} from "../../../../service/messageService";
 import {
   getSupabaseFileUrl,
   uploadFile,
 } from "../../../../service/imageService";
 import { getInteractionByActorAndTarget } from "../../../../service/interactionService";
-import Header from "@/components/Header";
-import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
-import { SwipeableMessage } from "@/components/swipeable-message";
-import * as DocumentPicker from "expo-document-picker";
-import { Animated, TouchableWithoutFeedback } from "react-native";
-import { useUnmatch } from "@/api/profiles";
-import { Loader } from "@/components/loader";
+import {
+  extendConversationTime,
+  fetchConversationSeenStatus,
+  fetchMessages,
+  getConversationCreatorAndMessageFirst,
+  getOtherUserInConversation,
+  markConversationAsSeen,
+  markConversationAsUnseen,
+  sendMessage,
+} from "../../../../service/messageService";
+import { useUnmatch } from "../../../api/profiles";
+import Header from "../../../components/Header";
+import Input from "../../../components/Input";
+import { Loader } from "../../../components/loader";
+import { SwipeableMessage } from "../../../components/swipeable-message";
+import { supabase } from "../../../lib/supabase";
 
 export default function ChatScreen() {
   const { conversationId, userId } = useLocalSearchParams();

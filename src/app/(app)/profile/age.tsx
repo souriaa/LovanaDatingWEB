@@ -1,7 +1,3 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
-import { age } from "@/utils/age";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -9,6 +5,10 @@ import { subYears } from "date-fns";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Platform, Text, View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
+import { age } from "../../../utils/age";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();

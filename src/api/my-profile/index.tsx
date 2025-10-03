@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Crypto from "expo-crypto";
+import { supabase } from "../../lib/supabase";
 import { PrivateProfile } from "./types";
 
 export const useMyProfile = () => {

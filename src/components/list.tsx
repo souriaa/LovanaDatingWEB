@@ -1,9 +1,9 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { cn } from "@/utils/cn";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, Link } from "expo-router";
 import { FC } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
+import { PrivateProfile } from "../api/my-profile/types";
+import { cn } from "../utils/cn";
 
 interface Props {
   data: {
@@ -19,7 +19,7 @@ interface Props {
 export const List: FC<Props> = ({ title, data, profile, canUsePremium }) => {
   return (
     <FlatList
-      style={{flexGrow: 0}}
+      style={{ flexGrow: 0 }}
       scrollEnabled={false}
       data={data}
       keyExtractor={(item) => item.title}
@@ -38,9 +38,8 @@ export const List: FC<Props> = ({ title, data, profile, canUsePremium }) => {
               <Text
                 className={cn("text-base font-poppins-regular", {
                   "text-red-700":
-                    ["Name", "Age", "Gender"].includes(
-                      item.title
-                    ) && item.getValue(profile) === "None",
+                    ["Name", "Age", "Gender"].includes(item.title) &&
+                    item.getValue(profile) === "None",
                 })}
               >
                 {item.title}
@@ -48,9 +47,8 @@ export const List: FC<Props> = ({ title, data, profile, canUsePremium }) => {
               <Text
                 className={cn("text-base font-poppins-light", {
                   "text-red-700":
-                    ["Name", "Age", "Gender"].includes(
-                      item.title
-                    ) && item.getValue(profile) === "None",
+                    ["Name", "Age", "Gender"].includes(item.title) &&
+                    item.getValue(profile) === "None",
                 })}
               >
                 {item.getValue(profile!)}

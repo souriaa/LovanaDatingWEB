@@ -1,6 +1,3 @@
-import { useVerifyOtp } from "@/api/auth";
-import { Fab } from "@/components/fab";
-import { StackHeader } from "@/components/stack-header";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -12,6 +9,9 @@ import {
   View,
 } from "react-native";
 import colors from "tailwindcss/colors";
+import { useVerifyOtp } from "../../api/auth";
+import { Fab } from "../../components/fab";
+import { StackHeader } from "../../components/stack-header";
 
 export default function Page() {
   const [otp, setOtp] = useState("");

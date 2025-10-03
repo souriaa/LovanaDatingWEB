@@ -1,5 +1,3 @@
-import { useMyProfile } from "@/api/my-profile";
-import { PrivateProfile } from "@/api/my-profile/types";
 import {
   PropsWithChildren,
   createContext,
@@ -7,6 +5,8 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useMyProfile } from "../api/my-profile";
+import { PrivateProfile } from "../api/my-profile/types";
 
 type EditContextType = {
   edits: PrivateProfile | null;

@@ -1,8 +1,8 @@
-import { Option } from "@/api/my-profile/types";
 import Checkbox from "expo-checkbox";
 import { FC, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import colors from "tailwindcss/colors";
+import { Option } from "../api/my-profile/types";
 
 interface Props {
   options: Option[];

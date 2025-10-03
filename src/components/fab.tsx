@@ -1,7 +1,7 @@
-import { cn } from "@/utils/cn";
 import { Ionicons } from "@expo/vector-icons";
-import React, { FC } from "react";
+import { FC } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { cn } from "../utils/cn";
 
 interface Props {
   disabled?: boolean;

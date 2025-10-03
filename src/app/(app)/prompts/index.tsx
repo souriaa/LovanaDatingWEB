@@ -1,8 +1,8 @@
-import { usePrompts } from "@/api/options";
-import { Prompt } from "@/api/options/types";
-import { StackHeaderV2 } from "@/components/stack-header-v2";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { usePrompts } from "../../../api/options";
+import { Prompt } from "../../../api/options/types";
+import { StackHeaderV2 } from "../../../components/stack-header-v2";
 
 export default function Page() {
   const { data: prompts } = usePrompts();

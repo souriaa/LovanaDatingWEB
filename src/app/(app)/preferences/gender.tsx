@@ -1,11 +1,11 @@
-import { useUpdateGenderPreferences } from "@/api/my-profile";
-import { useGenders } from "@/api/options";
-import { CheckboxList } from "@/components/checkbox-list";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
+import { useUpdateGenderPreferences } from "../../../api/my-profile";
+import { useGenders } from "../../../api/options";
+import { CheckboxList } from "../../../components/checkbox-list";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { edits } = useEdit();

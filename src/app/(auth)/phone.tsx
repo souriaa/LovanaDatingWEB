@@ -1,18 +1,17 @@
-import { useSignInWithOtp } from "@/api/auth";
-import { Fab } from "@/components/fab";
-import { StackHeader } from "@/components/stack-header";
 import { router, useFocusEffect } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StatusBar,
   Text,
   TextInput,
   View,
 } from "react-native";
 import colors from "tailwindcss/colors";
+import { useSignInWithOtp } from "../../api/auth";
+import { Fab } from "../../components/fab";
+import { StackHeader } from "../../components/stack-header";
 
 export default function Page() {
   const [method, setMethod] = useState<"phone" | "email">("email");

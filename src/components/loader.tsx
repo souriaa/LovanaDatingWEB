@@ -11,7 +11,7 @@ export const Loader: FC<Props> = () => {
         autoPlay
         // @ts-ignore
         className="w-full h-full bg-white"
-        source={require("~/assets/images/loading.json")}
+        source={require("../../assets/images/loading.json")}
       />
     </View>
   );

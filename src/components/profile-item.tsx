@@ -1,6 +1,6 @@
-import { Answer, Photo } from "@/types/profile";
 import { FC, ReactNode } from "react";
 import { View } from "react-native";
+import { Answer, Photo } from "../types/profile";
 import { Fab } from "./fab";
 
 interface Props {
