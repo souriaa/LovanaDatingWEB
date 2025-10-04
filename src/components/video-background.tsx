@@ -1,6 +1,6 @@
+import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
 import { FC, useEffect } from "react";
 import { View } from "react-native";
-import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
 
 interface Props {
   source: VideoSource;
@@ -9,7 +9,7 @@ interface Props {
 
 export const VideoBackground: FC<Props> = ({ source, children }) => {
   const player = useVideoPlayer(source, (player) => {
-    player.loop = true;  
+    player.loop = true;
   });
 
   useEffect(() => {
@@ -22,16 +22,15 @@ export const VideoBackground: FC<Props> = ({ source, children }) => {
         className="absolute top-0 right-0 bottom-0 left-0"
         player={player}
         contentFit="cover"
+        nativeControls={false}
       />
 
       <View
         className="absolute top-0 right-0 bottom-0 left-0"
-        style={{ backgroundColor: 'rgba(128,128,128,0.4)' }}
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
       />
 
-      <View className="absolute top-0 right-0 bottom-0 left-0">
-        {children}
-      </View>
+      <View className="absolute top-0 right-0 bottom-0 left-0">{children}</View>
     </View>
   );
 };

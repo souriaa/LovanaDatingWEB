@@ -467,7 +467,7 @@ export default function ChatScreen() {
       );
       if (!olderMessages || olderMessages.length === 0) setHasMore(false);
 
-      setMessages((prev) => [...olderMessages, ...prev]); // prepend older messages
+      setMessages((prev) => [...olderMessages, ...prev]);
     } catch (err) {
       console.error("Failed to load older messages:", err);
     }

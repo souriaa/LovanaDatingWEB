@@ -296,9 +296,15 @@ export default function MyPayPlan() {
                       style={[
                         styles.featureText,
                         {
-                          color: hasFeature
-                            ? theme.colors.primary
-                            : theme.colors.textLighterGray,
+                          color: !hasFeature
+                            ? theme.colors.textLighterGray
+                            : selectedPlan.name === "Plus"
+                              ? theme.colors.primaryLight
+                              : selectedPlan.name === "Premium"
+                                ? theme.colors.primary
+                                : selectedPlan.name === "Lovana"
+                                  ? theme.colors.primaryDark
+                                  : theme.colors.primary,
                         },
                       ]}
                     >
