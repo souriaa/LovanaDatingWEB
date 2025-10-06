@@ -49,3 +49,27 @@ export const getProfilePlanById = async (id) => {
     throw err;
   }
 };
+
+
+export const getActivePlanByUserId = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from("profile_plans")
+      .select(`
+        *,
+        plans (*)
+      `)
+      .eq("user_id", userId)
+      .gt("plan_due_date", new Date().toISOString())
+      .order("plan_due_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return data;
+  } catch (err) {
+    console.error("getActivePlanByUserId error:", err.message);
+    throw err;
+  }
+};

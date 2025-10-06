@@ -284,11 +284,10 @@ export default function ChatScreen() {
         sender_id: userId,
         body: text.trim(),
         files: fileData || [],
-        reply_to_id: replyMessage?.id || null, // use local variable
+        reply_to_id: replyMessage?.id || null,
         creator_id: conversationInfo?.created_by,
       });
 
-      // Clear input and reply state AFTER storing replyMessage
       setText("");
       setSelectedFile(null);
       setReplyingTo(null);
@@ -296,7 +295,7 @@ export default function ChatScreen() {
 
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMessage.id)) return prev;
-        return [...prev, { ...newMessage, reply_to: replyMessage }]; // <-- use local variable
+        return [...prev, { ...newMessage, reply_to: replyMessage }];
       });
 
       setIsSending(false);
@@ -318,7 +317,52 @@ export default function ChatScreen() {
     );
   };
 
-  // --- Group messages ---
+  async function getAIResponse(messages, userId) {
+    const sortedMessages = messages.sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const latest10Messages = sortedMessages.slice(-10);
+
+    const formattedMessages = latest10Messages.map((msg) => ({
+      sender_id: msg.sender_id === userId ? "Me" : "Them",
+      body: msg.body,
+    }));
+
+    const conversationText = formattedMessages
+      .map((m) => `${m.sender_id}: ${m.body}`)
+      .join("\n");
+
+    const prompt = `
+Bạn đang giúp tạo một câu trả lời ngắn, tự nhiên cho một người (sender_id: Me) trong một cuộc trò chuyện giữa hai người (Me và Them). Giữ câu trả lời thân thiện, tự nhiên, gần gũi. Chỉ viết câu tiếp theo mà sender_id Me sẽ nói.Cuộc trò chuyện: ${conversationText}
+Câu trả lời cho sender_id Me:
+  `.trim();
+
+    try {
+      const response = await fetch(
+        "https://sewuxuattigekhjtdasv.functions.supabase.co/AIReplySuggestion",
+        {
+          method: "POST",
+          body: JSON.stringify(prompt),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data?.body) {
+        setText(data.body);
+      }
+    } catch (err) {
+      console.error("Failed to fetch AI reply:", err);
+    }
+
+    return { messages: formattedMessages };
+  }
+
   const GROUP_WINDOW_MS = 2 * 60 * 1000;
   const TIME_SHOW_MS = 10 * 60 * 1000;
 
@@ -542,6 +586,16 @@ export default function ChatScreen() {
               onTextChange={handleTextChange}
               onSend={handleSend}
               isSending={isSending}
+              onAIResponse={async (done) => {
+                try {
+                  const success = await getAIResponse(messages, userId);
+                  done(success);
+                } catch (err) {
+                  done(false);
+                }
+              }}
+              value={text}
+              currentUser={userId}
             />
           ) : (
             <View style={styles.waitingContainer}>
