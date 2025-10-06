@@ -1,6 +1,7 @@
 // File: components/chat/MessageItem.tsx
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { theme } from "../../constants/theme";
 import { getSupabaseFileUrl } from "../../service/imageService";
 import { SwipeableMessage } from "./swipeable-message";
@@ -14,6 +15,7 @@ interface MessageItemProps {
   onLongPress: (message: any) => void;
   statusText: string;
   onReply: (message: any) => void;
+  showTime: boolean;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -25,6 +27,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onLongPress,
   statusText,
   onReply,
+  showTime,
 }) => {
   let bubbleStyle = item.reply_to
     ? styles.singleBubble
@@ -42,7 +45,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             ? styles.middleBubbleMine
             : styles.middleBubble;
 
-  const showTimestamp = item.showTime; // toggledTimeIds logic moved to parent if needed
+  const showTimestamp = showTime;
 
   const formatTimestamp = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -84,9 +87,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   return (
     <View>
       {showTimestamp && (
-        <Text style={styles.timestamp}>{formatTimestamp(item.created_at)}</Text>
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+        >
+          <Text style={styles.timestamp}>
+            {formatTimestamp(item.created_at)}
+          </Text>
+        </Animated.View>
       )}
-
       <SwipeableMessage onReply={() => onReply(item)} isMine={isMine}>
         <Pressable
           onPress={() => onToggleTime(item.id)}

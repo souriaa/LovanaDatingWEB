@@ -485,6 +485,7 @@ export default function ChatScreen() {
           {otherUser && (
             <ChatHeader
               otherUser={otherUser}
+              currentUserId={userId}
               onOptionsPress={openHeaderSheet}
             />
           )}
@@ -499,6 +500,7 @@ export default function ChatScreen() {
             statusText={statusText}
             hasMore={hasMore}
             loadOlderMessages={loadOlderMessages}
+            toggledTimeIds={toggledTimeIds}
           />
 
           {/* Typing */}

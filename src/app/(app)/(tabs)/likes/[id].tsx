@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { getInteractionByActorAndTarget } from "../../../../../service/interactionService";
@@ -10,7 +10,8 @@ import { ProfileView } from "../../../../components/profile-view";
 import { transformPublicProfile } from "../../../../utils/profile";
 
 const Page = () => {
-  const { id } = useLocalSearchParams();
+  const { id, hideFab } = useLocalSearchParams();
+
   const { mutate: remove, isPending: removePending } = useRemoveLike();
   const { mutate: match, isPending: matchPending } = useMatch();
 
@@ -47,13 +48,8 @@ const Page = () => {
         currentUser.id
       );
 
-      console.log("interaction", interaction);
-
       const firstMessageSent = interaction?.status_id === 7;
 
-      console.log("firstMessageSent", firstMessageSent);
-
-      // Sau đó mới gọi match
       match(like.id, {
         onSuccess: async () => {
           try {
@@ -97,12 +93,19 @@ const Page = () => {
         options={{
           headerLeft: () => (
             <Pressable onPressOut={() => router.back()}>
-              <Text
-                className="text-base font-poppins-medium"
-                suppressHighlighting
-              >
-                All
-              </Text>
+              <View className="flex-row items-center">
+                <Ionicons
+                  name="chevron-back"
+                  className="text-2xl"
+                  suppressHighlighting
+                />
+                <Text
+                  className="text-xl font-poppins-medium"
+                  suppressHighlighting
+                >
+                  All
+                </Text>
+              </View>
             </Pressable>
           ),
           title: "",
@@ -110,7 +113,7 @@ const Page = () => {
         }}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="h-28 bg-neutral-200 overflow-hidden rounded-md ">
+        {/* <View className="h-28 bg-neutral-200 overflow-hidden rounded-md ">
           {like?.photo_url ? (
             <Image source={like?.photo_url} className="aspect-square w-full" />
           ) : (
@@ -120,7 +123,7 @@ const Page = () => {
               </Text>
             </View>
           )}
-        </View>
+        </View> */}
         <ProfileView profile={profile} />
       </ScrollView>
 

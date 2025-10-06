@@ -42,6 +42,7 @@ export default function Page() {
 
     const firstProfileId = data[0].profile.id;
     const isSuperLike = interactionMap[firstProfileId] === 7;
+
     return (
       <View className="gap-5 bg-white ">
         <Text className="text-3xl font-poppins-semibold">Likes You</Text>

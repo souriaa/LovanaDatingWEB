@@ -11,6 +11,7 @@ interface MessageListProps {
   statusText: string;
   loadOlderMessages: () => Promise<any[]>;
   hasMore: boolean;
+  toggledTimeIds: string[];
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -22,6 +23,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   statusText,
   loadOlderMessages,
   hasMore,
+  toggledTimeIds,
 }) => {
   const [loadingOlder, setLoadingOlder] = useState(false);
 
@@ -38,6 +40,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           onLongPress={onLongPress}
           statusText={statusText}
           onReply={onReply}
+          showTime={toggledTimeIds.includes(item.id)}
         />
       );
     },

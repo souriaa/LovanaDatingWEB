@@ -69,20 +69,22 @@ export default function Page() {
             ))}
           </View>
           <TextInput
-            className="absoulte h-1 w-1 opacity-0"
-            style={
-              Platform.OS === "ios" && {
-                lineHeight: undefined,
-              }
-            }
+            className="absolute inset-0 opacity-0"
+            style={{
+              height: "100%",
+              width: "100%",
+              position: "absolute",
+              opacity: 0.01, // almost invisible but still touchable
+            }}
             selectionColor={colors.black}
             keyboardType="numeric"
             textContentType="oneTimeCode"
-            autoFocus={true}
+            autoFocus
             value={otp}
             onChangeText={handleOtpChange}
             maxLength={6}
           />
+
           {isError && (
             <Text className="text-red-500 text-sm text-center mt-4">
               {error.message}
