@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link, router, Stack } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Animated,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,13 +21,15 @@ import { useTabBar } from "../../../context/tabBarContext";
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 export default function Page() {
-  const { data: profile } = useMyProfile();
+  const { data: profile, refetch } = useMyProfile(); // assuming useMyProfile returns refetch
   const [selectedCard, setSelectedCard] = useState<"pay-plan" | "safety">(
     "pay-plan"
   );
   const { tabBarOpacity } = useTabBar();
   const scrollOffset = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
@@ -61,9 +64,27 @@ export default function Page() {
     }
   );
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch?.();
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error("Failed to refresh:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <AnimatedScrollView onScroll={handleScroll} scrollEventThrottle={16}>
+      <AnimatedScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Stack.Screen
           options={{
             headerShown: false,
@@ -116,7 +137,7 @@ export default function Page() {
             onPress={() => setSelectedCard("safety")}
           />
         </View>
-        {selectedCard === "pay-plan" && <MyPayPlan />}
+        {selectedCard === "pay-plan" && <MyPayPlan refreshKey={refreshKey} />}
         {selectedCard === "safety" && (
           <View className="items-center mt-10">
             <Text className="text-lg font-semibold">

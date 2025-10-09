@@ -85,7 +85,6 @@ export const InputBar = ({
   useEffect(() => {
     (async () => {
       const plan = await getActivePlanByUserId(currentUser);
-      console.log(plan);
 
       if (!plan || plan.plan_id !== 3) {
         setPlanIsValid(false);

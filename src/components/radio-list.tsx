@@ -41,7 +41,7 @@ export const RadioList: React.FC<Props> = ({
             <Text className="text-base font-poppins-regular">{item.name}</Text>
             <Checkbox
               value={isChecked}
-              color={isChecked ? colors.fuchsia[950] : colors.neutral[400]}
+              color={isChecked ? colors.red[900] : colors.neutral[400]}
               className="h-5 w-5"
               pointerEvents="none"
             />

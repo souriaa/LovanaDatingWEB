@@ -28,8 +28,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
       if (interaction?.id) {
         router.push({
-          pathname: `/likes/${interaction.id}`,
-          params: { hideFab: true },
+          pathname: `/messages/${interaction.id}`,
+          params: { hideInteraction: true },
         });
       } else {
         console.warn("No interaction found between these users.");

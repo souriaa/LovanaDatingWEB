@@ -98,7 +98,7 @@ export default function GetPlan() {
       let paymentId;
 
       if (existingPayment) {
-        paymentId = existingPayment.id;
+        paymentId = existingPayment;
       } else {
         const { data: newPayment, error: insertError } = await supabase
           .from("payments")

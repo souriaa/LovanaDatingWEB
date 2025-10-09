@@ -10,7 +10,7 @@ import { ProfileView } from "../../../../components/profile-view";
 import { transformPublicProfile } from "../../../../utils/profile";
 
 const Page = () => {
-  const { id, hideFab } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
 
   const { mutate: remove, isPending: removePending } = useRemoveLike();
   const { mutate: match, isPending: matchPending } = useMatch();
@@ -38,11 +38,9 @@ const Page = () => {
     try {
       const currentUser = await getProfile();
       if (!currentUser) {
-        console.error("❌ No user found");
         return;
       }
 
-      // 👉 Lấy interaction trước khi gọi match
       const interaction = await getInteractionByActorAndTarget(
         like.profile.id,
         currentUser.id
@@ -93,7 +91,7 @@ const Page = () => {
         options={{
           headerLeft: () => (
             <Pressable onPressOut={() => router.back()}>
-              <View className="flex-row items-center">
+              <View className="flex-row items-center" style={{ marginTop: 20 }}>
                 <Ionicons
                   name="chevron-back"
                   className="text-2xl"

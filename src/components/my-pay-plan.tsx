@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -135,71 +136,85 @@ function PayPlanCard({
   );
 }
 
-export default function MyPayPlan() {
+export default function MyPayPlan({ refreshKey }) {
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: profile } = useMyProfile();
   const [superLikes, setSuperLikes] = useState<number | null>(null);
   const [timeExtender, setTimeExtender] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const data = await getPlans();
-        if (!data) return;
+  const fetchPlans = async () => {
+    try {
+      const data = await getPlans();
+      if (!data) return;
 
-        let orderedPlans = [...data];
+      let orderedPlans = [...data];
 
-        if (profile?.id) {
-          const profilePlans = await getProfilePlansByUser(profile.id);
-          if (profilePlans && profilePlans.length > 0) {
-            const plan = profilePlans[0];
-            const planDueDate = new Date(plan.plan_due_date);
-            const now = new Date();
+      if (profile?.id) {
+        const profilePlans = await getProfilePlansByUser(profile.id);
+        if (profilePlans && profilePlans.length > 0) {
+          const plan = profilePlans[0];
+          const planDueDate = new Date(plan.plan_due_date);
+          const now = new Date();
 
-            if (planDueDate > now) {
-              const activePlanId = plan.plan_id;
-              orderedPlans = data.sort((a, b) =>
-                a.id === activePlanId ? -1 : b.id === activePlanId ? 1 : 0
-              );
-            } else {
-              orderedPlans = data;
-            }
+          if (planDueDate > now) {
+            const activePlanId = plan.plan_id;
+            orderedPlans = data.sort((a, b) =>
+              a.id === activePlanId ? -1 : b.id === activePlanId ? 1 : 0
+            );
+          } else {
+            orderedPlans = data;
           }
         }
-
-        setPlans(orderedPlans);
-      } catch (err) {
-        console.error("Error loading plans:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchPlans();
-  }, [profile?.id]);
+      setPlans(orderedPlans);
+    } catch (err) {
+      console.error("Error loading plans:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLikes = async () => {
+    if (!profile?.id) return;
+    try {
+      const data = await getLikes(profile.id);
+      setSuperLikes(data?.super_likes_remaining ?? 0);
+      setTimeExtender(data?.time_extend_remaining ?? 0);
+    } catch (err) {
+      console.error("Error loading super likes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLikes = async () => {
-      if (!profile?.id) return;
-      try {
-        const data = await getLikes(profile.id);
-        setSuperLikes(data?.super_likes_remaining ?? 0);
-        setTimeExtender(data?.time_extend_remaining ?? 0);
-      } catch (err) {
-        console.error("Error loading super likes:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    fetchPlans();
     fetchLikes();
-  }, [profile?.id]);
+  }, [profile?.id, refreshKey]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchPlans();
+      await fetchLikes();
+    } catch (err) {
+      console.error("Failed to refresh MyPayPlan:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white mt-5">
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Perks row */}
         <View style={styles.perksRow}>
           <TouchableOpacity
@@ -313,7 +328,17 @@ export default function MyPayPlan() {
                     <Ionicons
                       name={hasFeature ? "checkmark-outline" : ""}
                       size={22}
-                      color={hasFeature ? theme.colors.primary : ""}
+                      color={
+                        !hasFeature
+                          ? theme.colors.textLighterGray
+                          : selectedPlan?.name === "Plus"
+                            ? theme.colors.primaryLight
+                            : selectedPlan?.name === "Premium"
+                              ? theme.colors.primary
+                              : selectedPlan?.name === "Lovana"
+                                ? theme.colors.primaryDark
+                                : theme.colors.primary
+                      }
                     />
                   </View>
                 );
