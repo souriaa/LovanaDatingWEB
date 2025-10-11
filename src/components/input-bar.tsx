@@ -11,8 +11,8 @@ import {
   View,
 } from "react-native";
 import Tooltip from "react-native-tooltip-2";
-import { getActivePlanByUserId } from "~/service/profilePlanService";
 import { theme } from "../../constants/theme";
+import { getActivePlanByUserId } from "../../service/profilePlanService";
 import Input from "./Input";
 
 const STORAGE_KEY = "ai_response_limit";

@@ -1,4 +1,3 @@
-import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -13,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { getPlanById } from "../../../../service/planService";
 import { getProfile } from "../../../../service/userService";
+import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { supabase } from "../../../lib/supabase";
 

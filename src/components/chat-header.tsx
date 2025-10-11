@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { getInteractionByActorAndTarget } from "~/service/interactionService";
 import { theme } from "../../constants/theme";
+import { getInteractionByActorAndTarget } from "../../service/interactionService";
 import Header from "./Header";
 
 interface ChatHeaderProps {

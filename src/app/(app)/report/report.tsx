@@ -1,4 +1,3 @@
-import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -17,6 +16,7 @@ import {
   submitProfileReport,
 } from "../../../../service/reportService";
 import { getProfile } from "../../../../service/userService";
+import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { supabase } from "../../../lib/supabase";
 

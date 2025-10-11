@@ -1,9 +1,9 @@
-import Header from "@/components/Header";
-import { Loader } from "@/components/loader";
 import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { getInteractionWithOtherProfileById } from "../../../../service/interactionService";
+import Header from "../../../components/Header";
+import { Loader } from "../../../components/loader";
 import { ProfileView } from "../../../components/profile-view";
 import { transformPublicProfile } from "../../../utils/profile";
 
