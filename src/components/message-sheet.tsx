@@ -1,8 +1,6 @@
 // File: components/chat/MessageSheet.tsx
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import {
-  Alert,
   Animated,
   StyleSheet,
   Text,
@@ -10,14 +8,14 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { useUnmatch } from "../api/profiles";
 
 interface MessageSheetProps {
   sheetMessage: any;
   otherUser: any;
   onReply: (message: any) => void;
   onCopy: () => void;
-  onReport: () => void;
+  onReportUser: () => void;
+  onReportMessage: () => void;
   onUnmatch: () => void;
   onClose: () => void;
   slideAnim: Animated.Value;
@@ -30,47 +28,13 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
   otherUser,
   onReply,
   onCopy,
-  onReport,
+  onReportUser,
+  onReportMessage,
   onUnmatch,
   onClose,
   slideAnim,
   height,
 }) => {
-  const { mutate } = useUnmatch();
-
-  const handleUnmatchPress = () => {
-    onClose();
-    const userName =
-      otherUser.first_name || otherUser.last_name
-        ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
-        : "this user";
-
-    Alert.alert(
-      "Are you sure?",
-      `Unmatching will delete the match for both you and ${userName}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Unmatch",
-          onPress: async () => {
-            // Assuming interactionId is passed or managed
-            mutate(undefined, {
-              onSuccess: async () => {
-                router.navigate("/matches/");
-              },
-              onError: (err) => {
-                Alert.alert(
-                  "Error",
-                  "Something went wrong, please try again later."
-                );
-              },
-            });
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <TouchableWithoutFeedback onPress={onClose}>
       <View
@@ -131,7 +95,7 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={onReport}>
+              <TouchableOpacity onPress={onReportMessage}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons
                     name="flag-outline"
@@ -144,7 +108,7 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
             </>
           ) : (
             <>
-              <TouchableOpacity onPress={onReport}>
+              <TouchableOpacity onPress={onReportUser}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons
                     name="flag-outline"
@@ -160,7 +124,7 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleUnmatchPress}>
+              <TouchableOpacity onPress={onUnmatch}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons
                     name="close-outline"

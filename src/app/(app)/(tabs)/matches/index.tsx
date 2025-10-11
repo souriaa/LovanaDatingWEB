@@ -496,10 +496,16 @@ export default function ConversationsScreen() {
                   </Text>
                 </View>
               </TouchableOpacity>
+
               <TouchableOpacity
-                onPress={() => {
-                  console.log("Delete conversation pressed");
-                }}
+                onPress={() =>
+                  router.push({
+                    pathname: "/report/report",
+                    params: {
+                      reportedId: sheetConversation.other_user.id,
+                    },
+                  })
+                }
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons

@@ -53,7 +53,7 @@ function PayPlanCard({
   ];
   const bgColor = cardColors[i % cardColors.length];
 
-  const [upgradeText, setUpgradeText] = useState(`Upgrade from ${weeklyPrice}`);
+  const [upgradeText, setUpgradeText] = useState(`From ${weeklyPrice}`);
   const [loading, setLoading] = useState(true);
   const [activePlan, setActivePlan] = useState(null);
 
@@ -78,15 +78,15 @@ function PayPlanCard({
             if (dueDate && now < dueDate) {
               setUpgradeText(`Plan expired on ${dueDate.toLocaleDateString()}`);
             } else {
-              setUpgradeText(`Upgrade from ${weeklyPrice}`);
+              setUpgradeText(`From ${weeklyPrice}`);
             }
           } else {
-            setUpgradeText(`Upgrade from ${weeklyPrice}`);
+            setUpgradeText(`From ${weeklyPrice}`);
           }
         }
       } catch (err) {
         console.error("fetchProfilePlan error:", err);
-        setUpgradeText(`Upgrade from ${weeklyPrice}`);
+        setUpgradeText(`From ${weeklyPrice}`);
       } finally {
         setLoading(false);
       }

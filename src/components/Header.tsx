@@ -1,13 +1,26 @@
 import { useRouter } from "expo-router";
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { theme } from "../../constants/theme";
 import BackButton from "./BackButton";
 
-const Header = ({ title, showBackButton = true, mb = 10, ml = 0, children, style  }) => {
+const Header = ({
+  title,
+  showBackButton = true,
+  mb = 10,
+  ml = 0,
+  children,
+  style,
+}) => {
   const router = useRouter();
   return (
-    <View style={[styles.container, { marginBottom: mb }, { marginHorizontal: ml }, style ]}>
+    <View
+      style={[
+        styles.container,
+        { marginBottom: mb },
+        { marginHorizontal: ml },
+        style,
+      ]}
+    >
       {showBackButton && (
         <View style={styles.backButton}>
           <BackButton router={router} />
@@ -30,9 +43,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    fontSize: 30,
-    fontWeight: theme.fonts.semibold,
+    fontSize: 24,
     color: theme.colors.textDark,
+    fontFamily: "Poppins-Bold",
   },
   backButton: {
     position: "absolute",

@@ -45,7 +45,9 @@ export default function Page() {
 
     return (
       <View className="gap-5 bg-white ">
-        <Text className="text-3xl font-poppins-semibold">Likes You</Text>
+        <Text className="text-3xl font-poppins-semibold text-red-900">
+          Likes You
+        </Text>
         {data.length > 0 && (
           <>
             <Link href={`/likes/${data[0].id}`} asChild>

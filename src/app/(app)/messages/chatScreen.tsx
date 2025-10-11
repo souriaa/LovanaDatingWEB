@@ -1,6 +1,5 @@
-// File: app/(tabs)/chat/[conversationId].tsx (or wherever the main screen is)
 import * as DocumentPicker from "expo-document-picker";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -24,6 +23,7 @@ import {
   markConversationAsUnseen,
   sendMessage,
 } from "../../../../service/messageService";
+import { useUnmatch } from "../../../api/profiles";
 import { ChatHeader } from "../../../components/chat-header";
 import { ExtendTimeSheet } from "../../../components/extend-time-sheet";
 import { FilePreview } from "../../../components/file-preview";
@@ -70,6 +70,8 @@ export default function ChatScreen() {
   const headerHeight = 88;
   const height = screenHeight - headerHeight;
   const slideAnim = useRef(new Animated.Value(height)).current;
+
+  const { mutate } = useUnmatch();
 
   const getMessages = async () => {
     try {
@@ -195,13 +197,10 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!lastMessage) return;
 
-    // If the last message was sent by me
     if (lastMessage.sender_id === userId) {
-      // If we have real seen info, use it
       if (seenStatus.otherUser) {
         setStatusText(seenStatus.otherUser.is_seen ? "Seen" : "Sent");
       } else {
-        // Default new message to Sent until real status arrives
         setStatusText("Sent");
       }
     } else {
@@ -472,8 +471,26 @@ Câu trả lời cho sender_id Me:
     closeSheet();
   };
 
-  const handleReport = () => {
+  const handleReportUser = () => {
     closeSheet();
+    router.push({
+      pathname: "/report/report",
+      params: {
+        reportedId: otherUser.id,
+      },
+    });
+  };
+
+  const handleReportMessage = () => {
+    closeSheet();
+    router.push({
+      pathname: "/report/report",
+      params: {
+        reportedId: otherUser.id,
+        reportedMessageId: sheetMessage.id,
+        reportedMessageBody: sheetMessage.body,
+      },
+    });
   };
 
   const handleUnmatch = () => {
@@ -492,8 +509,17 @@ Câu trả lời cho sender_id Me:
         {
           text: "Unmatch",
           onPress: async () => {
-            // useUnmatch hook would be imported here if needed
-            // mutate(interactionId, { ... });
+            mutate(interactionId, {
+              onSuccess: async () => {
+                router.navigate("/matches/");
+              },
+              onError: (err) => {
+                Alert.alert(
+                  "Error",
+                  "Something went wrong, please try again later."
+                );
+              },
+            });
           },
         },
       ]
@@ -618,7 +644,8 @@ Câu trả lời cho sender_id Me:
           otherUser={otherUser}
           onReply={handleReply}
           onCopy={handleCopy}
-          onReport={handleReport}
+          onReportUser={handleReportUser}
+          onReportMessage={handleReportMessage}
           onUnmatch={handleUnmatch}
           onClose={closeSheet}
           slideAnim={slideAnim}

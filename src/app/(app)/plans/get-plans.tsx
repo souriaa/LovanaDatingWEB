@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -142,9 +143,9 @@ export default function GetPlan() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         {/* Scrollable content */}
+        <Header title={`Get ${plan.name}`} mb={0} ml={15} />
         <ScrollView contentContainerStyle={styles.scroll}>
           {/* Header */}
-          <Text style={styles.title}>Get {plan.name}</Text>
           <Text style={styles.subtitle}>{plan.name_subtitle}</Text>
 
           {/* Features */}
@@ -307,7 +308,7 @@ export default function GetPlan() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.primaryDark,
+    backgroundColor: theme.colors.textLight,
   },
   scroll: {
     padding: 20,
@@ -317,13 +318,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: "Poppins-Bold",
     marginBottom: 6,
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
   },
   subtitle: {
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
     fontFamily: "Poppins-Regular",
   },
   featuresBox: {
@@ -333,13 +334,12 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 14,
     fontFamily: "Poppins-SemiBold",
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
   },
   featureItem: {
     fontSize: 14,
     marginVertical: 4,
     fontFamily: "Poppins-Regular",
-    color: theme.colors.textLight,
   },
   planRow: {
     marginBottom: 80,
@@ -353,9 +353,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
     marginHorizontal: 8,
-    width: 160,
+    width: 140,
     borderWidth: 1,
-    borderColor: "#FFFFFF00",
+    borderColor: theme.colors.textLighterGray,
   },
   planLabelTitle: {
     fontSize: 24,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
   },
   continueBtn: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.primaryDark,
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 30,
@@ -415,12 +415,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
-    backgroundColor: theme.colors.primaryDark,
+    backgroundColor: theme.colors.textLight,
   },
   table: {
     width: "100%",
     marginTop: 8,
-    borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 8,
   },
@@ -442,13 +441,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: "Poppins-Regular",
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
   },
   lastRow: {
     borderBottomWidth: 0,
   },
   planCardSelected: {
-    borderWidth: 1,
-    borderColor: theme.colors.textDark,
+    borderWidth: 2,
+    borderColor: theme.colors.primaryDark,
   },
 });

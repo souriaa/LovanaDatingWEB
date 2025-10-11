@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -141,8 +142,8 @@ export default function GetPlan() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <Header title={`Get ${consumable.name}`} mb={0} ml={15} />
         <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.title}>Get {consumable.name}</Text>
           <Text style={styles.subtitle}>{consumable.name_subtitle}</Text>
         </ScrollView>
         <ScrollView
@@ -211,7 +212,7 @@ export default function GetPlan() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.primaryDark,
+    backgroundColor: theme.colors.textLight,
   },
   scroll: {
     padding: 20,
@@ -221,13 +222,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: "Poppins-Bold",
     marginBottom: 6,
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
   },
   subtitle: {
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
-    color: theme.colors.textLight,
+    color: theme.colors.textDark,
     fontFamily: "Poppins-Regular",
   },
   featuresBox: {
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     width: 160,
     borderWidth: 1,
-    borderColor: "#FFFFFF00",
+    borderColor: theme.colors.textLighterGray,
   },
   planLabelTitle: {
     fontSize: 24,
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
   },
   continueBtn: {
-    backgroundColor: "#111827",
+    backgroundColor: theme.colors.primaryDark,
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 30,
@@ -319,7 +320,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
-    backgroundColor: theme.colors.primaryDark,
+    backgroundColor: theme.colors.textLight,
   },
   table: {
     width: "100%",
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   planCardSelected: {
-    borderWidth: 1,
-    borderColor: theme.colors.textDark,
+    borderWidth: 2,
+    borderColor: theme.colors.primaryDark,
   },
 });
