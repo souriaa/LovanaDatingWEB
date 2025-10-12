@@ -48,6 +48,8 @@ const Page = () => {
 
   const profile = transformPublicProfile(like.profile);
 
+  console.log(profile.photos);
+
   return (
     <View className="flex-1 px-5 bg-white">
       <Header style={{ marginTop: 20 }} />

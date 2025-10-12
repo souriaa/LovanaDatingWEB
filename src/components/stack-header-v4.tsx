@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { FC } from "react";
-import { Pressable } from "react-native";
+import { Pressable, Text } from "react-native";
 
 interface Props {
   title: string;
@@ -14,13 +14,16 @@ export const StackHeaderV4: FC<Props> = ({ title, onPressBack }) => {
       options={{
         title,
         headerTitleAlign: "center",
+        headerTitleStyle: {
+          fontFamily: "Poppins-Regular",
+        },
         headerLeft: () => (
-          <Pressable onPressOut={onPressBack}>
-            <Ionicons
-              name="chevron-back"
-              className="text-2xl"
-              suppressHighlighting
-            />
+          <Pressable
+            onPressOut={onPressBack}
+            style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+          >
+            <Ionicons name="chevron-back" size={24} suppressHighlighting />
+            <Text className="font-poppins-regular pt-1">Save</Text>
           </Pressable>
         ),
       }}

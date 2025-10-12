@@ -3,23 +3,31 @@ import { supabase } from "../../lib/supabase";
 
 export const useSignInWithOtp = () => {
   return useMutation({
-    mutationFn: async (params: { phone?: string; email?: string }) => {
-      let error;
-      if (params.phone) {
-        const { error: e } = await supabase.auth.signInWithOtp({
-          phone: params.phone,
-        });
-        error = e;
-      } else if (params.email) {
-        const { error: e } = await supabase.auth.signInWithOtp({
-          email: params.email,
-        });
-        error = e;
-      } else {
-        throw new Error("Either phone or email must be provided");
-      }
+    mutationFn: async (params: { email: string; phone: string }) => {
+      const { data: canSignIn, error } = await supabase.rpc(
+        "verify_email_phone",
+        {
+          _email: params.email,
+          _phone: params.phone,
+        }
+      );
 
       if (error) throw error;
+
+      if (!canSignIn) {
+        throw new Error("Email and phone mismatch. Check credentials.");
+      }
+
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: params.email,
+      });
+
+      if (otpError) throw otpError;
+
+      await supabase.rpc("update_profile_phone_by_email", {
+        _email: params.email,
+        _phone: params.phone,
+      });
     },
   });
 };

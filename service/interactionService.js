@@ -84,6 +84,7 @@ export const getInteractionWithOtherProfileById = async (interactionId) => {
 
     const formattedProfile = {
       ...data,
+      photos: (data.photos || []).sort((a, b) => a.photo_order - b.photo_order),
       gender: data.gender?.name || null,
       sexuality: data.sexuality?.name || null,
       children: data.children?.name || null,

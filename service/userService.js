@@ -59,3 +59,35 @@ export async function toggleIncognito(profileId, value) {
 
   return data;
 }
+
+export async function isProfileComplete() {
+  const user = await getCurrentUser();
+  if (!user) return false;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, first_name, dob, gender_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error("Error fetching profile:", profileError);
+    return false;
+  }
+
+  if (!profile.first_name || !profile.dob || !profile.gender_id) return false;
+
+  const { data: photos, error: photosError } = await supabase
+    .from("profile_photos")
+    .select("id")
+    .eq("profile_id", profile.id)
+    .eq("is_active", true)
+    .limit(1);
+
+  if (photosError) {
+    console.error("Error fetching profile photos:", photosError);
+    return false;
+  }
+
+  return photos.length > 0;
+}

@@ -5,7 +5,7 @@ import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
-import { getProfile } from "../../../../service/userService";
+import { getProfile, isProfileComplete } from "../../../../service/userService";
 import {
   useLikeProfile,
   useProfiles,
@@ -33,6 +33,7 @@ export default function Page() {
     useSuperlikeProfile();
   const [loading, setLoading] = useState(true);
   const [canUsePremium, setCanUsePremium] = useState(false);
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
 
   const hasProfiles = data && data.length > 0;
@@ -119,6 +120,20 @@ export default function Page() {
 
     updateProfileWithLocation();
   }, []);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const complete = await isProfileComplete();
+        setProfileComplete(complete);
+      } catch (error) {
+        console.error("Failed to check profile completeness:", error);
+        setProfileComplete(false);
+      }
+    };
+
+    checkProfile();
+  }, [isFetching]);
 
   const handleSkip = () => {
     if (profile) {
@@ -238,6 +253,17 @@ export default function Page() {
         onPrimaryPress={() => router.push("/preferences")}
         onSecondaryPress={handleReview}
         secondaryDisabled={!canUsePremium}
+      />
+    );
+  }
+
+  if (profileComplete === false) {
+    return (
+      <Empty
+        title="Complete Your Profile"
+        subTitle="You need to fill out your personal information and add at least one photo before you can start matching."
+        primaryText="Update Profile"
+        onPrimaryPress={() => router.push("/profile")}
       />
     );
   }
