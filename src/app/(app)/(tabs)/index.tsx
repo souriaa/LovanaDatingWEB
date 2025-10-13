@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
 import { getProfile, isProfileComplete } from "../../../../service/userService";
+import { useSignOut } from "../../../api/auth";
 import {
   useLikeProfile,
   useProfiles,
@@ -22,6 +23,7 @@ import { supabase } from "../../../lib/supabase";
 import { transformPublicProfile } from "../../../utils/profile";
 
 export default function Page() {
+  const { mutate: signOut } = useSignOut();
   const { data, isFetching, error, refetch } = useProfiles();
   useRefreshOnFocus(refetch);
 
@@ -99,7 +101,19 @@ export default function Page() {
         const { coords } = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = coords;
 
-        console.log("Got location:", latitude, longitude);
+        const [address] = await Location.reverseGeocodeAsync(coords);
+
+        // console.log("Got location:", latitude, longitude);
+        // console.log("Country:", address.country);
+
+        if (address.country !== "Vietnam") {
+          Alert.alert(
+            "Access Forbidden",
+            "Logging in from outside Vietnam is not allowed. Please contact the developer."
+          );
+          signOut();
+          return;
+        }
 
         const { error: updateError } = await supabase
           .from("profiles")
