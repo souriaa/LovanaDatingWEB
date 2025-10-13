@@ -38,7 +38,7 @@ export default function Page() {
               style={{ backgroundColor: theme.colors.primaryDark }}
             >
               <Text className="text-white text-lg font-poppins-semibold">
-                Sign in with Email
+                Sign in
               </Text>
             </Pressable>
           </Link>
