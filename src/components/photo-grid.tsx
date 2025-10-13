@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
 import { Image } from "expo-image";
@@ -7,6 +6,7 @@ import { FC, useEffect, useState } from "react";
 import { Alert, Dimensions, TouchableOpacity, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
 import { Photo, PrivateProfile } from "../api/my-profile/types";
+import { supabase } from "../lib/supabase";
 import { useEdit } from "../store/edit";
 
 type Item = {
@@ -56,6 +56,15 @@ export const PhotoGrid: FC<Props> = ({
   const deletePhoto = async (item: Item) => {
     if (!item.photo?.id) return;
 
+    const remainingPhotos = data.filter((d) => d.photo?.photo_url);
+    if (remainingPhotos.length <= 1) {
+      Alert.alert(
+        "Cannot Delete",
+        "You must keep at least one photo in your profile."
+      );
+      return;
+    }
+
     Alert.alert("Delete Photo", "Are you sure you want to delete this photo?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -63,6 +72,31 @@ export const PhotoGrid: FC<Props> = ({
         style: "destructive",
         onPress: async () => {
           try {
+            if (item.photo.id.startsWith("temp_")) {
+              const updatedData = data.map((d) =>
+                d.key === item.key
+                  ? {
+                      ...d,
+                      photo: null,
+                      disabledDrag: true,
+                      disabledReSorted: true,
+                    }
+                  : d
+              );
+
+              const updatedPhotos = updatedData
+                .map(
+                  (d, index) => ({ ...d.photo, photo_order: index }) as Photo
+                )
+                .filter((d) => d?.photo_url);
+
+              setData(updatedData);
+              setEdits({
+                ...profile,
+                photos: updatedPhotos,
+              });
+              return;
+            }
             const { error } = await supabase
               .from("profile_photos")
               .delete()
@@ -103,8 +137,6 @@ export const PhotoGrid: FC<Props> = ({
   };
 
   const rendertem = (item: Item) => {
-    const isExistingPhoto =
-      item.photo?.id && !item.photo.id.startsWith("temp_");
     return (
       <View
         key={item.key}
@@ -120,24 +152,22 @@ export const PhotoGrid: FC<Props> = ({
               source={item.photo.photo_url}
               className="flex-1 bg-neutral-200"
             />
-            {isExistingPhoto && (
-              <TouchableOpacity
-                onPress={() => deletePhoto(item)}
-                style={{
-                  position: "absolute",
-                  top: 4,
-                  right: 4,
-                  backgroundColor: "rgba(0,0,0,0.5)",
-                  borderRadius: 12,
-                  width: 24,
-                  height: 24,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Ionicons name="close" size={16} color="white" />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              onPress={() => deletePhoto(item)}
+              style={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                borderRadius: 12,
+                width: 24,
+                height: 24,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons name="close" size={16} color="white" />
+            </TouchableOpacity>
           </View>
         ) : (
           <View className="flex-1 border border-red-600 border-dashed rounded-md" />
