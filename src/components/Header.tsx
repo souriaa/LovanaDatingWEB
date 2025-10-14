@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { theme } from "../../constants/theme";
-import BackButton from "./BackButton";
 
 const Header = ({
   title,
@@ -21,11 +20,7 @@ const Header = ({
         style,
       ]}
     >
-      {showBackButton && (
-        <View style={styles.backButton}>
-          <BackButton router={router} />
-        </View>
-      )}
+      {showBackButton && <View style={styles.backButton}></View>}
       <Text style={styles.title}>{title || ""}</Text>
       {children}
     </View>

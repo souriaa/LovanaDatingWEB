@@ -47,7 +47,7 @@ const traitsMapping = [
   },
   {
     key: "children",
-    icon: "cart-outline",
+    icon: "happy-outline",
     privateLabel: (profile: PrivateProfile) => profile.children?.name,
     publicLabel: (profile: PublicProfile) => profile.children || null,
   },

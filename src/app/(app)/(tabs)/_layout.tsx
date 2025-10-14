@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useConnection } from "@sendbird/uikit-react-native";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
@@ -7,12 +6,10 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import colors from "tailwindcss/colors";
 import { useMyProfile } from "../../../api/my-profile";
-import { TabBarProvider, useTabBar } from "../../../context/tabBarContext";
+import { TabBarProvider } from "../../../context/tabBarContext";
 import { cn } from "../../../utils/cn";
 
 const TabsComponent = () => {
-  const { tabBarOpacity } = useTabBar();
-
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +23,7 @@ const TabsComponent = () => {
           borderTopWidth: 0,
           backgroundColor: "#000000",
           overflow: "hidden",
-          opacity: tabBarOpacity,
+          opacity: 0,
         },
         tabBarBackground: () => (
           <BlurView
@@ -109,13 +106,8 @@ const TabsComponent = () => {
 
 export default function Layout() {
   const { data: profile } = useMyProfile();
-  const { connect } = useConnection();
 
-  useEffect(() => {
-    if (profile) {
-      connect(profile.id, { nickname: profile.first_name || undefined });
-    }
-  }, [profile, connect]);
+  useEffect(() => {}, [profile]);
 
   return (
     <TabBarProvider>

@@ -25,10 +25,14 @@ export const LikeCard: FC<Props> = ({
         </Text>
       </View>
       <View className="flex-1 bg-neutral-200 aspect-square w-full">
-        <Image source={profile.photos[0].photo_url} className="flex-1" />
+        <Image
+          source={{ uri: profile.photos[0].photo_url }}
+          className="flex-1"
+        />
+
         <BlurView
           className="absolute top-0 right-0 bottom-0 left-0"
-          intensity={30}
+          intensity={100}
           tint="light"
         />
       </View>

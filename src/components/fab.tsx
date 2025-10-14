@@ -11,6 +11,7 @@ interface Props {
   className?: string;
   iconClassName?: string;
   loaderClassName?: string;
+  iconSize?: number;
 }
 
 export const Fab: FC<Props> = ({
@@ -21,6 +22,7 @@ export const Fab: FC<Props> = ({
   className,
   iconClassName,
   loaderClassName,
+  iconSize = 24,
 }) => {
   return (
     <Pressable
@@ -52,6 +54,7 @@ export const Fab: FC<Props> = ({
               { "text-neutral-400": disabled },
               iconClassName
             )}
+            size={iconSize}
           />
         </View>
       )}

@@ -1,20 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useGroupChannel } from "@sendbird/uikit-chat-hooks";
-import {
-  createGroupChannelFragment,
-  GroupChannelContexts,
-  useSendbirdChat,
-} from "@sendbird/uikit-react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useContext } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useUnmatch } from "../../../api/profiles";
 
-const CustomHeader = () => {
-  const { headerTitle } = useContext(GroupChannelContexts.Fragment);
-  const { mutate } = useUnmatch();
+const CustomHeader = ({ title }: { title: string }) => {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { mutate } = useUnmatch();
 
   return (
     <Stack.Screen
@@ -29,7 +21,7 @@ const CustomHeader = () => {
               />
             </Pressable>
 
-            <Text className="text-lg font-poppins-medium">{headerTitle}</Text>
+            <Text className="text-lg font-poppins-medium">{title}</Text>
           </View>
         ),
         title: "",
@@ -38,25 +30,19 @@ const CustomHeader = () => {
             onPressOut={() => {
               Alert.alert(
                 "Are you sure?",
-                `Unmatching will delete the match for both you and ${headerTitle}`,
+                `Unmatching will delete the match for both you and ${title}`,
                 [
-                  {
-                    text: "Cancel",
-                    style: "cancel",
-                  },
+                  { text: "Cancel", style: "cancel" },
                   {
                     text: "Unmatch",
                     onPress: () => {
                       mutate(id, {
-                        onSuccess: () => {
-                          router.navigate("/matches/");
-                        },
-                        onError: () => {
+                        onSuccess: () => router.navigate("/matches/"),
+                        onError: () =>
                           Alert.alert(
                             "Error",
                             "Something went wrong, please try again later."
-                          );
-                        },
+                          ),
                       });
                     },
                   },
@@ -76,29 +62,21 @@ const CustomHeader = () => {
   );
 };
 
-const GroupChannelFragment = createGroupChannelFragment({
-  Header: CustomHeader,
-});
-
 export default function Page() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const height = useHeaderHeight();
 
-  const { sdk } = useSendbirdChat();
-  const { channel } = useGroupChannel(sdk, id);
-  if (!channel) return null;
-
   return (
-    <GroupChannelFragment
-      channel={channel}
-      onChannelDeleted={() => {
-        router.navigate("/matches");
-      }}
-      onPressHeaderLeft={() => {
-        router.back();
-      }}
-      onPressHeaderRight={() => {}}
-      keyboardAvoidOffset={height}
-    />
+    <View className="flex-1 bg-white">
+      <CustomHeader title={name || "Chat"} />
+      <View
+        style={{ flex: 1, paddingTop: height }}
+        className="justify-center items-center"
+      >
+        <Text className="text-gray-500">
+          Chat feature removed / placeholder
+        </Text>
+      </View>
+    </View>
   );
 }

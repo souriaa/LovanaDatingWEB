@@ -141,165 +141,98 @@ export default function GetPlan() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Scrollable content */}
-        <Header title={`Get ${plan.name}`} mb={0} ml={15} />
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Header */}
-          <Text style={styles.subtitle}>{plan.name_subtitle}</Text>
+      <View style={styles.contentWeb}>
+        <Header title={`Get ${plan.name}`} mb={0} />
 
-          {/* Features */}
-          <View style={styles.featuresBox}>
-            <Text style={styles.featureTitle}>Plan includes:</Text>
-            <View style={styles.table}>
-              {plan.features?.map((f: string, idx: number) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.tableRow,
-                    idx === plan.features.length - 1 && styles.lastRow,
-                  ]}
-                >
-                  <Text style={styles.tableCell}>{f}</Text>
-                </View>
-              ))}
+        <View style={styles.mainRow}>
+          {/* Left column: Plan Details */}
+          <ScrollView style={styles.leftColumn}>
+            <Text style={styles.subtitleWeb}>{plan.name_subtitle}</Text>
+
+            <View style={styles.featuresBoxWeb}>
+              <Text style={styles.featureTitleWeb}>What's Included</Text>
+              <View style={styles.tableWeb}>
+                {plan.features?.map((f: string, idx: number) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.tableRowWeb,
+                      idx === plan.features.length - 1 && styles.lastRowWeb,
+                    ]}
+                  >
+                    <Text style={styles.tableCellWeb}>• {f}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
-          {/* Prices */}
-        </ScrollView>
-
-        {/* Bottom fixed section */}
-        <ScrollView
-          horizontal
-          contentContainerStyle={styles.planRow}
-          showsHorizontalScrollIndicator={false}
-        >
-          {/* Week */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              { marginLeft: 10 },
-              selectedPlan === "week" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("week")}
+          {/* Right column: Pricing & CTA */}
+          <ScrollView
+            style={styles.rightColumn}
+            contentContainerStyle={{ gap: 25 }}
           >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Week</Text>
+            {["week", "month", "year"].map((p) => {
+              const price =
+                p === "week"
+                  ? plan.price_weekly
+                  : p === "month"
+                    ? plan.price_monthly
+                    : plan.price_yearly;
+              const discount =
+                p === "week"
+                  ? plan.price_weekly_discount_percent
+                  : p === "month"
+                    ? plan.price_monthly_discount_percent
+                    : plan.price_yearly_discount_percent;
 
-            {plan.price_weekly_discount_percent > 0 ? (
-              <View style={{ alignItems: "center" }}>
-                {/* Giá gốc */}
-                <Text style={[styles.planPrice, styles.discountPrice]}>
-                  {Number(plan.price_weekly).toLocaleString()} {plan.currency}
-                </Text>
-
-                {/* Giá sau giảm */}
-                <Text style={[styles.planPrice, { color: "red" }]}>
-                  {Number(
-                    plan.price_weekly *
-                      (1 - plan.price_weekly_discount_percent / 100)
-                  ).toLocaleString()}{" "}
-                  {plan.currency}
-                </Text>
-
-                {/* Box SAVE */}
-                <View style={styles.planDiscountPercent}>
-                  <Text style={styles.planDiscountPercentText}>
-                    SAVE {plan.price_weekly_discount_percent}%
+              return (
+                <TouchableOpacity
+                  key={p}
+                  style={[
+                    styles.planCardWeb,
+                    selectedPlan === p && styles.planCardSelectedWeb,
+                  ]}
+                  onPress={() => setSelectedPlan(p)}
+                >
+                  <Text style={styles.planLabelTitleWeb}>1</Text>
+                  <Text style={styles.planLabelWeb}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
                   </Text>
-                </View>
-              </View>
-            ) : (
-              <Text style={styles.planPrice}>
-                {Number(plan.price_weekly).toLocaleString()} {plan.currency}
-              </Text>
-            )}
-          </TouchableOpacity>
 
-          {/* Month */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === "month" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("month")}
-          >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Month</Text>
-
-            {plan.price_monthly_discount_percent > 0 ? (
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.planPrice, styles.discountPrice]}>
-                  {Number(plan.price_monthly).toLocaleString()} {plan.currency}
-                </Text>
-
-                <Text style={[styles.planPrice, { color: "red" }]}>
-                  {Number(
-                    plan.price_monthly *
-                      (1 - plan.price_monthly_discount_percent / 100)
-                  ).toLocaleString()}{" "}
-                  {plan.currency}
-                </Text>
-
-                <View style={styles.planDiscountPercent}>
-                  <Text style={styles.planDiscountPercentText}>
-                    SAVE {plan.price_monthly_discount_percent}%
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <Text style={styles.planPrice}>
-                {Number(plan.price_monthly).toLocaleString()} {plan.currency}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Year */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === "year" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("year")}
-          >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Year</Text>
-
-            {plan.price_yearly_discount_percent > 0 ? (
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.planPrice, styles.discountPrice]}>
-                  {Number(plan.price_yearly).toLocaleString()} {plan.currency}
-                </Text>
-
-                <Text style={[styles.planPrice, { color: "red" }]}>
-                  {Number(
-                    plan.price_yearly *
-                      (1 - plan.price_yearly_discount_percent / 100)
-                  ).toLocaleString()}{" "}
-                  {plan.currency}
-                </Text>
-
-                <View style={styles.planDiscountPercent}>
-                  <Text style={styles.planDiscountPercentText}>
-                    SAVE {plan.price_yearly_discount_percent}%
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <Text style={styles.planPrice}>
-                {Number(plan.price_yearly).toLocaleString()} {plan.currency}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-
-        <View style={styles.bottomSection}>
-          <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-            <Text style={styles.continueText}>Continue</Text>
-          </TouchableOpacity>
-          {/* <Text style={styles.footer}></Text> */}
+                  {discount > 0 ? (
+                    <View style={{ alignItems: "center" }}>
+                      <Text
+                        style={[styles.planPriceWeb, styles.discountPriceWeb]}
+                      >
+                        {Number(price).toLocaleString()} {plan.currency}
+                      </Text>
+                      <Text style={[styles.planPriceWeb, { color: "#E53935" }]}>
+                        {Number(price * (1 - discount / 100)).toLocaleString()}{" "}
+                        {plan.currency}
+                      </Text>
+                      <View style={styles.planDiscountPercentWeb}>
+                        <Text style={styles.planDiscountPercentTextWeb}>
+                          SAVE {discount}%
+                        </Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <Text style={styles.planPriceWeb}>
+                      {Number(price).toLocaleString()} {plan.currency}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
+        <TouchableOpacity
+          style={styles.continueBtnWeb}
+          onPress={handleContinue}
+        >
+          <Text style={styles.continueTextWeb}>Proceed to Checkout</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -310,144 +243,129 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.textLight,
   },
-  scroll: {
-    padding: 20,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 22,
-    fontFamily: "Poppins-Bold",
-    marginBottom: 6,
-    color: theme.colors.textDark,
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 16,
-    color: theme.colors.textDark,
-    fontFamily: "Poppins-Regular",
-  },
-  featuresBox: {
-    width: "100%",
-    marginBottom: 20,
-  },
-  featureTitle: {
-    fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
-    color: theme.colors.textDark,
-  },
-  featureItem: {
-    fontSize: 14,
-    marginVertical: 4,
-    fontFamily: "Poppins-Regular",
-  },
-  planRow: {
-    marginBottom: 80,
-    height: 180,
+  contentWeb: {
+    flex: 1,
+    padding: 50,
     paddingTop: 20,
   },
-  planCard: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    marginHorizontal: 8,
-    width: 140,
-    borderWidth: 1,
-    borderColor: theme.colors.textLighterGray,
+  mainRow: {
+    flexDirection: "row",
+    gap: 50,
+    paddingTop: 50,
   },
-  planLabelTitle: {
-    fontSize: 24,
-    fontFamily: "Poppins-SemiBold",
-  },
-  planLabel: {
-    fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
-  },
-  planPrice: {
-    fontSize: 16,
-    fontFamily: "Poppins-Bold",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  discountPrice: {
-    textDecorationLine: "line-through",
-    color: "gray",
-    fontSize: 12,
-    marginTop: 0,
-  },
-  planDiscountPercent: {
-    backgroundColor: "#FFEAEA",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  planDiscountPercentText: {
-    fontSize: 12,
-    color: "red",
-    fontFamily: "Poppins-SemiBold",
-  },
-  continueBtn: {
-    backgroundColor: theme.colors.primaryDark,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-  continueText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "Poppins-Bold",
-  },
-  footer: {
-    fontSize: 11,
-    textAlign: "center",
-    color: theme.colors.textLight,
-    fontFamily: "Poppins-SemiBold",
-    lineHeight: 16,
-  },
-  content: {
+  leftColumn: {
     flex: 1,
-    justifyContent: "space-between",
   },
-  bottomSection: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    backgroundColor: theme.colors.textLight,
+  rightColumn: {
+    width: 320,
   },
-  table: {
+  subtitleWeb: {
+    fontSize: 18,
+    color: theme.colors.textDark,
+    fontFamily: "Poppins-Regular",
+    lineHeight: 24,
+    marginBottom: 25,
+  },
+  featuresBoxWeb: {
     width: "100%",
-    marginTop: 8,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
+    marginBottom: 30,
   },
-  tableRow: {
+  featureTitleWeb: {
+    fontSize: 16,
+    color: theme.colors.primaryDark,
+    marginBottom: 15,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    fontFamily: "Poppins-SemiBold",
+  },
+  tableWeb: {
+    width: "100%",
+    borderRadius: 10,
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  tableRowWeb: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
   },
-  tableBullet: {
-    fontSize: 14,
-    marginRight: 8,
-    color: theme.colors.textLight,
-    fontFamily: "Poppins-SemiBold",
-  },
-  tableCell: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-    color: theme.colors.textDark,
-  },
-  lastRow: {
+  lastRowWeb: {
     borderBottomWidth: 0,
   },
-  planCardSelected: {
-    borderWidth: 2,
+  tableCellWeb: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.textDark,
+    lineHeight: 22,
+    fontFamily: "Poppins-Regular",
+  },
+  planCardWeb: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    alignItems: "center",
+    paddingVertical: 25,
+    paddingHorizontal: 20,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    transition: "all 0.2s",
+  },
+  planCardSelectedWeb: {
     borderColor: theme.colors.primaryDark,
+    shadowOpacity: 0.15,
+    borderWidth: 2,
+  },
+  planLabelTitleWeb: {
+    fontSize: 26,
+    fontFamily: "Poppins-Bold",
+    marginBottom: 6,
+  },
+  planLabelWeb: {
+    fontSize: 16,
+    fontFamily: "Poppins-SemiBold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  planPriceWeb: { fontSize: 20, fontFamily: "Poppins-Bold" },
+  discountPriceWeb: {
+    textDecorationLine: "line-through",
+    color: "#9E9E9E",
+    fontSize: 14,
+    marginBottom: 4,
+    fontFamily: "Poppins-Regular",
+  },
+  planDiscountPercentWeb: {
+    backgroundColor: "#FFEAEA",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  planDiscountPercentTextWeb: {
+    fontSize: 13,
+    color: "#E53935",
+    fontFamily: "Poppins-SemiBold",
+  },
+  continueBtnWeb: {
+    backgroundColor: theme.colors.primaryDark,
+    paddingVertical: 18,
+    borderRadius: 35,
+    alignSelf: "center",
+    width: "50%",
+    marginTop: 50,
+  },
+  continueTextWeb: {
+    color: "#fff",
+    fontSize: 17,
+    fontFamily: "Poppins-SemiBold",
+    textAlign: "center",
   },
 });

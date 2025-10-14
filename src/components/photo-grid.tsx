@@ -22,6 +22,7 @@ interface Props {
   columns?: number;
   spacing?: number;
   slots?: number;
+  containerWidth?: number;
 }
 
 export const PhotoGrid: FC<Props> = ({
@@ -30,12 +31,18 @@ export const PhotoGrid: FC<Props> = ({
   columns = 3,
   spacing = 10,
   slots = 6,
+  containerWidth,
 }) => {
-  const containerWidth = Dimensions.get("window").width - margin * 2;
-  const itemSize = containerWidth / columns - spacing;
+  const actualContainerWidth =
+    containerWidth ?? Dimensions.get("window").width * 0.66 - margin * 2;
+
+  const itemSize = (actualContainerWidth - (columns - 1) * spacing) / columns;
 
   const [data, setData] = useState<Item[]>([]);
   const { setEdits, setGridActive } = useEdit();
+
+  const rows = Math.ceil(data.filter((d) => d.photo).length / columns) || 1;
+  const containerHeight = rows * itemSize + (rows - 1) * spacing;
 
   useEffect(() => {
     const initialData: Item[] = Array(slots)
@@ -144,6 +151,7 @@ export const PhotoGrid: FC<Props> = ({
           height: itemSize,
           width: itemSize,
           position: "relative",
+          padding: 10,
         }}
       >
         {item.photo?.photo_url ? (
@@ -301,8 +309,7 @@ export const PhotoGrid: FC<Props> = ({
   return (
     <View
       style={{
-        width: containerWidth,
-        alignSelf: "center",
+        height: containerHeight,
       }}
     >
       <DraggableGrid

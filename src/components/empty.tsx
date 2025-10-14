@@ -38,23 +38,28 @@ export const Empty: FC<Props> = ({
       </View>
       <View className="gap-2 px-5">
         {primaryText && (
-          <Pressable
-            className="h-14 items-center justify-center rounded-full w-full"
-            style={{ backgroundColor: theme.colors.primaryDark }}
-            onPress={onPrimaryPress}
-          >
-            <Text className="text-white text-base font-poppins-medium">
-              {primaryText}
-            </Text>
-          </Pressable>
+          <View className="relative items-center">
+            <Pressable
+              className="h-14 items-center justify-center rounded-full w-full"
+              style={{
+                backgroundColor: theme.colors.primaryDark,
+                width: "50%",
+              }}
+              onPress={onPrimaryPress}
+            >
+              <Text className="text-white text-base font-poppins-medium">
+                {primaryText}
+              </Text>
+            </Pressable>
+          </View>
         )}
         {secondaryText && (
-          <View className="relative">
+          <View className="relative items-center">
             <Text className="text-center font-poppins-medium">OR</Text>
             <Pressable
               className="h-14 bg-white items-center justify-center rounded-full border border-neutral-400"
               onPress={secondaryDisabled ? undefined : onSecondaryPress}
-              style={{ opacity: secondaryDisabled ? 0.5 : 1 }}
+              style={{ opacity: secondaryDisabled ? 0.5 : 1, width: "50%" }}
             >
               <Text className="text-black text-base font-poppins-medium">
                 {secondaryText}

@@ -1,6 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Link, router, Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   Animated,
@@ -77,13 +76,15 @@ export default function Page() {
   }, [refetch]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" style={{ paddingTop: 20 }}>
       <AnimatedScrollView
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         <Stack.Screen
           options={{
@@ -98,14 +99,6 @@ export default function Page() {
             >
               Lovana
             </Text>
-            <View className="flex-row items-center gap-4">
-              <Link href={"/preferences"} suppressHighlighting>
-                <Ionicons name="options-outline" className="text-2xl" />
-              </Link>
-              <Link href={"/settings"} suppressHighlighting>
-                <Ionicons name="settings-outline" className="text-2xl" />
-              </Link>
-            </View>
           </View>
           <View className="items-center gap-2 my-12">
             <Pressable

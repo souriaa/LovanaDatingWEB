@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,9 +19,20 @@ const STORAGE_KEY = "ai_response_limit";
 const LIMIT = 5;
 const RESET_TIME = 60 * 60 * 1000;
 
+// platform-aware storage
+const storage =
+  Platform.OS === "web"
+    ? {
+        getItem: async (key: string) =>
+          Promise.resolve(localStorage.getItem(key)),
+        setItem: async (key: string, value: string) =>
+          Promise.resolve(localStorage.setItem(key, value)),
+      }
+    : require("@react-native-async-storage/async-storage");
+
 async function getAIStatus() {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEY);
+    const data = await storage.getItem(STORAGE_KEY);
     const now = Date.now();
 
     if (!data) return { count: 0, timestamp: now };
@@ -29,7 +40,7 @@ async function getAIStatus() {
     const { count, timestamp } = JSON.parse(data);
 
     if (now - timestamp > RESET_TIME) {
-      await AsyncStorage.setItem(
+      await storage.setItem(
         STORAGE_KEY,
         JSON.stringify({ count: 0, timestamp: now })
       );
@@ -48,14 +59,14 @@ async function useAIResponse() {
     const { count, timestamp } = await getAIStatus();
     const now = Date.now();
     if (now - timestamp > RESET_TIME) {
-      await AsyncStorage.setItem(
+      await storage.setItem(
         STORAGE_KEY,
         JSON.stringify({ count: 1, timestamp: now })
       );
       return 1;
     }
 
-    await AsyncStorage.setItem(
+    await storage.setItem(
       STORAGE_KEY,
       JSON.stringify({ count: count + 1, timestamp })
     );

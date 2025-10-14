@@ -2,7 +2,6 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { getInteractionWithOtherProfileById } from "../../../../service/interactionService";
-import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { ProfileView } from "../../../components/profile-view";
 import { transformPublicProfile } from "../../../utils/profile";
@@ -52,7 +51,6 @@ const Page = () => {
 
   return (
     <View className="flex-1 px-5 bg-white">
-      <Header style={{ marginTop: 20 }} />
       <ScrollView showsVerticalScrollIndicator={false}>
         <ProfileView profile={profile} />
       </ScrollView>

@@ -5,6 +5,7 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -50,29 +51,27 @@ export default function Page() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={100}
     >
       <StackHeader />
       <StatusBar barStyle={"dark-content"} />
 
-      <View className="flex-1 justify-center p-5">
+      <View style={styles.innerContainer}>
         <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-          }}
+          contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-4xl font-playfair-semibold mb-10">
+          <Text style={styles.heading}>
             What's your email and phone number?
           </Text>
 
           {/* Email Input */}
-          <Text className="text-gray-500 font-poppins-medium mb-2">Email</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            className="border-b h-20 text-2xl font-poppins-semibold mb-8"
+            style={styles.input}
             selectionColor={colors.black}
             keyboardType="email-address"
             textContentType="emailAddress"
@@ -84,19 +83,13 @@ export default function Page() {
             }}
             ref={emailRef}
             placeholder="mail@example.com"
+            placeholderTextColor="grey"
           />
 
           {/* Phone Input */}
-          <Text className="text-gray-500 font-poppins-medium mb-2">
-            Phone Number
-          </Text>
+          <Text style={styles.label}>Phone Number</Text>
           <TextInput
-            className="border-b h-20 text-2xl font-poppins-semibold mb-8"
-            style={
-              Platform.OS === "ios" && {
-                lineHeight: undefined,
-              }
-            }
+            style={styles.input}
             selectionColor={colors.black}
             keyboardType="phone-pad"
             textContentType="telephoneNumber"
@@ -108,23 +101,72 @@ export default function Page() {
             maxLength={16}
             ref={phoneRef}
             placeholder="0123456789"
+            placeholderTextColor="grey"
           />
 
-          {isError && (
-            <Text className="text-red-500 text-sm text-center mt-4">
-              {error.message}
-            </Text>
-          )}
+          {isError && <Text style={styles.errorText}>{error.message}</Text>}
+          <View style={styles.buttonContainer}>
+            <Fab
+              disabled={!isValid || isPending}
+              onPress={handleSubmit}
+              loading={isPending}
+            />
+          </View>
         </ScrollView>
-        {/* Submit Button */}
-        <View className="items-end mt-8">
-          <Fab
-            disabled={!isValid || isPending}
-            onPress={handleSubmit}
-            loading={isPending}
-          />
-        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    width: "100vw",
+    height: "100vh",
+  },
+  innerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: "5vw",
+    maxWidth: 600,
+    alignSelf: "center",
+    width: "100%",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    width: "100%",
+  },
+  heading: {
+    fontSize: 36,
+    fontFamily: "PlayfairDisplay-SemiBold",
+    marginBottom: 40,
+    textAlign: "center",
+  },
+  label: {
+    color: "#6b7280", // gray-500
+    fontFamily: "Poppins-Medium",
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    height: 60,
+    fontSize: 22,
+    fontFamily: "Poppins-SemiBold",
+    marginBottom: 24,
+    width: "100%",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 16,
+  },
+  buttonContainer: {
+    alignItems: "center",
+  },
+});

@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../../constants/theme";
 import { getInteractionByActorAndTarget } from "../../service/interactionService";
-import Header from "./Header";
 
 interface ChatHeaderProps {
   otherUser: any;
@@ -41,7 +40,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <View style={styles.headerContainer}>
-      <Header style={styles.header}>
+      <View style={styles.header}>
         <Pressable
           style={{ flexDirection: "row", alignItems: "center" }}
           onPress={handleNavigateToMessages}
@@ -56,7 +55,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               : null}
           </Text>
         </Pressable>
-      </Header>
+      </View>
 
       <Pressable onPress={onOptionsPress}>
         <Ionicons

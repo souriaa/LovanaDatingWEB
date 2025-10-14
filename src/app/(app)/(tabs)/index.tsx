@@ -1,7 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
@@ -283,27 +282,32 @@ export default function Page() {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-5">
-        <Link href={"/preferences"} suppressHighlighting>
-          <Ionicons name="options-outline" className="text-3xl" />
-        </Link>
+    <View className="flex-1 bg-white items-center">
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {profile && <ProfileView profile={profile} onLike={handleLike} />}
       </ScrollView>
-      <Fab
-        onPress={handleSkip}
-        iconName="close"
-        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-20 left-5"
-        iconClassName="text-black text-4xl"
-        loaderClassName="text-black"
-      />
-      <Fab
-        onPress={handleSuperlike}
-        iconName="star"
-        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-20 right-5"
-        iconClassName="text-red-900 text-4xl text-4xl"
-        loaderClassName="text-black"
-      />
+      <View className="absolute bottom-20 w-full flex flex-row justify-center space-x-8">
+        <Fab
+          onPress={handleSkip}
+          iconName="close"
+          className="bg-white shadow-sm h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          loaderClassName="text-black"
+          iconSize={40}
+        />
+        <Fab
+          onPress={handleSuperlike}
+          iconName="star"
+          className="bg-white shadow-sm h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-red-900 text-4xl"
+          loaderClassName="text-black"
+          iconSize={40}
+        />
+      </View>
     </View>
   );
 }

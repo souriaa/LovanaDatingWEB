@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { MotiView } from "moti";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -45,7 +45,7 @@ function PayPlanCard({
   onPress,
   i,
 }: PayPlanCardProps) {
-  const cardWidth = screenWidth * 0.85;
+  const cardWidth = screenWidth * 0.23;
   const cardColors = [
     theme.colors.primaryLight,
     theme.colors.primary,
@@ -116,21 +116,21 @@ function PayPlanCard({
       >
         <Text style={styles.premiumTitle}>{title}</Text>
         <Text style={styles.premiumSubtitle}>{subtitle}</Text>
-        <View
+        <TouchableOpacity
           style={styles.activeBadge}
-          {...(activePlan !== planId
-            ? {
-                onTouchEnd: () =>
-                  router.push(`/plans/get-plans?planId=${planId}`),
-              }
-            : {})}
+          activeOpacity={0.7}
+          disabled={activePlan === planId}
+          onPress={() =>
+            activePlan !== planId &&
+            router.push(`/plans/get-plans?planId=${planId}`)
+          }
         >
           {loading ? (
             <ActivityIndicator size="small" color="#111827" />
           ) : (
             <Text style={styles.activeText}>{upgradeText}</Text>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     </Pressable>
   );
@@ -144,6 +144,11 @@ export default function MyPayPlan({ refreshKey }) {
   const [timeExtender, setTimeExtender] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   const fetchPlans = async () => {
     try {
@@ -260,7 +265,28 @@ export default function MyPayPlan({ refreshKey }) {
           {loading ? (
             <ActivityIndicator size="large" color={theme.colors.textDark} />
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              ref={scrollRef}
+              style={{ cursor: "grab" }}
+              onMouseDown={(e) => {
+                setIsDown(true);
+                setStartX(e.pageX);
+                if (scrollRef.current)
+                  setScrollLeft(scrollRef.current.scrollLeft || 0);
+              }}
+              onMouseUp={() => setIsDown(false)}
+              onMouseLeave={() => setIsDown(false)}
+              onMouseMove={(e) => {
+                if (!isDown || !scrollRef.current) return;
+                const walk = e.pageX - startX;
+                scrollRef.current.scrollTo({
+                  x: scrollLeft - walk,
+                  animated: false,
+                });
+              }}
+            >
               {plans.map((plan, index) => (
                 <PayPlanCard
                   key={plan.id}
@@ -289,60 +315,62 @@ export default function MyPayPlan({ refreshKey }) {
               transition={{ type: "timing", duration: 500 }}
               style={styles.comparisonContainer}
             >
-              <Text style={styles.featuresHeader}>
-                {plans[selectedIndex].name}
-              </Text>
+              <View style={styles.comparisonContainerContainer}>
+                <Text style={styles.featuresHeader}>
+                  {plans[selectedIndex].name}
+                </Text>
 
-              {plans[plans.length - 1].features.map((feature, i) => {
-                const selectedPlan = plans[selectedIndex];
-                const hasFeature = selectedPlan.features.includes(feature);
+                {plans[plans.length - 1].features.map((feature, i) => {
+                  const selectedPlan = plans[selectedIndex];
+                  const hasFeature = selectedPlan.features.includes(feature);
 
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.featureRow,
-                      i === plans[plans.length - 1].features.length - 1 && {
-                        borderBottomWidth: 0,
-                      },
-                    ]}
-                  >
-                    <Text
+                  return (
+                    <View
+                      key={i}
                       style={[
-                        styles.featureText,
-                        {
-                          color: !hasFeature
-                            ? theme.colors.textLighterGray
-                            : selectedPlan.name === "Plus"
-                              ? theme.colors.primaryLight
-                              : selectedPlan.name === "Premium"
-                                ? theme.colors.primary
-                                : selectedPlan.name === "Lovana"
-                                  ? theme.colors.primaryDark
-                                  : theme.colors.primary,
+                        styles.featureRow,
+                        i === plans[plans.length - 1].features.length - 1 && {
+                          borderBottomWidth: 0,
                         },
                       ]}
                     >
-                      {feature}
-                    </Text>
-                    <Ionicons
-                      name={hasFeature ? "checkmark-outline" : ""}
-                      size={22}
-                      color={
-                        !hasFeature
-                          ? theme.colors.textLighterGray
-                          : selectedPlan?.name === "Plus"
-                            ? theme.colors.primaryLight
-                            : selectedPlan?.name === "Premium"
-                              ? theme.colors.primary
-                              : selectedPlan?.name === "Lovana"
-                                ? theme.colors.primaryDark
-                                : theme.colors.primary
-                      }
-                    />
-                  </View>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.featureText,
+                          {
+                            color: !hasFeature
+                              ? theme.colors.textLighterGray
+                              : selectedPlan.name === "Plus"
+                                ? theme.colors.primaryLight
+                                : selectedPlan.name === "Premium"
+                                  ? theme.colors.primary
+                                  : selectedPlan.name === "Lovana"
+                                    ? theme.colors.primaryDark
+                                    : theme.colors.primary,
+                          },
+                        ]}
+                      >
+                        {feature}
+                      </Text>
+                      <Ionicons
+                        name={hasFeature ? "checkmark-outline" : ""}
+                        size={22}
+                        color={
+                          !hasFeature
+                            ? theme.colors.textLighterGray
+                            : selectedPlan?.name === "Plus"
+                              ? theme.colors.primaryLight
+                              : selectedPlan?.name === "Premium"
+                                ? theme.colors.primary
+                                : selectedPlan?.name === "Lovana"
+                                  ? theme.colors.primaryDark
+                                  : theme.colors.primary
+                        }
+                      />
+                    </View>
+                  );
+                })}
+              </View>
             </MotiView>
           )}
         </View>
@@ -356,6 +384,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 16,
+    paddingHorizontal: 50,
   },
   perkCard: {
     flex: 1,
@@ -364,7 +393,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginHorizontal: 4,
-    maxWidth: "40%",
+    maxWidth: "20%",
   },
   perkTitle: {
     fontSize: 14,
@@ -429,6 +458,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   comparisonContainer: {
+    display: "flex",
+    alignItems: "center",
+  },
+  comparisonContainerContainer: {
+    width: "60%",
     backgroundColor: theme.colors.backgroundLighterGray,
     borderRadius: 12,
     padding: 16,

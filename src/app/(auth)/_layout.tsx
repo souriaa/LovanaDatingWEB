@@ -9,7 +9,7 @@ export default function Layout() {
   }
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="phone" />
       <Stack.Screen name="otp" />

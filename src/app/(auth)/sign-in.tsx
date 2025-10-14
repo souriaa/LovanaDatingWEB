@@ -1,12 +1,11 @@
 import { Link, Stack } from "expo-router";
-import { Pressable, StatusBar, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
 import { theme } from "../../../constants/theme";
 import { VideoBackground } from "../../components/video-background";
 
 export default function Page() {
   return (
-    <View className="flex-1">
+    <View style={styles.container}>
       <Stack.Screen
         options={{
           headerShown: false,
@@ -15,35 +14,71 @@ export default function Page() {
       <StatusBar barStyle={"light-content"} />
       <VideoBackground
         source={require("../../../assets/images/background.mp4")}
+        style={styles.videoBackground}
       >
-        <SafeAreaView className="flex-1 p-10">
-          <View className="flex-1 items-center pt-14">
-            <Text
-              className="text-white font-poppins-semibold"
-              style={{ fontSize: 50 }}
-            >
-              Lovana
-            </Text>
-            <View className="h-4" />
-            <Text className="text-white text-xl font-poppins-semibold">
-              AI-powered dating app
-            </Text>
-            <Text className="text-white text-xl font-poppins-semibold">
-              Match right - Love long
-            </Text>
-          </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Lovana</Text>
+          <Text style={styles.subtitle}>AI-powered dating app</Text>
+          <Text style={styles.subtitle}>Match right - Love long</Text>
+
           <Link href={"/phone"} asChild>
-            <Pressable
-              className="h-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: theme.colors.primaryDark }}
-            >
-              <Text className="text-white text-lg font-poppins-semibold">
-                Sign in
-              </Text>
+            <Pressable style={styles.signInBtn}>
+              <Text style={styles.signInText}>Sign in</Text>
             </Pressable>
           </Link>
-        </SafeAreaView>
+        </View>
       </VideoBackground>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: "100vw",
+    height: "100vh",
+    overflow: "hidden",
+  },
+  videoBackground: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    top: 0,
+    left: 0,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 0,
+    margin: 0,
+    width: "100%",
+    height: "100%",
+    gap: 16,
+    backgroundColor: "rgba(0,0,0,0.35)", // optional overlay for text readability
+  },
+  title: {
+    color: "#fff",
+    fontSize: 60,
+    fontFamily: "Poppins-SemiBold",
+    textAlign: "center",
+  },
+  subtitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Poppins-SemiBold",
+    textAlign: "center",
+  },
+  signInBtn: {
+    marginTop: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 64,
+    borderRadius: 999,
+    backgroundColor: theme.colors.primaryDark,
+  },
+  signInText: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Poppins-SemiBold",
+  },
+});
