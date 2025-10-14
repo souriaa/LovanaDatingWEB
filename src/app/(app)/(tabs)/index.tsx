@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
 import { getProfile, isProfileComplete } from "../../../../service/userService";
 import { useSignOut } from "../../../api/auth";
@@ -13,6 +13,7 @@ import {
   useSkipProfile,
   useSuperlikeProfile,
 } from "../../../api/profiles";
+import { useAlert } from "../../../components/alert-provider";
 import { Empty } from "../../../components/empty";
 import { Fab } from "../../../components/fab";
 import { Loader } from "../../../components/loader";
@@ -36,6 +37,8 @@ export default function Page() {
   const [canUsePremium, setCanUsePremium] = useState(false);
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
+
+  const { showAlert } = useAlert();
 
   const hasProfiles = data && data.length > 0;
 
@@ -106,11 +109,18 @@ export default function Page() {
         // console.log("Country:", address.country);
 
         if (address.country !== "Vietnam") {
-          Alert.alert(
-            "Access Forbidden",
-            "Logging in from outside Vietnam is not allowed. Please contact the developer."
-          );
-          signOut();
+          showAlert({
+            title: "Access Forbidden",
+            message:
+              "Logging in from outside Vietnam is not allowed. Please contact the developer.",
+            buttons: [
+              {
+                text: "OK",
+                style: "cancel",
+                onPress: () => signOut(),
+              },
+            ],
+          });
           return;
         }
 
@@ -162,7 +172,11 @@ export default function Page() {
           }
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       });
     }
@@ -175,8 +189,13 @@ export default function Page() {
           queryKey: ["profiles"],
         });
       },
+
       onError: () => {
-        Alert.alert("Error", "Something went wrong, please try again later");
+        showAlert({
+          title: "Error",
+          message: "Something went wrong, please try again later",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
       },
     });
   };
@@ -201,10 +220,11 @@ export default function Page() {
             }
           },
           onError: () => {
-            Alert.alert(
-              "Error",
-              "Something went wrong, please try again later"
-            );
+            showAlert({
+              title: "Error",
+              message: "Something went wrong, please try again later",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
           },
         }
       );
@@ -226,10 +246,11 @@ export default function Page() {
           }
         },
         onError: () => {
-          Alert.alert(
-            "Error",
-            "Something went wrong with superlike. Please try again."
-          );
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       }
     );
@@ -294,7 +315,7 @@ export default function Page() {
         <Fab
           onPress={handleSkip}
           iconName="close"
-          className="bg-white shadow-sm h-20 active:h-[4.75rem] rounded-full"
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
           iconClassName="text-black text-4xl"
           loaderClassName="text-black"
           iconSize={40}
@@ -302,7 +323,7 @@ export default function Page() {
         <Fab
           onPress={handleSuperlike}
           iconName="star"
-          className="bg-white shadow-sm h-20 active:h-[4.75rem] rounded-full"
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
           iconClassName="text-red-900 text-4xl"
           loaderClassName="text-black"
           iconSize={40}

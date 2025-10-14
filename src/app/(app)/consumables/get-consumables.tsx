@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,15 +11,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { getConsumableById } from "../../../../service/consumableService";
 import { getProfile } from "../../../../service/userService";
+import { useAlert } from "../../../components/alert-provider";
 import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { supabase } from "../../../lib/supabase";
+import { usePayment } from "../../../store/payment-store";
 
 export default function GetPlan() {
   const { consumableId } = useLocalSearchParams<{ consumableId: string }>();
   const [consumable, setConsumable] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedConsumable, setSelectedConsumable] = useState<number>(1);
+
+  const { showAlert } = useAlert();
+
+  const { setPayment } = usePayment();
 
   useEffect(() => {
     const fetchConsumable = async () => {
@@ -62,7 +67,11 @@ export default function GetPlan() {
       } = await supabase.auth.getUser();
 
       if (error || !user) {
-        Alert.alert("Not logged in", "Please log in to continue.");
+        showAlert({
+          title: "Not logged in",
+          message: "Please log in to continue.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -73,7 +82,11 @@ export default function GetPlan() {
       );
 
       if (!selectedPkg) {
-        Alert.alert("Selection Error", "Please select a valid package.");
+        showAlert({
+          title: "Selection Error",
+          message: "Please select a valid package.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -91,7 +104,11 @@ export default function GetPlan() {
 
       if (selectError && selectError.code !== "PGRST116") {
         console.error("Select error:", selectError);
-        Alert.alert("Payment Error", "Could not query payment row.");
+        showAlert({
+          title: "Payment Error",
+          message: "Could not query payment row.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -116,7 +133,11 @@ export default function GetPlan() {
 
         if (insertError || !data) {
           console.error("Insert error:", insertError);
-          Alert.alert("Payment Error", "Could not create payment row.");
+          showAlert({
+            title: "Payment Error",
+            message: "Could not query payment row.",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
           return;
         }
 
@@ -124,18 +145,21 @@ export default function GetPlan() {
       }
 
       router.back();
-      router.push({
-        pathname: "/qr/qr-page",
-        params: {
-          paymentId: paymentRow.id,
-          amount: amount.toString(),
-          currency: selectedPkg.currency,
-          type: "consumable",
-        },
+      setPayment({
+        paymentId: paymentRow.id,
+        amount: amount,
+        currency: selectedPkg.currency,
+        name: consumable.name,
+        type: "consumable",
       });
+      router.push("/qr/qr-page");
     } catch (err) {
       console.error("Error in handleContinue:", err);
-      Alert.alert("Payment Error", "Something went wrong.");
+      showAlert({
+        title: "Payment Error",
+        message: "Could not query payment row.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 

@@ -1,9 +1,9 @@
 import { router, Stack } from "expo-router";
 import { isEqual } from "lodash";
-import { Alert } from "react-native";
 import colors from "tailwindcss/colors";
 import { theme } from "../../../../../constants/theme";
 import { useMyProfile, useUpdateProfile } from "../../../../api/my-profile";
+import { useAlert } from "../../../../components/alert-provider";
 import { StackHeaderV3 } from "../../../../components/stack-header-v3";
 import { MaterialTopTabs } from "../../../../layouts/material-top-tabs";
 import { useEdit } from "../../../../store/edit";
@@ -13,34 +13,41 @@ export default function Layout() {
   const { edits, setEdits, gridActive } = useEdit();
   const { mutate } = useUpdateProfile();
 
+  const { showAlert } = useAlert();
+
   const handlePressCancel = async () => {
     if (isEqual(profile, edits)) {
-      router.dismiss();
+      router.push("/lovana");
       return;
     }
 
-    Alert.alert(
-      "Discard Changes",
-      "Are you sure you want to discard your changes?",
-      [
+    showAlert({
+      title: "Discard Changes",
+      message: "Are you sure you want to discard your changes?",
+      buttons: [
         {
           text: "Cancel",
           style: "cancel",
         },
         {
           text: "Discard",
+          style: "destructive",
           onPress: () => {
             setEdits(profile);
             router.dismiss();
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handlePresDone = async () => {
     if (!edits) {
-      Alert.alert("Error", "Something went wrong, please try again later");
+      showAlert({
+        title: "Error",
+        message: "Something went wrong, please try again later",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
       return;
     }
 
@@ -54,7 +61,11 @@ export default function Layout() {
         router.dismiss();
       },
       onError: () => {
-        Alert.alert("Error", "Something went wrong, please try again later");
+        showAlert({
+          title: "Error",
+          message: "Something went wrong, please try again later",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
       },
     });
   };

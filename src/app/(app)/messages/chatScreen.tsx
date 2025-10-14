@@ -2,12 +2,12 @@ import * as DocumentPicker from "expo-document-picker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 import { theme } from "../../../../constants/theme";
@@ -24,6 +24,7 @@ import {
   sendMessage,
 } from "../../../../service/messageService";
 import { useUnmatch } from "../../../api/profiles";
+import { useAlert } from "../../../components/alert-provider";
 import { ChatHeader } from "../../../components/chat-header";
 import { ExtendTimeSheet } from "../../../components/extend-time-sheet";
 import { FilePreview } from "../../../components/file-preview";
@@ -70,6 +71,8 @@ export default function ChatScreen() {
   const headerHeight = 88;
   const height = screenHeight - headerHeight;
   const slideAnim = useRef(new Animated.Value(height)).current;
+
+  const { showAlert } = useAlert();
 
   const { mutate } = useUnmatch();
 
@@ -501,29 +504,34 @@ Câu trả lời cho sender_id Me:
         ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
         : "this user";
 
-    Alert.alert(
-      "Are you sure?",
-      `Unmatching will delete the match for both you and ${userName}`,
-      [
-        { text: "Cancel", style: "cancel" },
+    showAlert({
+      title: "Are you sure?",
+      message: `Unmatching will delete the match for both you and ${userName}`,
+      buttons: [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
         {
           text: "Unmatch",
+          style: "destructive",
           onPress: async () => {
             mutate(interactionId, {
               onSuccess: async () => {
                 router.navigate("/matches/");
               },
               onError: (err) => {
-                Alert.alert(
-                  "Error",
-                  "Something went wrong, please try again later."
-                );
+                showAlert({
+                  title: "Error",
+                  message: "Something went wrong, please try again later.",
+                  buttons: [{ text: "OK", style: "cancel" }],
+                });
               },
             });
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const loadOlderMessages = async () => {
@@ -585,7 +593,7 @@ Câu trả lời cho sender_id Me:
           )}
 
           {/* File Preview */}
-          <View style={{ marginBottom: 4 }}>
+          <View>
             {selectedFile && selectedFile.uri && (
               <FilePreview
                 selectedFile={selectedFile}

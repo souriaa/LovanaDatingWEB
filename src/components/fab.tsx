@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FC } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { theme } from "../../constants/theme";
 import { cn } from "../utils/cn";
 
 interface Props {
@@ -34,6 +35,7 @@ export const Fab: FC<Props> = ({
         },
         className
       )}
+      style={{ borderWidth: 1, borderColor: theme.colors.textLightGray }}
       onPress={onPress}
       disabled={disabled}
     >

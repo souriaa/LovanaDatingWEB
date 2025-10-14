@@ -133,6 +133,7 @@ export default function Page() {
             columnWrapperStyle={{
               justifyContent: "space-between",
               marginBottom: 12,
+              gap: 10,
             }}
             contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
             ListEmptyComponent={renderEmpty}

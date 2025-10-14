@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryDark,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
@@ -60,6 +60,6 @@ const styles = StyleSheet.create({
   extendBtnText: {
     color: "#fff",
     fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: "Poppins-Regular",
   },
 });

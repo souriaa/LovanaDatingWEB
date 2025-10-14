@@ -16,7 +16,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   <View style={styles.filePreview}>
     <Image source={{ uri: selectedFile.uri }} style={styles.filePreviewImage} />
     <TouchableOpacity onPress={onRemove}>
-      <Ionicons name="close-circle" size={20} color="red" />
+      <Ionicons name="close-circle" size={20} color="grey" />
     </TouchableOpacity>
   </View>
 );

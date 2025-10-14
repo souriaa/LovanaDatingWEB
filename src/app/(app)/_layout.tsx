@@ -1,16 +1,16 @@
-import { useLikes } from "@/api/profiles";
-import { Loader } from "@/components/loader";
-import { useAuth } from "@/store/auth";
-import { EditProvider } from "@/store/edit";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Link, Redirect, router, Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { theme } from "~/constants/theme";
+import { theme } from "../../../constants/theme";
 import { fetchConversations } from "../../../service/messageService";
 import { useMyProfile } from "../../api/my-profile";
+import { useLikes } from "../../api/profiles";
 import { CountdownCircle } from "../../components/countdown-circle";
+import { Loader } from "../../components/loader";
+import { useAuth } from "../../store/auth";
+import { EditProvider } from "../../store/edit";
 
 export default function Layout() {
   const { session, isLoading } = useAuth();
@@ -73,7 +73,7 @@ export default function Layout() {
             style={[styles.profileItem, { justifyContent: "space-between" }]}
           >
             <Pressable
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
               onPress={() => router.push("/lovana")}
             >
               {profile?.avatar_url ? (
@@ -106,7 +106,7 @@ export default function Layout() {
           <View style={styles.likesBox}>
             <Pressable
               style={styles.menuItemContainer}
-              onPress={() => router.push("/likes")}
+              onPress={() => router.replace("/likes")}
             >
               <Text style={styles.menuItem}>Likes</Text>
               <Ionicons name="chevron-forward-outline" size={18} />
@@ -139,7 +139,12 @@ export default function Layout() {
                           tint="light"
                           style={{
                             ...StyleSheet.absoluteFillObject,
-                            borderRadius: 25,
+                            position: "absolute",
+                            top: -20,
+                            bottom: -20,
+                            left: -20,
+                            right: -20,
+                            borderRadius: 25 + 20,
                           }}
                         />
                       )}
@@ -165,8 +170,6 @@ export default function Layout() {
               <Text style={styles.placeholderText}>No conversations yet</Text>
             ) : (
               conversations.slice(0, 5).map((item) => {
-                const [isHovered, setIsHovered] = useState(false);
-
                 return (
                   <Pressable
                     key={item.id}
@@ -267,7 +270,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
   },
   menuItem: {
-    fontSize: 16,
+    fontSize: 18,
     color: theme.colors.textDark,
     flex: 1,
     fontFamily: "Poppins-SemiBold",
@@ -279,13 +282,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 8,
     marginVertical: 2,
-    gap: 10,
+    gap: 16,
   },
   conversationName: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "500",
     color: theme.colors.textDark,
+    fontFamily: "Poppins-Regular",
   },
   unreadDot: {
     position: "absolute",
@@ -326,5 +329,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     fontFamily: "Poppins-Regular",
+    paddingBottom: 10,
   },
 });

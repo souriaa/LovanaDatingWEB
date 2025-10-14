@@ -1,12 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useUnmatch } from "../../../api/profiles";
+import { useAlert } from "../../../components/alert-provider";
 
 const CustomHeader = ({ title }: { title: string }) => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { mutate } = useUnmatch();
+
+  const { showAlert } = useAlert();
 
   return (
     <Stack.Screen
@@ -28,26 +31,33 @@ const CustomHeader = ({ title }: { title: string }) => {
         headerRight: () => (
           <Pressable
             onPressOut={() => {
-              Alert.alert(
-                "Are you sure?",
-                `Unmatching will delete the match for both you and ${title}`,
-                [
-                  { text: "Cancel", style: "cancel" },
+              showAlert({
+                title: "Are you sure?",
+                message: `Unmatching will delete the match for both you and ${title}`,
+                buttons: [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
                   {
                     text: "Unmatch",
+                    style: "destructive",
                     onPress: () => {
                       mutate(id, {
                         onSuccess: () => router.navigate("/matches/"),
-                        onError: () =>
-                          Alert.alert(
-                            "Error",
-                            "Something went wrong, please try again later."
-                          ),
+                        onError: () => {
+                          showAlert({
+                            title: "Error",
+                            message:
+                              "Something went wrong, please try again later.",
+                            buttons: [{ text: "OK", style: "cancel" }],
+                          });
+                        },
                       });
                     },
                   },
-                ]
-              );
+                ],
+              });
             }}
           >
             <Ionicons

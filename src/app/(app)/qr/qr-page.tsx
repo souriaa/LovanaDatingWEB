@@ -1,15 +1,27 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "../../../../constants/theme";
+import { usePayment } from "../../../store/payment-store";
 
 export default function QRPage() {
-  const { paymentId, amount, currency, type, plan_due_date } = useLocalSearchParams<{
-    paymentId: string;
-    amount: string;
-    currency: string;
-    type: "plan" | "consumable";
-    plan_due_date?: string;
-  }>();
   const router = useRouter();
+  const { payment } = usePayment();
+
+  useEffect(() => {
+    if (!payment) {
+      router.replace("/");
+    }
+  }, [payment]);
+
+  if (!payment) {
+    return null;
+  }
+
+  const { amount, type, plan_due_date, paymentId, currency, name } = payment;
+
+  const formattedAmount = Number(amount).toLocaleString();
 
   let qrUrl = "";
   if (type === "plan") {
@@ -18,22 +30,60 @@ export default function QRPage() {
     qrUrl = `https://qr.sepay.vn/img?acc=VQRQAEKJS2386&bank=MBBank&amount=${amount}&des=${type}${paymentId}`;
   }
 
-  console.log(qrUrl);
+  const decodePlanDueDate = (code: string | undefined) => {
+    if (!code) return "";
+    const map: Record<string, string> = {
+      "1w": "1 week",
+      "1m": "1 month",
+      "1y": "1 year",
+    };
+    return map[code] ?? code;
+  };
+
+  const handleCancel = () => {
+    router.back();
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Complete Your Payment</Text>
-      <Text style={styles.subtitle}>
-        Please scan the QR code to pay {Number(amount).toLocaleString()}{" "}
-        {currency}
-      </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Scan to Complete Payment</Text>
+        <Text style={styles.subtitle}>
+          Pay{" "}
+          <Text style={styles.amount}>
+            {formattedAmount} {currency}
+          </Text>
+        </Text>
+      </View>
 
-      <Image source={{ uri: qrUrl }} style={styles.qrCode} />
+      <View style={styles.qrCard}>
+        <Image source={{ uri: qrUrl }} style={styles.qrCode} />
+      </View>
 
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backText}>Cancel</Text>
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>Payment Details</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Plan name:</Text>
+          <Text style={styles.infoValue}>{name}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Type:</Text>
+          <Text style={styles.infoValue}>{type}</Text>
+        </View>
+        {plan_due_date && (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Duration:</Text>
+            <Text style={styles.infoValue}>
+              {decodePlanDueDate(plan_due_date)}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+        <Text style={styles.cancelText}>Cancel Payment</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -41,33 +91,83 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 30,
+    backgroundColor: "#f9fafb",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
   },
   title: {
-    fontSize: 20,
-    marginBottom: 10,
-    fontFamily: "Poppins-Bold",
+    fontSize: 22,
+    fontFamily: "Poppins-SemiBold",
+    color: theme.colors.textDark,
   },
   subtitle: {
-    fontSize: 14,
-    marginBottom: 20,
-    textAlign: "center",
+    fontSize: 16,
     fontFamily: "Poppins-Regular",
+    color: "#4b5563",
+    marginTop: 5,
+  },
+  amount: {
+    fontFamily: "Poppins-SemiBold",
+    color: theme.colors.textDark,
+  },
+  qrCard: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 16,
+    marginVertical: 20,
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
   },
   qrCode: {
     width: 250,
     height: 250,
-    marginBottom: 20,
   },
-  backBtn: {
-    padding: 12,
-    backgroundColor: "#111827",
-    borderRadius: 8,
+  infoCard: {
+    width: "50%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 10,
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
   },
-  backText: {
-    color: "white",
-    fontWeight: "600",
+  infoTitle: {
+    fontSize: 16,
+    fontFamily: "Poppins-SemiBold",
+    color: theme.colors.textDark,
+    marginBottom: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  infoLabel: {
     fontFamily: "Poppins-Regular",
+    color: "#6b7280",
+  },
+  infoValue: {
+    fontFamily: "Poppins-Medium",
+    color: theme.colors.textDark,
+  },
+  cancelBtn: {
+    marginTop: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    backgroundColor: theme.colors.primaryDark,
+    shadowColor: theme.colors.primaryDark,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    borderRadius: 30,
+  },
+  cancelText: {
+    color: "white",
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 16,
   },
 });

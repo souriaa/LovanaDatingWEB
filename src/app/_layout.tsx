@@ -4,8 +4,10 @@ import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../../global.css";
+import { AlertProvider } from "../components/alert-provider";
 import { fonts } from "../constants/fonts";
 import { AuthProvider } from "../store/auth";
+import { PaymentProvider } from "../store/payment-store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,24 +30,28 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen
-              name="(app)"
-              options={{
-                animation: "none",
-              }}
-            />
-            <Stack.Screen
-              name="(auth)"
-              options={{
-                animation: "none",
-              }}
-            />
-          </Stack>
+          <AlertProvider>
+            <PaymentProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
+                <Stack.Screen
+                  name="(app)"
+                  options={{
+                    animation: "none",
+                  }}
+                />
+                <Stack.Screen
+                  name="(auth)"
+                  options={{
+                    animation: "none",
+                  }}
+                />
+              </Stack>
+            </PaymentProvider>
+          </AlertProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

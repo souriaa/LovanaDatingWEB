@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import Tooltip from "react-native-tooltip-2";
 import { theme } from "../../constants/theme";
 import { getActivePlanByUserId } from "../../service/profilePlanService";
 import Input from "./Input";
+import { useAlert } from "./alert-provider";
 
 const STORAGE_KEY = "ai_response_limit";
 const LIMIT = 5;
@@ -93,6 +93,8 @@ export const InputBar = ({
   const [aiInfo, setAiInfo] = useState({ remaining: LIMIT, resetMinutes: 60 });
   const tooltipRef = useRef(null);
 
+  const { showAlert } = useAlert();
+
   useEffect(() => {
     (async () => {
       const plan = await getActivePlanByUserId(currentUser);
@@ -130,10 +132,12 @@ export const InputBar = ({
   const handleAIResponse = async () => {
     const { count } = await getAIStatus();
     if (count >= LIMIT) {
-      Alert.alert(
-        "Giới hạn đã đạt",
-        "Bạn chỉ có thể dùng AI tối đa 5 lần mỗi 1 tiếng. Vui lòng thử lại sau."
-      );
+      showAlert({
+        title: "Giới hạn đã đạt",
+        message:
+          "Bạn chỉ có thể dùng AI tối đa 5 lần mỗi 1 tiếng. Vui lòng thử lại sau.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
       return;
     }
 

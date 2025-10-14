@@ -150,17 +150,7 @@ export const useMatch = () => {
       await queryClient.invalidateQueries({ queryKey: ["likes"] });
     },
     onError: (err: any) => {
-      // Detailed error alert
       console.error("Match mutation error:", err);
-
-      if (err.message) {
-        Alert.alert("Error", err.message);
-      } else {
-        Alert.alert(
-          "Error",
-          "Something went wrong during the match. Check console for details."
-        );
-      }
     },
   });
 };

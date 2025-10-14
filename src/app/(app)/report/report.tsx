@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +15,7 @@ import {
   submitProfileReport,
 } from "../../../../service/reportService";
 import { getProfile } from "../../../../service/userService";
+import { useAlert } from "../../../components/alert-provider";
 import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { supabase } from "../../../lib/supabase";
@@ -32,6 +32,8 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [note, setNote] = useState("");
+
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -50,7 +52,12 @@ export default function ReportPage() {
   const handleSubmit = async () => {
     try {
       if (!selectedOption) {
-        Alert.alert("Missing Selection", "Please select a report reason.");
+        showAlert({
+          title: "Missing Selection",
+          message: "Please select a report reason.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
+
         return;
       }
 
@@ -60,7 +67,11 @@ export default function ReportPage() {
       } = await supabase.auth.getUser();
 
       if (error || !user) {
-        Alert.alert("Not logged in", "Please log in to continue.");
+        showAlert({
+          title: "Not logged in",
+          message: "Please log in to continue.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -75,14 +86,19 @@ export default function ReportPage() {
         note,
       });
 
-      Alert.alert(
-        "Report Submitted",
-        "Thank you for helping keep our community safe."
-      );
+      showAlert({
+        title: "Report Submitted",
+        message: "Thank you for helping keep our community safe.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
       router.back();
     } catch (err) {
       console.error("handleSubmit error:", err);
-      Alert.alert("Error", "Something went wrong submitting your report.");
+      showAlert({
+        title: "Error",
+        message: "Something went wrong, please try again later",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 

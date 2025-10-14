@@ -1,8 +1,9 @@
 import { openSettings } from "expo-linking";
 import * as Location from "expo-location";
 import { FC, useEffect, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { LocationData } from "../types/location";
+import { useAlert } from "./alert-provider";
 
 interface Props {
   location: LocationData;
@@ -13,6 +14,8 @@ export const LocationView: FC<Props> = ({ location, onLocationChange }) => {
   const [neighborhood, setNeighborhood] = useState(
     location?.neighborhood ?? ""
   );
+
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (location?.latitude && location?.longitude && location?.neighborhood) {
@@ -31,11 +34,15 @@ export const LocationView: FC<Props> = ({ location, onLocationChange }) => {
     }
 
     if (finalStatus !== "granted") {
-      Alert.alert(
-        "Allow Location Access",
-        "Please enable Location Services so we can introduce you to new people near you.",
-        [{ text: "Cancel" }, { text: "Settings", onPress: openSettings }]
-      );
+      showAlert({
+        title: "Allow Location Access",
+        message:
+          "Please enable Location Services so we can introduce you to new people near you.",
+        buttons: [
+          { text: "Cancel", style: "cancel" },
+          { text: "Settings", onPress: openSettings },
+        ],
+      });
       return;
     }
   };
@@ -44,10 +51,12 @@ export const LocationView: FC<Props> = ({ location, onLocationChange }) => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permission denied",
-          "Please allow location access to detect your current position."
-        );
+        showAlert({
+          title: "Permission denied",
+          message:
+            "Please allow location access to detect your current position.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -65,7 +74,11 @@ export const LocationView: FC<Props> = ({ location, onLocationChange }) => {
       setNeighborhood(neighborhoodName);
       onLocationChange({ latitude, longitude, neighborhood: neighborhoodName });
     } catch (error: any) {
-      Alert.alert("Error", "Unable to fetch location. Please try again later.");
+      showAlert({
+        title: "Error",
+        message: "Unable to fetch location. Please try again later.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 

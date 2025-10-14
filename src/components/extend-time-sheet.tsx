@@ -1,8 +1,6 @@
-// File: components/chat/ExtendTimeSheet.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import {
-  Alert,
   Animated,
   StyleSheet,
   Text,
@@ -12,6 +10,7 @@ import {
 } from "react-native";
 import { theme } from "../../constants/theme";
 import { extendConversationTime } from "../../service/messageService";
+import { useAlert } from "./alert-provider";
 
 interface ExtendTimeSheetProps {
   otherUser: any;
@@ -32,9 +31,15 @@ export const ExtendTimeSheet: React.FC<ExtendTimeSheetProps> = ({
   conversationId,
   setConversationInfo,
 }) => {
+  const { showAlert } = useAlert();
+
   const handleExtend = async () => {
     if (!userId || !conversationId) {
-      Alert.alert("Error", "Invalid user or conversation.");
+      showAlert({
+        title: "Error",
+        message: "Invalid user or conversation.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
       return;
     }
     try {
@@ -47,12 +52,18 @@ export const ExtendTimeSheet: React.FC<ExtendTimeSheetProps> = ({
         expiration_at: updatedConversation.expiration_at,
       }));
       onCancel();
-      Alert.alert("Success", "Conversation time extended by 24 hours!");
+      showAlert({
+        title: "Success",
+        message: "Conversation time extended by 24 hours!",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     } catch (err: any) {
-      Alert.alert(
-        "Failed",
-        err.message || "Unable to extend time. Check your remaining extends."
-      );
+      showAlert({
+        title: "Failed",
+        message:
+          err.message || "Unable to extend time. Check your remaining extends.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 
@@ -160,7 +171,7 @@ const styles = StyleSheet.create({
   extendSheetButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryDark,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",

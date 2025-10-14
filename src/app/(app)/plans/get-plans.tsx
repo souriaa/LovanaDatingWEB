@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,15 +11,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { getPlanById } from "../../../../service/planService";
 import { getProfile } from "../../../../service/userService";
+import { useAlert } from "../../../components/alert-provider";
 import Header from "../../../components/Header";
 import { Loader } from "../../../components/loader";
 import { supabase } from "../../../lib/supabase";
+import { usePayment } from "../../../store/payment-store";
 
 export default function GetPlan() {
   const { planId } = useLocalSearchParams<{ planId: string }>();
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string>("week");
+
+  const { showAlert } = useAlert();
+
+  const { setPayment } = usePayment();
 
   useEffect(() => {
     const fetchPlan = async () => {
@@ -61,7 +66,11 @@ export default function GetPlan() {
         error,
       } = await supabase.auth.getUser();
       if (error || !user) {
-        Alert.alert("Not logged in", "Please log in to continue.");
+        showAlert({
+          title: "Not logged in",
+          message: "Please log in to continue.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -92,7 +101,11 @@ export default function GetPlan() {
 
       if (checkError) {
         console.error("Check error:", checkError);
-        Alert.alert("Payment Error", "Could not check existing payment.");
+        showAlert({
+          title: "Payment Error",
+          message: "Could not check existing payment.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
@@ -115,7 +128,11 @@ export default function GetPlan() {
 
         if (insertError || !newPayment) {
           console.error("Insert error:", insertError);
-          Alert.alert("Payment Error", "Could not create payment row.");
+          showAlert({
+            title: "Payment Error",
+            message: "Could not query payment row.",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
           return;
         }
 
@@ -123,19 +140,22 @@ export default function GetPlan() {
       }
 
       router.back();
-      router.push({
-        pathname: "/qr/qr-page",
-        params: {
-          paymentId: paymentId.id,
-          amount: amount.toString(),
-          currency: plan.currency,
-          type: "plan",
-          plan_due_date,
-        },
+      setPayment({
+        paymentId: paymentId.id,
+        amount,
+        currency: plan.currency,
+        type: "plan",
+        name: plan.name,
+        plan_due_date,
       });
+      router.push("/qr/qr-page");
     } catch (err) {
       console.error("Error in handleContinue:", err);
-      Alert.alert("Payment Error", "Something went wrong.");
+      showAlert({
+        title: "Payment Error",
+        message: "Could not query payment row.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 

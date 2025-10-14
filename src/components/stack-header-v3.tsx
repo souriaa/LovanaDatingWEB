@@ -21,15 +21,16 @@ export const StackHeaderV3: FC<Props> = ({
         headerTitleAlign: "center",
         headerTitleStyle: {
           fontFamily: "Poppins-Regular",
+          fontSize: 22,
         },
         headerLeft: () => (
           <Pressable onPressOut={onPressCancel}>
-            <Text className="font-poppins-semibold px-2">Cancel</Text>
+            <Text className="font-poppins-semibold px-5 text-lg">Cancel</Text>
           </Pressable>
         ),
         headerRight: () => (
           <Pressable onPressOut={onPressDone}>
-            <Text className="font-poppins-semibold px-2">Done</Text>
+            <Text className="font-poppins-semibold px-5 text-lg">Save</Text>
           </Pressable>
         ),
 

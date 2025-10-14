@@ -16,7 +16,7 @@ export const ProfileItem: FC<Props> = ({ children, item, type, onLike }) => {
       <View className="flex-1">{children}</View>
       {onLike && (
         <Fab
-          className="absolute bottom-5 right-5 bg-white shadow-sm"
+          className="absolute bottom-5 right-5 bg-white"
           iconName="heart-outline"
           iconClassName="text-red-900 text-4xl"
           onPress={() => onLike(item.id, type)}

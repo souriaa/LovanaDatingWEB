@@ -4,7 +4,6 @@ import { router, Stack, useFocusEffect } from "expo-router";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Dimensions,
   FlatList,
@@ -27,6 +26,7 @@ import {
   fetchConversations,
 } from "../../../../../service/messageService";
 import { getProfile } from "../../../../../service/userService";
+import { useAlert } from "../../../../components/alert-provider";
 import { CountdownCircle } from "../../../../components/countdown-circle";
 import { Loader } from "../../../../components/loader";
 import { supabase } from "../../../../lib/supabase";
@@ -101,10 +101,9 @@ const ConversationRow = React.memo(
               onPressAvatar={() => {
                 if (!item.first_message_sent) onAvatarPress(item);
               }}
-            ></CountdownCircle>
+            />
             {!seen && <View style={styles.unreadDot} />}
           </View>
-
           <View style={styles.messageContainer}>
             <Text
               style={[
@@ -156,6 +155,19 @@ const ConversationRow = React.memo(
               </Text>
             </View>
           </View>
+
+          {/* 3 Dots Button */}
+          <TouchableOpacity
+            style={styles.dotsButton}
+            onPress={() => handleLongPress()}
+          >
+            <Ionicons
+              name="ellipsis-horizontal-circle-outline"
+              size={20}
+              color="red"
+              style={styles.dotsText}
+            />
+          </TouchableOpacity>
         </TouchableOpacity>
       </ReAnimated.View>
     );
@@ -178,6 +190,8 @@ export default function ConversationsScreen() {
   const avatarSlideAnim = useRef(new Animated.Value(height)).current;
   const slideAnim = useRef(new Animated.Value(height)).current;
   const [conversationInfo, setConversationInfo] = useState(null);
+
+  const { showAlert } = useAlert();
 
   const CustomHeader = () => {
     return (
@@ -360,7 +374,11 @@ export default function ConversationsScreen() {
     closeExtendSheet
   ) {
     if (!userId || !conversationId) {
-      Alert.alert("Error", "Invalid user or conversation.");
+      showAlert({
+        title: "Error",
+        message: "Invalid user or conversation.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
       return;
     }
     try {
@@ -373,12 +391,18 @@ export default function ConversationsScreen() {
         expiration_at: updatedConversation.expiration_at,
       }));
       closeExtendSheet();
-      Alert.alert("Success", "Conversation time extended by 24 hours!");
+      showAlert({
+        title: "Success",
+        message: "Conversation time extended by 24 hours!",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     } catch (err) {
-      Alert.alert(
-        "Failed",
-        err.message || "Unable to extend time. Check your remaining extends."
-      );
+      showAlert({
+        title: "Failed",
+        message:
+          err.message || "Unable to extend time. Check your remaining extends.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   }
 
@@ -692,6 +716,13 @@ const styles = StyleSheet.create({
   disableText: {
     opacity: 0.5,
   },
+  dotsButton: {
+    padding: 5,
+  },
+  dotsText: {
+    fontSize: 24,
+    color: "#555",
+  },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   noData: {
     fontSize: 16,
@@ -730,7 +761,7 @@ const styles = StyleSheet.create({
   extendSheetButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryDark,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",

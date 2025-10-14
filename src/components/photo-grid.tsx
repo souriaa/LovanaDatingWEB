@@ -3,9 +3,10 @@ import * as Crypto from "expo-crypto";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { FC, useEffect, useState } from "react";
-import { Alert, Dimensions, TouchableOpacity, View } from "react-native";
+import { Dimensions, TouchableOpacity, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
 import { Photo, PrivateProfile } from "../api/my-profile/types";
+import { useAlert } from "../components/alert-provider";
 import { supabase } from "../lib/supabase";
 import { useEdit } from "../store/edit";
 
@@ -44,6 +45,8 @@ export const PhotoGrid: FC<Props> = ({
   const rows = Math.ceil(data.filter((d) => d.photo).length / columns) || 1;
   const containerHeight = rows * itemSize + (rows - 1) * spacing;
 
+  const { showAlert } = useAlert();
+
   useEffect(() => {
     const initialData: Item[] = Array(slots)
       .fill(null)
@@ -64,22 +67,68 @@ export const PhotoGrid: FC<Props> = ({
     if (!item.photo?.id) return;
 
     const remainingPhotos = data.filter((d) => d.photo?.photo_url);
+
     if (remainingPhotos.length <= 1) {
-      Alert.alert(
-        "Cannot Delete",
-        "You must keep at least one photo in your profile."
-      );
+      showAlert({
+        title: "Cannot Delete",
+        message: "You must keep at least one photo in your profile.",
+        buttons: [{ text: "OK" }],
+      });
       return;
     }
 
-    Alert.alert("Delete Photo", "Are you sure you want to delete this photo?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            if (item.photo.id.startsWith("temp_")) {
+    showAlert({
+      title: "Delete Photo",
+      message: "Are you sure you want to delete this photo?",
+      buttons: [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {},
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (item.photo.id.startsWith("temp_")) {
+                const updatedData = data.map((d) =>
+                  d.key === item.key
+                    ? {
+                        ...d,
+                        photo: null,
+                        disabledDrag: true,
+                        disabledReSorted: true,
+                      }
+                    : d
+                );
+
+                const updatedPhotos = updatedData
+                  .map(
+                    (d, index) => ({ ...d.photo, photo_order: index }) as Photo
+                  )
+                  .filter((d) => d?.photo_url);
+
+                setData(updatedData);
+                setEdits({
+                  ...profile,
+                  photos: updatedPhotos,
+                });
+                return;
+              }
+
+              // Delete from Supabase
+              const { error } = await supabase
+                .from("profile_photos")
+                .delete()
+                .eq("id", item.photo!.id);
+              if (error) throw error;
+
+              // Delete file from storage
+              const filePath = `${profile.id}/photos/${item.photo.photo_url.split("/").pop()}`;
+              await supabase.storage.from("profiles").remove([filePath]);
+
+              // Update local state
               const updatedData = data.map((d) =>
                 d.key === item.key
                   ? {
@@ -102,45 +151,18 @@ export const PhotoGrid: FC<Props> = ({
                 ...profile,
                 photos: updatedPhotos,
               });
-              return;
+            } catch (err) {
+              console.error("Failed to delete photo:", err);
+              showAlert({
+                title: "Error",
+                message: "Failed to delete photo. Please try again.",
+                buttons: [{ text: "OK" }],
+              });
             }
-            const { error } = await supabase
-              .from("profile_photos")
-              .delete()
-              .eq("id", item.photo!.id);
-
-            if (error) throw error;
-
-            const filePath = `${profile.id}/photos/${item.photo.photo_url.split("/").pop()}`;
-            await supabase.storage.from("profiles").remove([filePath]);
-
-            const updatedData = data.map((d) =>
-              d.key === item.key
-                ? {
-                    ...d,
-                    photo: null,
-                    disabledDrag: true,
-                    disabledReSorted: true,
-                  }
-                : d
-            );
-
-            const updatedPhotos = updatedData
-              .map((d, index) => ({ ...d.photo, photo_order: index }) as Photo)
-              .filter((d) => d?.photo_url);
-
-            setData(updatedData);
-            setEdits({
-              ...profile,
-              photos: updatedPhotos,
-            });
-          } catch (err) {
-            console.error("Failed to delete photo:", err);
-            Alert.alert("Error", "Failed to delete photo. Please try again.");
-          }
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   const rendertem = (item: Item) => {

@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { getInteractionByActorAndTarget } from "../../../../../service/interactionService";
 import { createConversation } from "../../../../../service/messageService";
 import { getProfile } from "../../../../../service/userService";
 import { useLikes, useMatch, useRemoveLike } from "../../../../api/profiles";
+import { useAlert } from "../../../../components/alert-provider";
 import { Fab } from "../../../../components/fab";
 import { ProfileView } from "../../../../components/profile-view";
 import { transformPublicProfile } from "../../../../utils/profile";
@@ -14,6 +15,8 @@ const Page = () => {
 
   const { mutate: remove, isPending: removePending } = useRemoveLike();
   const { mutate: match, isPending: matchPending } = useMatch();
+
+  const { showAlert } = useAlert();
 
   const { data } = useLikes();
   const like = data.find((like) => like.id === id);
@@ -26,7 +29,11 @@ const Page = () => {
           router.back();
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       });
     }
@@ -71,7 +78,11 @@ const Page = () => {
           }
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       });
     } catch (err) {
@@ -111,38 +122,28 @@ const Page = () => {
         }}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* <View className="h-28 bg-neutral-200 overflow-hidden rounded-md ">
-          {like?.photo_url ? (
-            <Image source={like?.photo_url} className="aspect-square w-full" />
-          ) : (
-            <View className="flex-1 justify-center p-5">
-              <Text className="text-xl font-playfair-semibold">
-                {like?.answer_text}
-              </Text>
-            </View>
-          )}
-        </View> */}
         <ProfileView profile={profile} />
       </ScrollView>
-
-      <Fab
-        className="absolute bottom-20 left-5 bg-white  shadow-sm h-20"
-        iconClassName="text-black text-4xl"
-        iconName="close"
-        onPress={handleRemove}
-        loading={removePending}
-        loaderClassName="text-black"
-        disabled={removePending || matchPending}
-      />
-      <Fab
-        className="absolute bottom-20 right-5 bg-white  shadow-sm h-20"
-        iconClassName="text-black text-4xl"
-        iconName="chatbox-outline"
-        onPress={handleMatch}
-        loading={matchPending}
-        loaderClassName="text-black"
-        disabled={removePending || matchPending}
-      />
+      <View className="absolute bottom-20 w-full flex flex-row justify-center space-x-8">
+        <Fab
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          iconName="close"
+          onPress={handleRemove}
+          loading={removePending}
+          loaderClassName="text-black"
+          disabled={removePending || matchPending}
+        />
+        <Fab
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          iconName="chatbox-outline"
+          onPress={handleMatch}
+          loading={matchPending}
+          loaderClassName="text-black"
+          disabled={removePending || matchPending}
+        />
+      </View>
     </View>
   );
 };

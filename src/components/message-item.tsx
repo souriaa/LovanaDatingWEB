@@ -1,9 +1,9 @@
 // File: components/chat/MessageItem.tsx
-import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { theme } from "../../constants/theme";
-import { getSupabaseFileUrl } from "../../service/imageService";
 import { SwipeableMessage } from "./swipeable-message";
 
 interface MessageItemProps {
@@ -29,6 +29,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onReply,
   showTime,
 }) => {
+  const [hovered, setHovered] = useState(false);
+
   let bubbleStyle = item.reply_to
     ? styles.singleBubble
     : item.isFirstInGroup && item.isLastInGroup
@@ -101,49 +103,31 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           onPress={() => onToggleTime(item.id)}
           onLongPress={() => onLongPress(item)}
           delayLongPress={300}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
         >
-          {/* Reply Bubble */}
-          {item.reply_to && (
-            <View
-              style={[
-                styles.messageContainer,
-                isMine ? styles.myMessageReply : styles.theirMessageReply,
-                styles.replyBubble,
-              ]}
-            >
-              <Text style={styles.messageText}>
-                {item.reply_to.sender?.first_name}
-              </Text>
-              <Text
-                style={[
-                  styles.messageText,
-                  { color: theme.colors.textDarkGray },
-                ]}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: isMine ? "flex-end" : "flex-start",
+              marginVertical: 2,
+            }}
+          >
+            {/* Left button if isMine */}
+            {isMine && hovered && (
+              <Pressable
+                onPress={() => {
+                  onLongPress(item);
+                  setHovered(false);
+                }}
+                style={{ marginRight: 6, opacity: 0.7 }}
               >
-                {item.reply_to.body}
-              </Text>
-            </View>
-          )}
+                <Ionicons name="ellipsis-horizontal-circle-outline" size={20} />
+              </Pressable>
+            )}
 
-          {/* Image Preview from Supabase */}
-          {item.files?.map((filePath: string, i: number) => (
-            <View
-              key={i}
-              style={{
-                alignSelf: isMine ? "flex-end" : "flex-start",
-                marginVertical: 5,
-              }}
-            >
-              <Image
-                source={getSupabaseFileUrl(filePath)}
-                style={styles.imagePreview}
-                resizeMode="cover"
-              />
-            </View>
-          ))}
-
-          {/* Message Bubble */}
-          {!!item.body && (
+            {/* Message bubble */}
             <View
               style={[
                 styles.messageContainer,
@@ -151,20 +135,34 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 bubbleStyle,
               ]}
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  {
-                    color: isMine
-                      ? theme.colors.textLight
-                      : theme.colors.textDarkGray,
-                  },
-                ]}
-              >
-                {item.body}
-              </Text>
+              {!!item.body && (
+                <Text
+                  style={[
+                    styles.messageText,
+                    {
+                      color: isMine
+                        ? theme.colors.textLight
+                        : theme.colors.textDarkGray,
+                    },
+                  ]}
+                >
+                  {item.body}
+                </Text>
+              )}
             </View>
-          )}
+
+            {!isMine && hovered && (
+              <Pressable
+                onPress={() => {
+                  onLongPress(item);
+                  setHovered(false);
+                }}
+                style={{ marginLeft: 6, opacity: 0.7 }}
+              >
+                <Ionicons name="ellipsis-horizontal-circle-outline" size={20} />
+              </Pressable>
+            )}
+          </View>
         </Pressable>
       </SwipeableMessage>
 

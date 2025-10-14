@@ -63,8 +63,12 @@ export const fetchConversations = async (userId) => {
         if (otherMember?.profiles) {
           const user = otherMember.profiles;
           const mainPhoto =
-            (user.photos && user.photos.find((p) => p.photo_order === 0)) ||
-            (user.photos && user.photos[0]) ||
+            (user.photos &&
+              user.photos.find(
+                (p) => p.photo_order === 0 && p.is_active === true
+              )) ||
+            (user.photos &&
+              user.photos.find((p) => p.is_active === true)) ||
             null;
 
           otherUser = {
@@ -73,6 +77,8 @@ export const fetchConversations = async (userId) => {
           };
         }
       }
+
+      console.log(otherUser);
 
       return {
         ...conv,
@@ -317,8 +323,12 @@ export const getOtherUserInConversation = async (conversationId, currentUserId) 
     const user = otherMember.user;
 
     const mainPhoto =
-      (user.photos && user.photos.find((p) => p.photo_order === 0)) ||
-      (user.photos && user.photos[0]) ||
+      (user.photos &&
+        user.photos.find(
+          (p) => p.photo_order === 0 && p.is_active === true
+        )) ||
+      (user.photos &&
+        user.photos.find((p) => p.is_active === true)) ||
       null;
 
     return {
