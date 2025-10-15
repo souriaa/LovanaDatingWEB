@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
 import { getProfile, isProfileComplete } from "../../../../service/userService";
@@ -36,6 +36,7 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [canUsePremium, setCanUsePremium] = useState(false);
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+  const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
 
   const { showAlert } = useAlert();
@@ -90,25 +91,29 @@ export default function Page() {
           error: authError,
         } = await supabase.auth.getUser();
         if (authError || !user) {
-          console.log("❌ No user found:", authError);
           return;
         }
 
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          console.log("Location permission not granted");
+          setLocationGranted(false);
           return;
         }
+
+        setLocationGranted(true);
 
         const { coords } = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = coords;
 
-        const [address] = await Location.reverseGeocodeAsync(coords);
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+        const data = await res.json();
 
         // console.log("Got location:", latitude, longitude);
-        // console.log("Country:", address.country);
+        // console.log("Country:", data.address.country);
 
-        if (address.country !== "Vietnam") {
+        if (data.address.country !== "Vietnam") {
           showAlert({
             title: "Access Forbidden",
             message:
@@ -144,19 +149,24 @@ export default function Page() {
     updateProfileWithLocation();
   }, []);
 
-  useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const complete = await isProfileComplete();
-        setProfileComplete(complete);
-      } catch (error) {
-        console.error("Failed to check profile completeness:", error);
-        setProfileComplete(false);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const checkProfile = async () => {
+        setLoading(true);
+        try {
+          const complete = await isProfileComplete();
+          setProfileComplete(complete);
+        } catch (error) {
+          console.error("Failed to check profile completeness:", error);
+          setProfileComplete(false);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    checkProfile();
-  }, [isFetching]);
+      checkProfile();
+    }, [isFetching])
+  );
 
   const handleSkip = () => {
     if (profile) {
@@ -277,16 +287,11 @@ export default function Page() {
     );
   }
 
-  if (!hasProfiles) {
+  if (locationGranted === false) {
     return (
       <Empty
-        title="You've seen everyone for now"
-        subTitle="Try changing your filters..."
-        primaryText="Change filters"
-        secondaryText="Review skipped profiles"
-        onPrimaryPress={() => router.push("/preferences")}
-        onSecondaryPress={handleReview}
-        secondaryDisabled={!canUsePremium}
+        title="Location Required"
+        subTitle="We need your location to show nearby matches. Please enable location access in your settings."
       />
     );
   }
@@ -302,10 +307,24 @@ export default function Page() {
     );
   }
 
+  if (!hasProfiles) {
+    return (
+      <Empty
+        title="You've seen everyone for now"
+        subTitle="Try changing your filters..."
+        primaryText="Change filters"
+        secondaryText="Review skipped profiles"
+        onPrimaryPress={() => router.push("/preferences")}
+        onSecondaryPress={handleReview}
+        secondaryDisabled={!canUsePremium}
+      />
+    );
+  }
+
   return (
     <View className="flex-1 bg-white items-center">
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1 px-5 w-full"
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >

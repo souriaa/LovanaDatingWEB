@@ -29,9 +29,7 @@ export default function Layout() {
     loadConversations();
   }, [loadConversations]);
 
-  const handleAvatarPress = (conversation) => {
-    console.log("Avatar pressed", conversation.id);
-  };
+  const handleAvatarPress = (conversation) => {};
 
   if (isLoading) return <Loader />;
   if (!session) return <Redirect href="/sign-in" />;
@@ -40,6 +38,7 @@ export default function Layout() {
     <EditProvider>
       <View style={styles.container}>
         <View style={styles.leftPanel}>
+          <Ionicons name="home" size={0} color={theme.colors.primaryDark} />
           <View
             style={[styles.profileItem, { justifyContent: "space-between" }]}
           >
@@ -47,11 +46,11 @@ export default function Layout() {
               style={styles.homeButton}
               onPress={() => router.push("/")}
             >
-              {/* <Ionicons
+              <Ionicons
                 name="home"
                 size={30}
                 color={theme.colors.primaryDark}
-              /> */}
+              />
               <Text style={styles.homeButtonText}>Home</Text>
             </Pressable>
             <View style={{ flexDirection: "row" }}>

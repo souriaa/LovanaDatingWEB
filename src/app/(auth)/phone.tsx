@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -57,6 +58,7 @@ export default function Page() {
     >
       <StackHeader />
       <StatusBar barStyle={"dark-content"} />
+      <Ionicons name="star-outline" size={0} />
 
       <View style={styles.innerContainer}>
         <ScrollView

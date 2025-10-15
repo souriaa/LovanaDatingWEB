@@ -139,14 +139,12 @@ export const useMatch = () => {
         }
 
         // Optional: log returned data if your RPC returns anything
-        console.log("Match RPC response:", data);
       } catch (err: any) {
         console.error("Mutation failed:", err);
         throw err; // re-throw to trigger onError
       }
     },
     onSuccess: async () => {
-      console.log("Match successful, invalidating likes cache");
       await queryClient.invalidateQueries({ queryKey: ["likes"] });
     },
     onError: (err: any) => {

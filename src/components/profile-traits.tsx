@@ -19,10 +19,10 @@ export const ProfileTraits: FC<Props> = ({ profile }) => {
           >
             <Ionicons
               name={icon as keyof typeof Ionicons.glyphMap}
-              size={40}
+              size={32}
               color="#000"
             />
-            <Text className="text-lg font-poppins-regular">{label}</Text>
+            <Text className="text-md font-poppins-regular">{label}</Text>
           </View>
         );
       })}

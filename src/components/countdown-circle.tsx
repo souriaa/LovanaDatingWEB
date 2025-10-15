@@ -40,9 +40,6 @@ export const CountdownCircle = ({
         setExpired(true);
         try {
           await setConversationStatus(conversationId, false);
-          console.log(
-            `Conversation ${conversationId} expired -> status = false`
-          );
         } catch (err) {
           console.error("Failed to update conversation status:", err);
         }

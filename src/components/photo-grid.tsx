@@ -43,7 +43,11 @@ export const PhotoGrid: FC<Props> = ({
   const { setEdits, setGridActive } = useEdit();
 
   const rows = Math.ceil(data.filter((d) => d.photo).length / columns) || 1;
-  const containerHeight = rows * itemSize + (rows - 1) * spacing;
+  const totalRows = Math.ceil(slots / columns);
+  const containerHeight = Math.max(
+    rows * itemSize + (rows - 1) * spacing,
+    totalRows * itemSize + (totalRows - 1) * spacing
+  );
 
   const { showAlert } = useAlert();
 
