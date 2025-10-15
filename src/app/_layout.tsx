@@ -14,7 +14,10 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 export default function Layout() {
-  const [loaded, error] = useFonts(fonts);
+  const [loaded, error] = useFonts({
+    ...fonts,
+    Ionicons: require("../../assets/fonts/Ionicons.ttf"),
+  });
 
   useEffect(() => {
     if (loaded || error) {

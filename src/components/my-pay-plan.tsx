@@ -234,7 +234,7 @@ export default function MyPayPlan({ refreshKey }) {
             <Ionicons
               name="star-outline"
               size={24}
-              color={theme.colors.primary}
+              color={theme.colors.primaryDark}
             />
             <Text style={styles.perkTitle}>Super Likes</Text>
             <Text style={styles.perkSubtitle}>{superLikes}</Text>
@@ -253,7 +253,7 @@ export default function MyPayPlan({ refreshKey }) {
             <Ionicons
               name="time-outline"
               size={24}
-              color={theme.colors.primary}
+              color={theme.colors.primaryDark}
             />
             <Text style={styles.perkTitle}>Time Extender</Text>
             <Text style={styles.perkSubtitle}>{timeExtender}</Text>

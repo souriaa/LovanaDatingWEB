@@ -24,6 +24,7 @@ const TabsComponent = () => {
           backgroundColor: "#000000",
           overflow: "hidden",
           opacity: 0,
+          display: "none",
         },
         tabBarBackground: () => (
           <BlurView

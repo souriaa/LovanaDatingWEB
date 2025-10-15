@@ -40,7 +40,10 @@ export const Fab: FC<Props> = ({
       disabled={disabled}
     >
       {loading ? (
-        <ActivityIndicator className={cn(" text-white", loaderClassName)} />
+        <ActivityIndicator
+          color={theme.colors.primaryDark}
+          className={cn(" text-white", loaderClassName)}
+        />
       ) : (
         <View
           className={cn(

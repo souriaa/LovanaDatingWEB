@@ -168,7 +168,7 @@ export const InputBar = ({
           <Ionicons
             name="attach-outline"
             size={28}
-            color={theme.colors.primary}
+            color={theme.colors.primaryDark}
           />
         </TouchableOpacity>
 
@@ -208,7 +208,7 @@ export const InputBar = ({
                 <Ionicons
                   name="chatbubble-ellipses-outline"
                   size={28}
-                  color={theme.colors.primary}
+                  color={theme.colors.primaryDark}
                 />
                 <Text
                   style={{
@@ -217,7 +217,7 @@ export const InputBar = ({
                     right: -4,
                     fontSize: 8,
                     fontFamily: "Poppins-Regular",
-                    color: theme.colors.primary,
+                    color: theme.colors.primaryDark,
                     backgroundColor: "#fff",
                     borderRadius: 10,
                     paddingHorizontal: 4,
@@ -246,12 +246,12 @@ export const InputBar = ({
           activeOpacity={isSending ? 1 : 0.7}
         >
           {isSending ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <ActivityIndicator size="small" color={theme.colors.primaryDark} />
           ) : (
             <Ionicons
               name="send-outline"
               size={28}
-              color={theme.colors.primary}
+              color={theme.colors.primaryDark}
             />
           )}
         </TouchableOpacity>

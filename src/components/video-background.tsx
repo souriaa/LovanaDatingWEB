@@ -1,5 +1,6 @@
+import { useFocusEffect } from "expo-router";
 import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
-import { FC, useEffect } from "react";
+import { FC, useCallback } from "react";
 import { View } from "react-native";
 
 interface Props {
@@ -10,11 +11,21 @@ interface Props {
 export const VideoBackground: FC<Props> = ({ source, children }) => {
   const player = useVideoPlayer(source, (player) => {
     player.loop = true;
+    player.volume = 0;
   });
 
-  useEffect(() => {
-    player.play();
-  }, [player]);
+  useFocusEffect(
+    useCallback(() => {
+      if (player) {
+        player.play();
+      }
+      return () => {
+        if (player) {
+          player.play();
+        }
+      };
+    }, [player])
+  );
 
   return (
     <View className="flex-1">
@@ -23,6 +34,7 @@ export const VideoBackground: FC<Props> = ({ source, children }) => {
         player={player}
         contentFit="cover"
         nativeControls={false}
+        style={{ flex: 1 }}
       />
 
       <View

@@ -1,3 +1,4 @@
+import AboutUs from "@/components/about-us";
 import { Image } from "expo-image";
 import { router, Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
@@ -21,7 +22,7 @@ const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 export default function Page() {
   const { data: profile, refetch } = useMyProfile(); // assuming useMyProfile returns refetch
-  const [selectedCard, setSelectedCard] = useState<"pay-plan" | "safety">(
+  const [selectedCard, setSelectedCard] = useState<"pay-plan" | "about-us">(
     "pay-plan"
   );
   const { tabBarOpacity } = useTabBar();
@@ -124,20 +125,14 @@ export default function Page() {
             onPress={() => setSelectedCard("pay-plan")}
           />
           <Card
-            key="safety"
-            title="Safety & Wellbeing"
-            selected={selectedCard === "safety"}
-            onPress={() => setSelectedCard("safety")}
+            key="about-us"
+            title="About Us"
+            selected={selectedCard === "about-us"}
+            onPress={() => setSelectedCard("about-us")}
           />
         </View>
         {selectedCard === "pay-plan" && <MyPayPlan refreshKey={refreshKey} />}
-        {selectedCard === "safety" && (
-          <View className="items-center mt-10">
-            <Text className="text-lg font-semibold">
-              Safety & Wellbeing coming soon...
-            </Text>
-          </View>
-        )}
+        {selectedCard === "about-us" && <AboutUs />}
       </AnimatedScrollView>
     </SafeAreaView>
   );

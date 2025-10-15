@@ -47,11 +47,11 @@ export default function Layout() {
               style={styles.homeButton}
               onPress={() => router.push("/")}
             >
-              <Ionicons
-                name="home-outline"
+              {/* <Ionicons
+                name="home"
                 size={30}
                 color={theme.colors.primaryDark}
-              />
+              /> */}
               <Text style={styles.homeButtonText}>Home</Text>
             </Pressable>
             <View style={{ flexDirection: "row" }}>
@@ -199,7 +199,7 @@ export default function Layout() {
                           onPressAvatar={() => handleAvatarPress(item)}
                         />
                       )}
-                      {!item.is_seen && <View style={styles.unreadDot} />}
+                      {item.is_seen && <View style={styles.unreadDot} />}
                     </View>
                     <Text style={styles.conversationName}>
                       {item.other_user?.first_name || "Unknown"}
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   homeButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "Poppins-SemiBold",
     color: theme.colors.primaryDark,
     paddingBottom: 2,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   avatar: { width: 60, height: 60, borderRadius: 50 },
   profileName: {
-    fontSize: 16,
+    fontSize: 18,
     color: theme.colors.textDark,
     fontFamily: "Poppins-Regular",
   },
@@ -286,18 +286,18 @@ const styles = StyleSheet.create({
   },
   conversationName: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: theme.colors.textDark,
     fontFamily: "Poppins-Regular",
   },
   unreadDot: {
     position: "absolute",
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: theme.colors.primary,
+    top: 2,
+    right: 2,
+    width: 13,
+    height: 13,
+    borderRadius: 10,
+    backgroundColor: theme.colors.primaryDark,
     borderWidth: 1,
     borderColor: "#fff",
   },
