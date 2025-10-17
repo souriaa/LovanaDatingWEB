@@ -13,6 +13,7 @@ import Tooltip from "react-native-tooltip-2";
 import { theme } from "../../constants/theme";
 import { getActivePlanByUserId } from "../../service/profilePlanService";
 import Input from "./Input";
+import { useInputAlert } from "./alert-input-provider";
 import { useAlert } from "./alert-provider";
 
 const STORAGE_KEY = "ai_response_limit";
@@ -94,6 +95,7 @@ export const InputBar = ({
   const tooltipRef = useRef(null);
 
   const { showAlert } = useAlert();
+  const { showInputAlert } = useInputAlert();
 
   useEffect(() => {
     (async () => {

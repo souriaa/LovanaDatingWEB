@@ -1,5 +1,6 @@
 import { Redirect } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
+import { theme } from "~/constants/theme";
 import { useMyProfile } from "../../api/my-profile";
 import {
   useChildren,
@@ -31,7 +32,7 @@ export default function Page() {
   if (isPending) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size={"small"} />
+        <ActivityIndicator color={theme.colors.primaryDark} size={"small"} />
       </View>
     );
   }

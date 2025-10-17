@@ -78,8 +78,6 @@ export const fetchConversations = async (userId) => {
         }
       }
 
-      console.log(otherUser);
-
       return {
         ...conv,
         is_seen: cm.is_seen,

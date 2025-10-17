@@ -1,3 +1,4 @@
+import { StackBottom } from "@/components/stack-bottom";
 import * as Crypto from "expo-crypto";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -6,7 +7,6 @@ import colors from "tailwindcss/colors";
 import { Answer } from "../../../api/my-profile/types";
 import { usePrompts } from "../../../api/options";
 import { Prompt } from "../../../api/options/types";
-import { StackHeaderV3 } from "../../../components/stack-header-v3";
 import { useEdit } from "../../../store/edit";
 
 export default function Page() {
@@ -75,11 +75,6 @@ export default function Page() {
   };
   return (
     <View className="flex-1 bg-white p-5">
-      <StackHeaderV3
-        title="Write answer"
-        onPressCancel={handlePressCancel}
-        onPressDone={handlePressDone}
-      />
       <View className="gap-5">
         <Link
           href={{
@@ -105,6 +100,12 @@ export default function Page() {
           onChangeText={setText}
         />
       </View>
+      <StackBottom
+        visible={true}
+        title="Edit Answer"
+        onPressCancel={handlePressCancel}
+        onPressSave={handlePressDone}
+      />
     </View>
   );
 }

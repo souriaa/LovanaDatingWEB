@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FC, useEffect, useState } from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { deleteProfileAnswer } from "../../service/profileAnswerService";
 import { Answer, PrivateProfile } from "../api/my-profile/types";
 import { useEdit } from "../store/edit";
 
@@ -68,16 +70,24 @@ export const AnswerList: FC<Props> = ({
         }}
       >
         {item.answer ? (
-          <View className="flex-1 rounded-md overflow-hidden border border-neutral-200 p-5">
-            <Text className="text-base font-poppins-regular">
-              {item.answer.question}
-            </Text>
-            <Text
-              className="text-base font-poppins-regular text-neutral-400"
-              numberOfLines={3}
-            >
-              {item.answer.answer_text}
-            </Text>
+          <View className="flex-1 rounded-md overflow-hidden border border-neutral-200 p-5 flex-row items-center justify-between">
+            <View className="flex-1 pr-2">
+              <Text className="text-base font-poppins-regular">
+                {item.answer.question}
+              </Text>
+              <Text
+                className="text-base font-poppins-regular text-neutral-400"
+                numberOfLines={3}
+              >
+                {item.answer.answer_text}
+              </Text>
+            </View>
+
+            {item.answer && !item.answer.id.startsWith("temp_") && (
+              <TouchableOpacity onPress={() => handleDelete(item)}>
+                <Ionicons name="trash-outline" size={20} color="grey" />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <View className="flex-1 rounded-md border border-red-600 border-dashed" />
@@ -118,6 +128,29 @@ export const AnswerList: FC<Props> = ({
       });
     } else {
       router.push("/(app)/prompts");
+    }
+  };
+
+  const handleDelete = async (item: Item) => {
+    if (!item.answer) return;
+
+    const answerId = item.answer.id;
+
+    const newData = data.filter((d) => d.key !== item.key);
+    setData(newData);
+
+    const updatedAnswers = newData
+      .filter((i) => i.answer && !i.answer.id.startsWith("temp_"))
+      .map((i, index) => ({ ...i.answer, answer_order: index }));
+
+    setMyProfileChanges({ ...profile, answers: updatedAnswers });
+
+    if (!answerId.startsWith("temp_")) {
+      try {
+        await deleteProfileAnswer(answerId);
+      } catch (err) {
+        console.error("deleteProfileAnswer error:", err);
+      }
     }
   };
 

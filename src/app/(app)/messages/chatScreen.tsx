@@ -336,13 +336,18 @@ export default function ChatScreen() {
       .join("\n");
 
     const prompt = `
-Bạn đang giúp tạo một câu trả lời ngắn, tự nhiên cho một người (sender_id: Me) trong một cuộc trò chuyện giữa hai người (Me và Them). Giữ câu trả lời thân thiện, tự nhiên, gần gũi. Chỉ viết câu tiếp theo mà sender_id Me sẽ nói.Cuộc trò chuyện: ${conversationText}
-Câu trả lời cho sender_id Me:
-  `.trim();
+    Bạn đang giúp tạo một câu trả lời ngắn, tự nhiên cho một người (sender_id: Me) trong một cuộc trò chuyện giữa hai người (Me và Them). Giữ câu trả lời thân thiện, tự nhiên, gần gũi.
+    ${customizationMessage ? `Phong cách: ${customizationMessage}` : ""}
+    Chỉ viết câu tiếp theo mà sender_id Me sẽ nói.
+    Cuộc trò chuyện:
+    ${conversationText}
+
+    Câu trả lời cho sender_id Me:
+      `.trim();
 
     try {
       const response = await fetch(
-        "https://sewuxuattigekhjtdasv.functions.supabase.co/AIReplySuggestion",
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/AIReplySuggestion`,
         {
           method: "POST",
           body: JSON.stringify(prompt),

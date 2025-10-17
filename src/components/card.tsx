@@ -43,9 +43,10 @@ const styles = StyleSheet.create({
   card: {
     paddingHorizontal: 12,
     borderRadius: 50,
-    backgroundColor: "#fff",
     paddingTop: 6,
     paddingBottom: 4,
+    width: 150,
+    backgroundColor: theme.colors.backgroundGray,
   },
   cardSelected: {
     backgroundColor: theme.colors.primaryDark,

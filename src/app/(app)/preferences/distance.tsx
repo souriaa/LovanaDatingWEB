@@ -1,3 +1,4 @@
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { Slider } from "@miblanchard/react-native-slider";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -51,6 +52,11 @@ const Page = () => {
             </View>
           );
         }}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Filter"
+        onPressBack={handlePress}
       />
     </View>
   );

@@ -1,4 +1,6 @@
 import AboutUs from "@/components/about-us";
+import { PerkStats } from "@/components/perk-stats";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
@@ -101,21 +103,32 @@ export default function Page() {
               Lovana
             </Text>
           </View>
-          <View className="items-center gap-2 my-12">
+          <View className="items-center gap-2 mt-12 mb-5">
             <Pressable
-              className="h-32 aspect-square rounded-full border-4 p-1"
+              className="h-32 aspect-square rounded-full p-1"
               onPress={() => router.push("/profile")}
-              style={{ borderColor: theme.colors.primaryDark }}
+              style={{ borderWidth: 4, borderColor: theme.colors.primaryDark }}
             >
               <Image
                 source={profile?.avatar_url}
                 className="flex-1 rounded-full bg-neutral-400"
               />
+              <View
+                className="absolute bottom-1 right-1 rounded-full p-1 border-2 border-white"
+                style={{ backgroundColor: theme.colors.primaryDark }}
+              >
+                <Ionicons
+                  name="pencil-outline"
+                  size={16}
+                  color={theme.colors.textLight}
+                />
+              </View>
             </Pressable>
             <Text className="text-2xl font-poppins-semibold">
               {profile?.first_name}
             </Text>
           </View>
+          <PerkStats />
         </View>
         <View style={styles.cardsContainer}>
           <Card

@@ -113,21 +113,21 @@ export default function Page() {
         // console.log("Got location:", latitude, longitude);
         // console.log("Country:", data.address.country);
 
-        if (data.address.country !== "Vietnam") {
-          showAlert({
-            title: "Access Forbidden",
-            message:
-              "Logging in from outside Vietnam is not allowed. Please contact the developer.",
-            buttons: [
-              {
-                text: "OK",
-                style: "cancel",
-                onPress: () => signOut(),
-              },
-            ],
-          });
-          return;
-        }
+        // if (data.address.country !== "Vietnam") {
+        //   showAlert({
+        //     title: "Access Forbidden",
+        //     message:
+        //       "Logging in from outside Vietnam is not allowed. Please contact the developer.",
+        //     buttons: [
+        //       {
+        //         text: "OK",
+        //         style: "cancel",
+        //         onPress: () => signOut(),
+        //       },
+        //     ],
+        //   });
+        //   return;
+        // }
 
         const { error: updateError } = await supabase
           .from("profiles")
@@ -231,8 +231,9 @@ export default function Page() {
           },
           onError: () => {
             showAlert({
-              title: "Error",
-              message: "Something went wrong, please try again later",
+              title: "Out of Likes",
+              message:
+                "You've reached your daily like limit. Likes refresh automatically every day — upgrade to a plan for unlimited likes!",
               buttons: [{ text: "OK", style: "cancel" }],
             });
           },

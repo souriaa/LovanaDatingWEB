@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
+import { theme } from "~/constants/theme";
 import { MessageItem } from "./message-item";
 
 interface MessageListProps {
@@ -71,7 +72,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       ListFooterComponent={
         loadingOlder ? (
           <View style={{ padding: 8 }}>
-            <ActivityIndicator size="small" />
+            <ActivityIndicator size="small" color={theme.colors.primaryDark} />
           </View>
         ) : null
       }

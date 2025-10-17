@@ -1,3 +1,4 @@
+import { InputAlertProvider } from "@/components/alert-input-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
@@ -34,26 +35,28 @@ export default function Layout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <AlertProvider>
-            <PaymentProvider>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
-                <Stack.Screen
-                  name="(app)"
-                  options={{
-                    animation: "none",
+            <InputAlertProvider>
+              <PaymentProvider>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
                   }}
-                />
-                <Stack.Screen
-                  name="(auth)"
-                  options={{
-                    animation: "none",
-                  }}
-                />
-              </Stack>
-            </PaymentProvider>
+                >
+                  <Stack.Screen
+                    name="(app)"
+                    options={{
+                      animation: "none",
+                    }}
+                  />
+                  <Stack.Screen
+                    name="(auth)"
+                    options={{
+                      animation: "none",
+                    }}
+                  />
+                </Stack>
+              </PaymentProvider>
+            </InputAlertProvider>
           </AlertProvider>
         </AuthProvider>
       </QueryClientProvider>

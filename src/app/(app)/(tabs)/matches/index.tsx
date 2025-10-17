@@ -1,3 +1,4 @@
+import { Empty } from "@/components/empty";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, Stack, useFocusEffect } from "expo-router";
@@ -435,7 +436,10 @@ export default function ConversationsScreen() {
                 {isLoading ? (
                   <Loader />
                 ) : (
-                  <Text style={styles.noData}>No conversations yet</Text>
+                  <Empty
+                    title="No conversations yet"
+                    subTitle="We can help you get your first one sooner."
+                  />
                 )}
               </View>
             )

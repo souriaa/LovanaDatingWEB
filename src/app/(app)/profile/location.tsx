@@ -1,3 +1,4 @@
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -52,6 +53,11 @@ export default function Page() {
       <LocationView
         location={selectedLocation}
         onLocationChange={handleLocationChange}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
       />
     </View>
   );

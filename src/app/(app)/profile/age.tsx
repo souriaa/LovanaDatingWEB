@@ -56,7 +56,6 @@ export default function Page() {
     if (isValid(parsedDate)) setDate(parsedDate);
   };
 
-  // Save edits
   const handlePress = () => {
     setEdits({ ...edits, dob: date.toISOString() } as PrivateProfile);
     router.back();

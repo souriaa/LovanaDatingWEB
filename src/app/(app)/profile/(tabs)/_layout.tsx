@@ -1,10 +1,10 @@
+import { StackBottom } from "@/components/stack-bottom";
 import { router, Stack } from "expo-router";
 import { isEqual } from "lodash";
 import colors from "tailwindcss/colors";
 import { theme } from "../../../../../constants/theme";
 import { useMyProfile, useUpdateProfile } from "../../../../api/my-profile";
 import { useAlert } from "../../../../components/alert-provider";
-import { StackHeaderV3 } from "../../../../components/stack-header-v3";
 import { MaterialTopTabs } from "../../../../layouts/material-top-tabs";
 import { useEdit } from "../../../../store/edit";
 
@@ -41,7 +41,7 @@ export default function Layout() {
     });
   };
 
-  const handlePresDone = async () => {
+  const handlePressDone = async () => {
     if (!edits) {
       showAlert({
         title: "Error",
@@ -52,7 +52,7 @@ export default function Layout() {
     }
 
     if (isEqual(profile, edits)) {
-      router.dismiss();
+      router.push("/lovana");
       return;
     }
 
@@ -71,22 +71,17 @@ export default function Layout() {
   };
   return (
     <>
-      <StackHeaderV3
-        title={edits?.first_name || ""}
-        onPressCancel={handlePressCancel}
-        onPressDone={handlePresDone}
-      />
       <MaterialTopTabs
         screenOptions={{
           tabBarIndicatorStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.primaryDark,
           },
           tabBarLabelStyle: {
             textTransform: "capitalize",
             fontWeight: "bold",
             fontSize: 13,
           },
-          tabBarActiveTintColor: theme.colors.primary,
+          tabBarActiveTintColor: theme.colors.primaryDark,
           tabBarInactiveTintColor: colors.neutral[300],
           swipeEnabled: !gridActive,
         }}
@@ -104,6 +99,12 @@ export default function Layout() {
           }}
         />
       </MaterialTopTabs>
+      <StackBottom
+        visible={true}
+        title="Edit Info"
+        onPressCancel={handlePressCancel}
+        onPressSave={handlePressDone}
+      />
     </>
   );
 }

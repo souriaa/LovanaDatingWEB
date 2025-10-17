@@ -1,3 +1,4 @@
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
@@ -29,6 +30,11 @@ export default function Page() {
         options={data.map((item) => ({ id: item.id, name: item.name }))}
         onChange={setSelected}
         initialSelection={selected}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
       />
     </View>
   );

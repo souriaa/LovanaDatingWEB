@@ -1,6 +1,6 @@
+import { supabase } from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
-import { supabase } from "@/lib/supabase";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 
 export const getUserImageSrc = (imagePath) => {
@@ -54,13 +54,11 @@ export const uploadFile = async (folderName, fileUri, isImage = true) => {
       });
 
     if (error) {
-      console.log("file upload error:", error);
       return { success: false, msg: error.message };
     }
 
     return { success: true, data: data.path };
   } catch (error) {
-    console.log("file upload error", error);
     return { success: false, msg: error.message };
   }
 };

@@ -1,5 +1,6 @@
 import LottieView from "lottie-react-native";
 import { ActivityIndicator, Platform, View } from "react-native";
+import { theme } from "~/constants/theme";
 
 export const Loader = () => (
   <View
@@ -17,7 +18,7 @@ export const Loader = () => (
         source={require("../../assets/images/loading.json")}
       />
     ) : (
-      <ActivityIndicator size="large" color="#000" />
+      <ActivityIndicator size="large" color={theme.colors.primaryDark} />
     )}
   </View>
 );

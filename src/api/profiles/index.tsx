@@ -137,11 +137,9 @@ export const useMatch = () => {
           console.error("Supabase RPC error:", error);
           throw new Error(error.message);
         }
-
-        // Optional: log returned data if your RPC returns anything
       } catch (err: any) {
         console.error("Mutation failed:", err);
-        throw err; // re-throw to trigger onError
+        throw err;
       }
     },
     onSuccess: async () => {

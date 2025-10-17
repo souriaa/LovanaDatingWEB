@@ -72,7 +72,12 @@ export default function Layout() {
             style={[styles.profileItem, { justifyContent: "space-between" }]}
           >
             <Pressable
-              style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 20,
+                flex: 1,
+              }}
               onPress={() => router.push("/lovana")}
             >
               {profile?.avatar_url ? (
@@ -102,111 +107,122 @@ export default function Layout() {
             </View>
           </View>
 
-          <View style={styles.likesBox}>
+          <View style={styles.likesBoxContainer}>
             <Pressable
-              style={styles.menuItemContainer}
+              style={({ hovered, pressed }) => [
+                styles.menuItemContainer,
+                hovered && { backgroundColor: theme.colors.backgroundGray },
+                pressed && { opacity: 0.8 },
+              ]}
               onPress={() => router.replace("/likes")}
             >
               <Text style={styles.menuItem}>Likes</Text>
               <Ionicons name="chevron-forward-outline" size={18} />
             </Pressable>
-
-            {likes && likes.length > 0 ? (
-              <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-                {likes.slice(0, 5).map((like, index) => (
-                  <Pressable
-                    key={like.id}
-                    onPress={() =>
-                      index === 0 && router.push(`/likes/${like.id}`)
-                    }
-                  >
-                    <View
-                      style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        overflow: "hidden",
-                      }}
+            <View style={styles.likesBox}>
+              {likes && likes.length > 0 ? (
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+                  {likes.slice(0, 5).map((like, index) => (
+                    <Pressable
+                      key={like.id}
+                      onPress={() =>
+                        index === 0 && router.push(`/likes/${like.id}`)
+                      }
                     >
-                      <Image
-                        source={{ uri: like.profile.photos[0]?.photo_url }}
-                        style={{ width: 50, height: 50 }}
-                      />
-                      {index !== 0 && (
-                        <BlurView
-                          intensity={30}
-                          tint="light"
-                          style={{
-                            ...StyleSheet.absoluteFillObject,
-                            position: "absolute",
-                            top: -20,
-                            bottom: -20,
-                            left: -20,
-                            right: -20,
-                            borderRadius: 25 + 20,
-                          }}
+                      <View
+                        style={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: 25,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Image
+                          source={{ uri: like.profile.photos[0]?.photo_url }}
+                          style={{ width: 50, height: 50 }}
                         />
-                      )}
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.placeholderText}>No likes yet</Text>
-            )}
+                        {index !== 0 && (
+                          <BlurView
+                            intensity={30}
+                            tint="light"
+                            style={{
+                              ...StyleSheet.absoluteFillObject,
+                              position: "absolute",
+                              top: -20,
+                              bottom: -20,
+                              left: -20,
+                              right: -20,
+                              borderRadius: 25 + 20,
+                            }}
+                          />
+                        )}
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.placeholderText}>No likes yet</Text>
+              )}
+            </View>
           </View>
 
-          <View style={styles.conversationsBox}>
+          <View style={styles.conversationsBoxContainer}>
             <Pressable
-              style={styles.menuItemContainer}
+              style={({ hovered, pressed }) => [
+                styles.menuItemContainer,
+                hovered && { backgroundColor: theme.colors.backgroundGray },
+                pressed && { opacity: 0.8 },
+              ]}
               onPress={() => router.push("/matches")}
             >
               <Text style={styles.menuItem}>Matches</Text>
               <Ionicons name="chevron-forward-outline" size={18} />
             </Pressable>
 
-            {conversations.length === 0 ? (
-              <Text style={styles.placeholderText}>No conversations yet</Text>
-            ) : (
-              conversations.slice(0, 5).map((item) => {
-                return (
-                  <Pressable
-                    key={item.id}
-                    style={[
-                      styles.conversationItem,
-                      { backgroundColor: isHovered ? "#f0f0f0" : "#fff" },
-                    ]}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                    onPress={() =>
-                      router.push(
-                        `messages/chatScreen?conversationId=${item.id}&userId=${profile?.id}`
-                      )
-                    }
-                  >
-                    <View style={{ position: "relative" }}>
-                      {item.other_user?.photo_url && (
-                        <CountdownCircle
-                          conversationId={item.id}
-                          createdAt={item.created_at}
-                          expirationAt={item.expiration_at}
-                          firstMessageSent={item.first_message_sent}
-                          avatarUrl={item.other_user.photo_url}
-                          size={60}
-                          strokeWidth={3}
-                          conversationStatus={item.conversation_status}
-                          onPressAvatar={() => handleAvatarPress(item)}
-                        />
-                      )}
-                      {item.is_seen && <View style={styles.unreadDot} />}
-                    </View>
-                    <Text style={styles.conversationName}>
-                      {item.other_user?.first_name || "Unknown"}
-                    </Text>
-                  </Pressable>
-                );
-              })
-            )}
+            <View style={styles.conversationsBox}>
+              {conversations.length === 0 ? (
+                <Text style={styles.placeholderText}>No conversations yet</Text>
+              ) : (
+                conversations.slice(0, 5).map((item) => {
+                  return (
+                    <Pressable
+                      key={item.id}
+                      style={[
+                        styles.conversationItem,
+                        { backgroundColor: isHovered ? "#f0f0f0" : "#fff" },
+                      ]}
+                      onMouseEnter={() => setIsHovered(true)}
+                      onMouseLeave={() => setIsHovered(false)}
+                      onPress={() =>
+                        router.push(
+                          `messages/chatScreen?conversationId=${item.id}&userId=${profile?.id}`
+                        )
+                      }
+                    >
+                      <View style={{ position: "relative" }}>
+                        {item.other_user?.photo_url && (
+                          <CountdownCircle
+                            conversationId={item.id}
+                            createdAt={item.created_at}
+                            expirationAt={item.expiration_at}
+                            firstMessageSent={item.first_message_sent}
+                            avatarUrl={item.other_user.photo_url}
+                            size={60}
+                            strokeWidth={3}
+                            conversationStatus={item.conversation_status}
+                            onPressAvatar={() => handleAvatarPress(item)}
+                          />
+                        )}
+                        {!item.is_seen && <View style={styles.unreadDot} />}
+                      </View>
+                      <Text style={styles.conversationName}>
+                        {item.other_user?.first_name || "Unknown"}
+                      </Text>
+                    </Pressable>
+                  );
+                })
+              )}
+            </View>
           </View>
         </View>
 
@@ -240,15 +256,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     borderRadius: 12,
     gap: 20,
+    flex: 1,
   },
   homeButtonText: {
     fontSize: 18,
     fontFamily: "Poppins-SemiBold",
     color: theme.colors.primaryDark,
     paddingBottom: 2,
+    paddingLeft: 15,
   },
   profileItem: {
     flexDirection: "row",
@@ -279,9 +297,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
     paddingHorizontal: 4,
-    borderRadius: 8,
     marginVertical: 2,
     gap: 16,
+    paddingLeft: 12,
   },
   conversationName: {
     flex: 1,
@@ -300,19 +318,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#fff",
   },
-  likesBox: {
+  likesBoxContainer: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 10,
+    borderRadius: 11.2,
+    paddingBottom: 16,
+    marginVertical: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  conversationsBox: {
+  likesBox: {
+    paddingLeft: 16,
+  },
+  conversationsBoxContainer: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 10,
+    borderRadius: 11.2,
+    marginVertical: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     flex: 1,
@@ -321,7 +341,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    borderRadius: 10,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    padding: 16,
+    paddingVertical: 10,
   },
   placeholderText: {
     color: "#9ca3af",

@@ -77,12 +77,22 @@ const Page = () => {
             console.error("Error creating conversation:", err);
           }
         },
-        onError: () => {
-          showAlert({
-            title: "Error",
-            message: "Something went wrong, please try again later",
-            buttons: [{ text: "OK", style: "cancel" }],
-          });
+        onError: (error) => {
+          if (error?.message?.toLowerCase().includes("no likes remaining")) {
+            showAlert({
+              title: "Out of Likes",
+              message:
+                "You've reached your daily like limit. Likes refresh every day — upgrade to a plan for unlimited likes!",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
+          } else {
+            console.error("Match mutation error:", error);
+            showAlert({
+              title: "Error",
+              message: "Something went wrong. Please try again later.",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
+          }
         },
       });
     } catch (err) {

@@ -1,3 +1,4 @@
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
@@ -48,6 +49,11 @@ const Page = () => {
         options={data}
         initialSelection={selected}
         onChange={setSelected}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Filter"
+        onPressBack={handlePress}
       />
     </View>
   );

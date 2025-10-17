@@ -2,6 +2,13 @@ import { PrivateProfile } from "../api/my-profile/types";
 
 export const identity = [
   {
+    title: "Gender",
+    getValue: (profile: PrivateProfile) => {
+      return profile?.gender?.name || "None";
+    },
+    route: "/profile/gender",
+  },
+  {
     title: "Pronouns",
     getValue: (profile: PrivateProfile) => {
       return (
@@ -9,13 +16,6 @@ export const identity = [
       );
     },
     route: "/profile/pronouns",
-  },
-  {
-    title: "Gender",
-    getValue: (profile: PrivateProfile) => {
-      return profile?.gender?.name || "None";
-    },
-    route: "/profile/gender",
   },
   {
     title: "Sexuality",

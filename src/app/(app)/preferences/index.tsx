@@ -184,7 +184,7 @@ export default function Page() {
           </Text>
         </View>
         {loading ? (
-          <ActivityIndicator size="small" color="#111827" />
+          <ActivityIndicator color={theme.colors.primaryDark} size="small" />
         ) : (
           <Switch
             value={incognito || false}
