@@ -200,7 +200,7 @@ export const InputBar = ({
               onPress={(e) => {
                 e.stopPropagation();
                 showInputAlert({
-                  title: "What's your mood?",
+                  title: "What's your mood?(Optional)",
                   message: "Enter a mood so the AI can respond to:",
                   placeholder: "e.g. Excited but a little nervous",
                   okText: "Confirm",

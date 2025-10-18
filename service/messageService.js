@@ -26,6 +26,7 @@ export const fetchConversations = async (userId) => {
               phone,
               user_id,
               created_at,
+              children ( id, name ),
               photos:profile_photos (
                 photo_url,
                 photo_order,

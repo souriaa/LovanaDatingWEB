@@ -3,12 +3,21 @@ import * as Crypto from "expo-crypto";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { FC, useEffect, useState } from "react";
-import { Dimensions, TouchableOpacity, View } from "react-native";
+import Cropper from "react-easy-crop";
+import {
+  Dimensions,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
 import { Photo, PrivateProfile } from "../api/my-profile/types";
 import { useAlert } from "../components/alert-provider";
 import { supabase } from "../lib/supabase";
 import { useEdit } from "../store/edit";
+import { getCroppedImg } from "../utils/cropUtils";
+import { StackBottom } from "./stack-bottom";
 
 type Item = {
   key: string;
@@ -41,6 +50,15 @@ export const PhotoGrid: FC<Props> = ({
 
   const [data, setData] = useState<Item[]>([]);
   const { setEdits, setGridActive } = useEdit();
+  const { showAlert } = useAlert();
+
+  // Web crop modal states
+  const [cropModalVisible, setCropModalVisible] = useState(false);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
   const rows = Math.ceil(data.filter((d) => d.photo).length / columns) || 1;
   const totalRows = Math.ceil(slots / columns);
@@ -48,8 +66,6 @@ export const PhotoGrid: FC<Props> = ({
     rows * itemSize + (rows - 1) * spacing,
     totalRows * itemSize + (totalRows - 1) * spacing
   );
-
-  const { showAlert } = useAlert();
 
   useEffect(() => {
     const initialData: Item[] = Array(slots)
@@ -113,10 +129,7 @@ export const PhotoGrid: FC<Props> = ({
                   .filter((d) => d?.photo_url);
 
                 setData(updatedData);
-                setEdits({
-                  ...profile,
-                  photos: updatedPhotos,
-                });
+                setEdits({ ...profile, photos: updatedPhotos });
                 return;
               }
 
@@ -150,10 +163,7 @@ export const PhotoGrid: FC<Props> = ({
                 .filter((d) => d?.photo_url);
 
               setData(updatedData);
-              setEdits({
-                ...profile,
-                photos: updatedPhotos,
-              });
+              setEdits({ ...profile, photos: updatedPhotos });
             } catch (err) {
               console.error("Failed to delete photo:", err);
               showAlert({
@@ -211,18 +221,10 @@ export const PhotoGrid: FC<Props> = ({
 
   const onDragRelease = (data: Item[]) => {
     const photos = data
-      .map((item, index) => {
-        return {
-          ...item.photo,
-          photo_order: index,
-        };
-      })
+      .map((item, index) => ({ ...item.photo, photo_order: index }))
       .filter((item) => item.photo_order !== undefined);
     setData(data);
-    setEdits({
-      ...profile,
-      photos,
-    });
+    setEdits({ ...profile, photos });
     setGridActive(false);
   };
 
@@ -231,112 +233,98 @@ export const PhotoGrid: FC<Props> = ({
   };
 
   const onItemPress = (item: Item) => {
-    if (!item.photo) {
-      pickPhoto();
-    }
-    // else {
-    //   replacePhoto(item);
-    // }
+    if (!item.photo) pickPhoto();
   };
 
   const pickPhoto = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      selectionLimit: slots - data.filter((item) => item.photo).length,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    if (Platform.OS === "web") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e: any) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        setCropImage(url);
+        setCropModalVisible(true);
+      };
+      input.click();
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        allowsMultipleSelection: true,
+        selectionLimit: slots - data.filter((item) => item.photo).length,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      const updatedData = data.map((item, index) => {
-        if (!item.photo && result.assets?.length) {
-          const currentAsset = result.assets.shift();
-
-          if (currentAsset) {
-            return {
-              ...item,
-              photo: {
-                id: "temp_" + Crypto.randomUUID(),
-                photo_url: currentAsset.uri,
-                photo_order: index,
-              },
-              disabledDrag: false,
-              disabledReSorted: false,
-            };
+      if (!result.canceled) {
+        const updatedData = data.map((item, index) => {
+          if (!item.photo && result.assets?.length) {
+            const currentAsset = result.assets.shift();
+            if (currentAsset) {
+              return {
+                ...item,
+                photo: {
+                  id: "temp_" + Crypto.randomUUID(),
+                  photo_url: currentAsset.uri,
+                  photo_order: index,
+                },
+                disabledDrag: false,
+                disabledReSorted: false,
+              };
+            }
           }
-        }
-        return item;
-      });
+          return item;
+        });
 
-      const updatedPhotos = updatedData
-        .map((item, index) => {
-          return {
-            ...item?.photo,
-            photo_order: index,
-          } as Photo;
-        })
-        .filter((item) => item.photo_url);
+        const updatedPhotos = updatedData
+          .map(
+            (item, index) => ({ ...item?.photo, photo_order: index }) as Photo
+          )
+          .filter((item) => item.photo_url);
 
-      setData(updatedData as Item[]);
-      setEdits({
-        ...profile,
-        photos: updatedPhotos,
-      });
+        setData(updatedData as Item[]);
+        setEdits({ ...profile, photos: updatedPhotos });
+      }
     }
   };
 
-  const replacePhoto = async (item: Item) => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  const handleCropSave = async () => {
+    if (cropImage && croppedAreaPixels) {
+      const croppedUri = await getCroppedImg(cropImage, croppedAreaPixels);
 
-    if (!result.canceled) {
-      const updatedData = data.map((i, index) => {
-        if (item.key === i.key && result.assets?.length) {
-          const currentAsset = result.assets.shift();
+      const emptyIndex = data.findIndex((item) => !item.photo);
+      if (emptyIndex === -1) return;
 
-          if (currentAsset) {
-            return {
-              ...i,
-              photo: {
-                ...i.photo,
-                photo_url: currentAsset.uri,
-              },
-              disabledDrag: false,
-              disabledReSorted: false,
-            };
-          }
-        }
-        return i;
-      });
+      const updatedData = [...data];
+      updatedData[emptyIndex] = {
+        ...updatedData[emptyIndex],
+        photo: {
+          id: "temp_" + Crypto.randomUUID(),
+          photo_url: croppedUri,
+          photo_order: emptyIndex,
+        },
+        disabledDrag: false,
+        disabledReSorted: false,
+      };
 
       const updatedPhotos = updatedData
-        .map((item, index) => {
-          return {
-            ...item?.photo,
-            photo_order: index,
-          } as Photo;
-        })
+        .map((item, index) => ({ ...item?.photo, photo_order: index }) as Photo)
         .filter((item) => item.photo_url);
 
-      setData(updatedData as Item[]);
-      setEdits({
-        ...profile,
-        photos: updatedPhotos,
-      });
+      setData(updatedData);
+      setEdits({ ...profile, photos: updatedPhotos });
+
+      setCropModalVisible(false);
+      setCropImage(null);
+      setCroppedAreaPixels(null);
     }
   };
 
   return (
-    <View
-      style={{
-        height: containerHeight,
-      }}
-    >
+    <View style={{ height: containerHeight }}>
       <DraggableGrid
         numColumns={3}
         renderItem={rendertem}
@@ -345,6 +333,52 @@ export const PhotoGrid: FC<Props> = ({
         onDragItemActive={onDragItemActive}
         onItemPress={onItemPress}
       />
+
+      {cropModalVisible && cropImage && Platform.OS === "web" && (
+        <Modal visible={cropModalVisible} transparent animationType="fade">
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.8)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            onClick={(e: any) => {
+              if (e.target === e.currentTarget) {
+                setCropModalVisible(false);
+              }
+            }}
+          >
+            <View
+              style={{
+                position: "relative",
+                width: "80vw",
+                height: "80vh",
+                background: "#fff",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Cropper
+                image={cropImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={3 / 4}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, croppedAreaPixels) =>
+                  setCroppedAreaPixels(croppedAreaPixels)
+                }
+              />
+              <StackBottom
+                visible={true}
+                title="Edit Info"
+                onPressSave={handleCropSave}
+                onPressCancel={() => setCropModalVisible(false)}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };

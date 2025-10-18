@@ -336,9 +336,9 @@ export default function ChatScreen() {
       .join("\n");
 
     const prompt = `
-    Bạn đang giúp tạo một câu trả lời ngắn, tự nhiên cho một người (sender_id: Me) trong một cuộc trò chuyện giữa hai người (Me và Them). Giữ câu trả lời thân thiện, tự nhiên, gần gũi.
+    Bạn đang giúp tạo 01 câu trả lời NGẮN, tự nhiên cho một người (sender_id: Me) trong một cuộc trò chuyện giữa hai người (Me và Them). Giữ câu trả lời thân thiện, tự nhiên, gần gũi.
     ${customizationMessage ? `Phong cách: ${customizationMessage}` : ""}
-    Chỉ viết câu tiếp theo mà sender_id Me sẽ nói.
+    Đặt mình vào vị trí người dùng, KHÔNG trích dẫn, chỉ viết câu tiếp theo mà sender_id Me sẽ nói.
     Cuộc trò chuyện:
     ${conversationText}
 
@@ -621,27 +621,38 @@ export default function ChatScreen() {
             />
           ) : conversationInfo?.created_by === userId ||
             conversationInfo?.first_message_sent ? (
-            <InputBar
-              onPickFile={handlePickFile}
-              inputRef={inputRef}
-              onTextChange={handleTextChange}
-              onSend={handleSend}
-              isSending={isSending}
-              onAIResponse={async (customizationMessage, done) => {
-                try {
-                  const success = await getAIResponse(
-                    messages,
-                    userId,
-                    customizationMessage
-                  );
-                  done(success);
-                } catch (err) {
-                  done(false);
-                }
-              }}
-              value={text}
-              currentUser={userId}
-            />
+            <View>
+              <View style={styles.waitingContainer}>
+                <Text style={styles.waitingText}>
+                  You are the conversation starter! Start messaging{" "}
+                  {otherUser?.first_name || otherUser?.last_name
+                    ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+                    : null}{" "}
+                  now!
+                </Text>
+              </View>
+              <InputBar
+                onPickFile={handlePickFile}
+                inputRef={inputRef}
+                onTextChange={handleTextChange}
+                onSend={handleSend}
+                isSending={isSending}
+                onAIResponse={async (customizationMessage, done) => {
+                  try {
+                    const success = await getAIResponse(
+                      messages,
+                      userId,
+                      customizationMessage
+                    );
+                    done(success);
+                  } catch (err) {
+                    done(false);
+                  }
+                }}
+                value={text}
+                currentUser={userId}
+              />
+            </View>
           ) : (
             <View style={styles.waitingContainer}>
               <Text style={styles.waitingText}>
