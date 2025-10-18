@@ -20,7 +20,6 @@ const STORAGE_KEY = "ai_response_limit";
 const LIMIT = 5;
 const RESET_TIME = 60 * 60 * 1000;
 
-// platform-aware storage
 const storage =
   Platform.OS === "web"
     ? {
@@ -131,24 +130,23 @@ export const InputBar = ({
     })();
   }, []);
 
-  const handleAIResponse = async () => {
+  const handleAIResponse = async (customizationMessage) => {
     const { count } = await getAIStatus();
     if (count >= LIMIT) {
       showAlert({
-        title: "Giới hạn đã đạt",
+        title: "Limit reached",
         message:
-          "Bạn chỉ có thể dùng AI tối đa 5 lần mỗi 1 tiếng. Vui lòng thử lại sau.",
+          "You can only use AI up to 5 times per hour. Please try again later.",
         buttons: [{ text: "OK", style: "cancel" }],
       });
       return;
     }
 
-    setTimeout(() => {
-      setTooltipVisible(true);
-    }, 1000);
-
-    onAIResponse?.(async (success) => {
+    onAIResponse?.(customizationMessage, async (success) => {
       if (success) {
+        setTimeout(() => {
+          setTooltipVisible(true);
+        }, 1000);
         const newCount = await useAIResponse();
         const remaining = Math.max(LIMIT - newCount, 0);
         const elapsed = Date.now() - (await getAIStatus()).timestamp;
@@ -157,6 +155,12 @@ export const InputBar = ({
           0
         );
         setAiInfo({ remaining, resetMinutes });
+      } else {
+        showAlert({
+          title: "Error",
+          message: "Something went wrong, please try again later",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
       }
     });
   };
@@ -182,7 +186,7 @@ export const InputBar = ({
             backgroundColor="rgba(0,0,0,0.5)"
             placement="top"
             content={
-              <View style={{ padding: 8 }}>
+              <View style={{ padding: 8, margin: 10 }}>
                 <Text style={{ color: "#000", fontFamily: "Poppins-Regular" }}>
                   Còn lại: {aiInfo.remaining} / {LIMIT} lần
                 </Text>
@@ -195,7 +199,16 @@ export const InputBar = ({
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
-                handleAIResponse();
+                showInputAlert({
+                  title: "What's your mood?",
+                  message: "Enter a mood so the AI can respond to:",
+                  placeholder: "e.g. Excited but a little nervous",
+                  okText: "Confirm",
+                  cancelText: "Cancel",
+                  onOk: async (value) => {
+                    await handleAIResponse(value);
+                  },
+                });
               }}
               style={styles.uploadBtn}
             >

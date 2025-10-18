@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { theme } from "~/constants/theme";
 
 type InputAlertOptions = {
   title: string;
@@ -81,6 +82,7 @@ export const InputAlertProvider = ({ children }: { children: ReactNode }) => {
               style={styles.textarea}
               placeholder={options.placeholder}
               value={inputValue}
+              placeholderTextColor={theme.colors.textLightGray}
               onChangeText={setInputValue}
               multiline
             />
@@ -109,7 +111,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modal: {
-    width: 320,
+    width: 420,
     backgroundColor: "white",
     borderRadius: 8,
     padding: 20,

@@ -64,7 +64,6 @@ export const PhotoGrid: FC<Props> = ({
         };
       });
     setData(initialData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const deletePhoto = async (item: Item) => {

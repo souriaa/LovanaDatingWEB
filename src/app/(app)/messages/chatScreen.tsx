@@ -319,7 +319,7 @@ export default function ChatScreen() {
     );
   };
 
-  async function getAIResponse(messages, userId) {
+  async function getAIResponse(messages, userId, customizationMessage) {
     const sortedMessages = messages.sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -347,7 +347,7 @@ export default function ChatScreen() {
 
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/AIReplySuggestion`,
+        `${process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_URL}/AIReplySuggestion`,
         {
           method: "POST",
           body: JSON.stringify(prompt),
@@ -362,12 +362,14 @@ export default function ChatScreen() {
 
       if (data?.body) {
         setText(data.body);
+        return true;
+      } else {
+        return false;
       }
     } catch (err) {
       console.error("Failed to fetch AI reply:", err);
+      return false;
     }
-
-    return { messages: formattedMessages };
   }
 
   const GROUP_WINDOW_MS = 2 * 60 * 1000;
@@ -625,9 +627,13 @@ export default function ChatScreen() {
               onTextChange={handleTextChange}
               onSend={handleSend}
               isSending={isSending}
-              onAIResponse={async (done) => {
+              onAIResponse={async (customizationMessage, done) => {
                 try {
-                  const success = await getAIResponse(messages, userId);
+                  const success = await getAIResponse(
+                    messages,
+                    userId,
+                    customizationMessage
+                  );
                   done(success);
                 } catch (err) {
                   done(false);
