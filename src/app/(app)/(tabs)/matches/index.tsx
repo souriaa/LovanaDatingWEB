@@ -1,3 +1,4 @@
+import { useUnmatch } from "@/api/profiles";
 import { Empty } from "@/components/empty";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -22,6 +23,7 @@ import ReAnimated, {
   FadeOut,
   LinearTransition,
 } from "react-native-reanimated";
+import { getInteractionByActorAndTarget } from "~/service/interactionService";
 import { getActivePlanByUserId } from "~/service/profilePlanService";
 import { theme } from "../../../../../constants/theme";
 import {
@@ -207,6 +209,8 @@ export default function ConversationsScreen() {
 
   const [planIsValid, setPlanIsValid] = useState(false);
 
+  const { mutate } = useUnmatch();
+
   const { showAlert } = useAlert();
 
   const CustomHeader = () => {
@@ -282,13 +286,37 @@ export default function ConversationsScreen() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "conversations" },
-        (payload) => {
-          const updatedConv = payload.new;
-          setConversations((prev) =>
-            prev.map((conv) =>
-              conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv
-            )
-          );
+        async (payload) => {
+          switch (payload.eventType) {
+            case "INSERT":
+              // Fetch full conversation to include nested data like other_user
+              try {
+                const fullConv = await fetchConversations(user.id);
+                setConversations((prev) => [fullConv, ...prev]);
+              } catch (err) {
+                console.error("Failed to fetch new conversation:", err);
+              }
+              break;
+
+            case "UPDATE":
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.id === payload.new.id
+                    ? { ...conv, ...payload.new }
+                    : conv
+                )
+              );
+              break;
+
+            case "DELETE":
+              setConversations((prev) =>
+                prev.filter((conv) => conv.id !== payload.old.id)
+              );
+              break;
+
+            default:
+              break;
+          }
         }
       )
       .subscribe();
@@ -644,39 +672,6 @@ Hãy trả về mức độ tương thích giữa người đầu tiên và ngư
               }}
             >
               <TouchableOpacity
-                onPress={async () => {
-                  if (!sheetConversation?.id) return;
-                  const conversationId = sheetConversation.id;
-                  try {
-                    await deleteConversationById(conversationId);
-                  } catch (err) {
-                    console.error("Delete failed:", err);
-                  }
-
-                  Animated.timing(slideAnim, {
-                    toValue: height,
-                    duration: 300,
-                    useNativeDriver: false,
-                  }).start(() => {
-                    setShowSheet(false);
-                    setSheetConversation(null);
-                  });
-                }}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color="red"
-                    style={{ marginRight: 8 }}
-                  />
-                  <Text style={[styles.sheetOption, { color: "red" }]}>
-                    Delete Conversation
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
                 onPress={() =>
                   router.push({
                     pathname: "/report/report",
@@ -693,6 +688,134 @@ Hãy trả về mức độ tương thích giữa người đầu tiên và ngư
                     style={{ marginRight: 8 }}
                   />
                   <Text style={styles.sheetOption}>Report</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    let targetUserId;
+                    if (sheetConversation?.members?.length > 0) {
+                      const otherMember = sheetConversation.members.find(
+                        (m) => m.user_id !== user.id
+                      );
+                      if (otherMember) {
+                        targetUserId = otherMember.user_id;
+                      }
+                    }
+
+                    const interaction = await getInteractionByActorAndTarget(
+                      user.id,
+                      targetUserId
+                    );
+                    console.log(interaction.id);
+
+                    showAlert({
+                      title: "Are you sure?",
+                      message: `Unmatching will delete the match for both you and them`,
+                      buttons: [
+                        {
+                          text: "Cancel",
+                          style: "cancel",
+                        },
+                        {
+                          text: "Unmatch",
+                          style: "destructive",
+                          onPress: () => {
+                            mutate(interaction.id, {
+                              onSuccess: () => {
+                                router.navigate("/matches/");
+                              },
+                              onError: () => {
+                                showAlert({
+                                  title: "Error",
+                                  message:
+                                    "Something went wrong, please try again later.",
+                                  buttons: [{ text: "OK", style: "cancel" }],
+                                });
+                              },
+                            });
+                          },
+                        },
+                      ],
+                    });
+
+                    Animated.timing(slideAnim, {
+                      toValue: height,
+                      duration: 300,
+                      useNativeDriver: false,
+                    }).start(() => {
+                      setShowSheet(false);
+                      setSheetConversation(null);
+                    });
+                  } catch (err) {
+                    console.error("Action failed:", err);
+                  }
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="close-outline"
+                    size={20}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={[styles.sheetOption]}>Unmatch</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  if (!sheetConversation?.id) return;
+                  const conversationId = sheetConversation.id;
+
+                  showAlert({
+                    title: "Are you sure?",
+                    message: `Block and unmatch will block them permanently`,
+                    buttons: [
+                      {
+                        text: "Cancel",
+                        style: "cancel",
+                      },
+                      {
+                        text: "Block and unmatch",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await deleteConversationById(conversationId);
+
+                            Animated.timing(slideAnim, {
+                              toValue: height,
+                              duration: 300,
+                              useNativeDriver: false,
+                            }).start(() => {
+                              setShowSheet(false);
+                              setSheetConversation(null);
+                            });
+                          } catch (err) {
+                            console.error("Delete failed:", err);
+                            showAlert({
+                              title: "Error",
+                              message:
+                                "Something went wrong, please try again later.",
+                              buttons: [{ text: "OK", style: "cancel" }],
+                            });
+                          }
+                        },
+                      },
+                    ],
+                  });
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color="red"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={[styles.sheetOption, { color: "red" }]}>
+                    Block and unmatch
+                  </Text>
                 </View>
               </TouchableOpacity>
             </Animated.View>
@@ -968,13 +1091,13 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: theme.radius.round,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryDark,
     borderWidth: 2,
     borderColor: "white",
   },
   unreadText: {
-    color: theme.colors.primary,
-    fontFamily: "Poppins-Bold",
+    color: theme.colors.textDark,
+    fontFamily: "Poppins-SemiBold",
   },
   disableText: {
     opacity: 0.5,

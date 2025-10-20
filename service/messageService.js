@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getProfile } from "./userService";
 
 export const fetchConversations = async (userId) => {
   try {
@@ -617,4 +618,188 @@ export const fetchOlderMessages = async (conversationId, oldestMessageId, limit 
     console.error("Error fetching older messages:", err.message || err);
     return [];
   }
+};
+
+export async function createSchedule(title, date, conversationId) {
+  try {
+    const user = await getProfile();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data: message, error: messageError } = await supabase
+      .from("messages")
+      .insert([
+        {
+          conversation_id: conversationId,
+          sender_id: user.id,
+          body: title,
+          is_schedule: true,
+          schedule_date: date,
+        },
+      ])
+      .select()
+      .single();
+
+    if (messageError || !message) throw messageError ?? new Error("Failed to create message");
+
+    const { data: members, error: membersError } = await supabase
+      .from("conversation_members")
+      .select("user_id")
+      .eq("conversation_id", conversationId);
+
+    if (membersError) throw membersError;
+
+    const participantRows = members
+      .filter((m) => m.user_id)
+      .map((m) => ({
+        message_id: message.id,
+        user_id: m.user_id,
+        decide_at: m.user_id === user.id ? new Date().toISOString() : null,
+        accept_status: m.user_id === user.id ? true : null,
+      }));
+
+    const { error: participantError } = await supabase
+      .from("message_schedule_participants")
+      .insert(participantRows);
+
+    if (participantError) throw participantError;
+
+    return { message, participants: participantRows };
+  } catch (err) {
+    console.error("Error creating schedule:", err.message);
+    return null;
+  }
+}
+
+export async function getScheduleParticipantsByMessageId(messageId) {
+  try {
+    const { data, error } = await supabase
+      .from("message_schedule_participants")
+      .select(`
+        user_id,
+        decide_at,
+        accept_status,
+        profiles!inner(first_name)
+      `)
+      .eq("message_id", messageId);
+
+    if (error) throw error;
+    const participants = data.map((p) => ({
+      user_id: p.user_id,
+      decide_at: p.decide_at,
+      accept_status: p.accept_status,
+      first_name: p.profiles.first_name,
+    }));
+
+    return participants;
+  } catch (err) {
+    console.error("Error fetching schedule participants:", err.message);
+    return [];
+  }
+}
+
+export async function participateInSchedule(messageId) {
+  try {
+    const user = await getProfile();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from("message_schedule_participants")
+      .upsert(
+        [
+          {
+            message_id: messageId,
+            user_id: user.id,
+            decide_at: new Date().toISOString(),
+            accept_status: true,
+          },
+        ],
+        { onConflict: ["message_id", "user_id"] }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (err) {
+    console.error("Error participating in schedule:", err.message);
+    return null;
+  }
+}
+
+export async function declineSchedule(messageId) {
+  try {
+    const user = await getProfile();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from("message_schedule_participants")
+      .upsert(
+        [
+          {
+            message_id: messageId,
+            user_id: user.id,
+            decide_at: new Date().toISOString(),
+            accept_status: false,
+          },
+        ],
+        { onConflict: ["message_id", "user_id"] }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (err) {
+    console.error("Error declining schedule:", err.message);
+    return null;
+  }
+}
+
+export async function getScheduleParticipants(messageId) {
+  try {
+    const { data, error } = await supabase
+      .from("message_schedule_participants")
+      .select("user_id, decide_at, accept_status")
+      .eq("message_id", messageId);
+
+    if (error) throw error;
+
+    return data;
+  } catch (err) {
+    console.error("Error fetching schedule participants:", err.message);
+    return [];
+  }
+}
+
+export const getScheduleSubtext = async (messageId) => {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("schedule_subtext")
+    .eq("id", messageId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching schedule_subtext:", error);
+    return null;
+  }
+
+  return data?.schedule_subtext || null;
+};
+
+export const setScheduleSubtext = async (messageId, subtext) => {
+  const { data, error } = await supabase
+    .from("messages")
+    .update({ schedule_subtext: subtext })
+    .eq("id", messageId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating schedule_subtext:", error);
+    return null;
+  }
+
+  return data?.schedule_subtext || null;
 };

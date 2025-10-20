@@ -208,7 +208,18 @@ export default function MyPayPlan({ refreshKey }) {
         <View style={styles.planContainerContainer}>
           <View style={styles.planContainer}>
             {loading ? (
-              <ActivityIndicator size="large" color={theme.colors.textDark} />
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <ActivityIndicator
+                  size="large"
+                  color={theme.colors.primaryDark}
+                />
+              </View>
             ) : (
               <View style={{ flex: 1, justifyContent: "space-between" }}>
                 {plans.map((plan, index) => (

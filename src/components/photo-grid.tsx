@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { theme } from "~/constants/theme";
 import { Photo, PrivateProfile } from "../api/my-profile/types";
 import { useAlert } from "../components/alert-provider";
 import { supabase } from "../lib/supabase";
@@ -213,7 +214,20 @@ export const PhotoGrid: FC<Props> = ({
             </TouchableOpacity>
           </View>
         ) : (
-          <View className="flex-1 border border-red-600 border-dashed rounded-md" />
+          <TouchableOpacity
+            onPress={pickPhoto}
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: theme.colors.primaryDark,
+              borderStyle: "dashed",
+              borderRadius: 8,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="add" size={32} color={theme.colors.primaryDark} />
+          </TouchableOpacity>
         )}
       </View>
     );

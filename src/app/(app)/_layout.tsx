@@ -18,6 +18,7 @@ export default function Layout() {
   const { data: likes } = useLikes();
   const [conversations, setConversations] = useState([]);
   const [isHovered, setIsHovered] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
 
   const loadConversations = useCallback(async () => {
     if (!profile?.id) return;
@@ -64,7 +65,11 @@ export default function Layout() {
                   justifyContent: "center",
                 }}
               >
-                <Ionicons name="options-outline" size={30} />
+                <Ionicons
+                  name="options-outline"
+                  style={{ marginLeft: 20 }}
+                  size={30}
+                />
               </Link>
             </View>
           </View>
@@ -184,6 +189,8 @@ export default function Layout() {
                 <Text style={styles.placeholderText}>No conversations yet</Text>
               ) : (
                 conversations.slice(0, 5).map((item) => {
+                  const isHovered = hoveredId === item.id;
+
                   return (
                     <Pressable
                       key={item.id}
@@ -191,8 +198,8 @@ export default function Layout() {
                         styles.conversationItem,
                         { backgroundColor: isHovered ? "#f0f0f0" : "#fff" },
                       ]}
-                      onMouseEnter={() => setIsHovered(true)}
-                      onMouseLeave={() => setIsHovered(false)}
+                      onMouseEnter={() => setHoveredId(item.id)}
+                      onMouseLeave={() => setHoveredId(null)}
                       onPress={() =>
                         router.push(
                           `messages/chatScreen?conversationId=${item.id}&userId=${profile?.id}`

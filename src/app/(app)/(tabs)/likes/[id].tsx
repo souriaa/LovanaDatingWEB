@@ -143,6 +143,7 @@ const Page = () => {
           loading={removePending}
           loaderClassName="text-black"
           disabled={removePending || matchPending}
+          iconSize={40}
         />
         <Fab
           className="bg-white h-20 active:h-[4.75rem] rounded-full"
@@ -152,6 +153,7 @@ const Page = () => {
           loading={matchPending}
           loaderClassName="text-black"
           disabled={removePending || matchPending}
+          iconSize={40}
         />
       </View>
     </View>

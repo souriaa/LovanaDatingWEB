@@ -124,8 +124,6 @@ Chỉ tạo ra 01 câu trả lời NGẮN cho câu hỏi trên, đặt mình và
 Trả lời bằng tiếng Anh nếu không có chỉ định trong Phong cách.
 `.trim();
 
-    console.log(aiPrompt);
-
     try {
       const response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_URL}/AIReplySuggestion`,
@@ -140,7 +138,6 @@ Trả lời bằng tiếng Anh nếu không có chỉ định trong Phong cách.
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      console.log(data);
 
       return data?.body || null;
     } catch (err) {
@@ -182,8 +179,6 @@ Trả lời bằng tiếng Anh nếu không có chỉ định trong Phong cách.
         );
         setAiInfo({ remaining, resetMinutes });
         setTooltipVisible(true);
-
-        console.log("AI refinement prompt submitted:", value);
       },
     });
   };

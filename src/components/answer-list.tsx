@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { FC, useEffect, useState } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { theme } from "~/constants/theme";
 import { deleteProfileAnswer } from "../../service/profileAnswerService";
 import { Answer, PrivateProfile } from "../api/my-profile/types";
 import { useEdit } from "../store/edit";
@@ -90,7 +91,20 @@ export const AnswerList: FC<Props> = ({
             )}
           </View>
         ) : (
-          <View className="flex-1 rounded-md border border-red-600 border-dashed" />
+          <TouchableOpacity
+            onPress={onItemPress}
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: theme.colors.primaryDark,
+              borderStyle: "dashed",
+              borderRadius: 8,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="add" size={32} color={theme.colors.primaryDark} />
+          </TouchableOpacity>
         )}
       </View>
     );

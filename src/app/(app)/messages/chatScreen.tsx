@@ -1,3 +1,4 @@
+import { useInputDateAlert } from "@/components/alert-input-date-provider";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +15,8 @@ import { theme } from "../../../../constants/theme";
 import { uploadFile } from "../../../../service/imageService";
 import { getInteractionByActorAndTarget } from "../../../../service/interactionService";
 import {
+  createSchedule,
+  deleteConversationById,
   fetchConversationSeenStatus,
   fetchMessages,
   fetchOlderMessages,
@@ -73,6 +76,7 @@ export default function ChatScreen() {
   const slideAnim = useRef(new Animated.Value(height)).current;
 
   const { showAlert } = useAlert();
+  const { showInputAlert } = useInputDateAlert();
 
   const { mutate } = useUnmatch();
 
@@ -503,6 +507,30 @@ export default function ChatScreen() {
     });
   };
 
+  const handleCreateSchedule = async (title, date) => {
+    showInputAlert({
+      title: "Ask on a Date",
+      message: "Enter a title and pick a date/time:",
+      placeholder: "e.g. Lunch with Anna",
+      showDate: true,
+      defaultDate: new Date(),
+      okText: "Send",
+      cancelText: "Cancel",
+      onOk: async (title, date) => {
+        if (!title || !date) return;
+        try {
+          const result = await createSchedule(title, date, conversationId);
+          if (result) {
+          } else {
+            console.error("Failed to create schedule");
+          }
+        } catch (err) {
+          console.error("Error creating schedule:", err);
+        }
+      },
+    });
+  };
+
   const handleUnmatch = () => {
     closeSheet();
 
@@ -535,6 +563,33 @@ export default function ChatScreen() {
                 });
               },
             });
+          },
+        },
+      ],
+    });
+  };
+
+  const handleDeleteConversation = () => {
+    closeSheet();
+
+    const userName =
+      otherUser.first_name || otherUser.last_name
+        ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
+        : "this user";
+
+    showAlert({
+      title: "Are you sure?",
+      message: `Block and unmatch will block them pernamently`,
+      buttons: [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Block and unmatch",
+          style: "destructive",
+          onPress: async () => {
+            await deleteConversationById(conversationId);
           },
         },
       ],
@@ -619,49 +674,58 @@ export default function ChatScreen() {
               userId={userId as string}
               onExtendPress={openExtendSheet}
             />
-          ) : conversationInfo?.created_by === userId ||
-            conversationInfo?.first_message_sent ? (
-            <View>
-              <View style={styles.waitingContainer}>
-                <Text style={styles.waitingText}>
-                  You are the conversation starter! Start messaging{" "}
-                  {otherUser?.first_name || otherUser?.last_name
-                    ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
-                    : null}{" "}
-                  now!
-                </Text>
-              </View>
-              <InputBar
-                onPickFile={handlePickFile}
-                inputRef={inputRef}
-                onTextChange={handleTextChange}
-                onSend={handleSend}
-                isSending={isSending}
-                onAIResponse={async (customizationMessage, done) => {
-                  try {
-                    const success = await getAIResponse(
-                      messages,
-                      userId,
-                      customizationMessage
-                    );
-                    done(success);
-                  } catch (err) {
-                    done(false);
-                  }
-                }}
-                value={text}
-                currentUser={userId}
-              />
-            </View>
           ) : (
-            <View style={styles.waitingContainer}>
-              <Text style={styles.waitingText}>
-                Waiting for{" "}
-                {otherUser?.first_name || otherUser?.last_name
-                  ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
-                  : null}{" "}
-                to start the converation!
-              </Text>
+            <View>
+              {conversationInfo?.created_by === userId &&
+                !conversationInfo?.first_message_sent && (
+                  <View style={styles.waitingContainer}>
+                    <Text style={styles.waitingText}>
+                      You are the conversation starter! Start messaging{" "}
+                      {otherUser?.first_name || otherUser?.last_name
+                        ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+                        : null}{" "}
+                      now!
+                    </Text>
+                  </View>
+                )}
+
+              {(conversationInfo?.created_by === userId ||
+                conversationInfo?.first_message_sent) && (
+                <InputBar
+                  onPickFile={handlePickFile}
+                  inputRef={inputRef}
+                  onTextChange={handleTextChange}
+                  onSend={handleSend}
+                  isSending={isSending}
+                  onAIResponse={async (customizationMessage, done) => {
+                    try {
+                      const success = await getAIResponse(
+                        messages,
+                        userId,
+                        customizationMessage
+                      );
+                      done(success);
+                    } catch (err) {
+                      done(false);
+                    }
+                  }}
+                  value={text}
+                  currentUser={userId}
+                />
+              )}
+
+              {conversationInfo?.created_by !== userId &&
+                !conversationInfo?.first_message_sent && (
+                  <View style={styles.waitingContainer}>
+                    <Text style={styles.waitingText}>
+                      Waiting for{" "}
+                      {otherUser?.first_name || otherUser?.last_name
+                        ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+                        : null}{" "}
+                      to start the conversation!
+                    </Text>
+                  </View>
+                )}
             </View>
           )}
         </View>
@@ -677,6 +741,8 @@ export default function ChatScreen() {
           onReportUser={handleReportUser}
           onReportMessage={handleReportMessage}
           onUnmatch={handleUnmatch}
+          onDelete={handleDeleteConversation}
+          onCreateSchedule={handleCreateSchedule}
           onClose={closeSheet}
           slideAnim={slideAnim}
           height={height}

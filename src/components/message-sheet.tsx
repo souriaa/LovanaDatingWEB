@@ -16,7 +16,9 @@ interface MessageSheetProps {
   onCopy: () => void;
   onReportUser: () => void;
   onReportMessage: () => void;
+  onCreateSchedule: () => void;
   onUnmatch: () => void;
+  onDelete: () => void;
   onClose: () => void;
   slideAnim: Animated.Value;
   height: number;
@@ -31,7 +33,9 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
   onReportUser,
   onReportMessage,
   onUnmatch,
+  onDelete,
   onClose,
+  onCreateSchedule,
   slideAnim,
   height,
 }) => {
@@ -108,6 +112,22 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
             </>
           ) : (
             <>
+              <TouchableOpacity onPress={onCreateSchedule}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.sheetOption}>
+                    Add a schedule with{" "}
+                    {otherUser.first_name || otherUser.last_name
+                      ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
+                      : null}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
               <TouchableOpacity onPress={onReportUser}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Ionicons
@@ -132,6 +152,20 @@ export const MessageSheet: React.FC<MessageSheetProps> = ({
                     style={{ marginRight: 8 }}
                   />
                   <Text style={styles.sheetOption}>Unmatch</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={onDelete}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    style={{ marginRight: 8 }}
+                    color={"red"}
+                  />
+                  <Text style={[styles.sheetOption, { color: "red" }]}>
+                    Block and unmatch
+                  </Text>
                 </View>
               </TouchableOpacity>
             </>

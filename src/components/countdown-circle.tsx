@@ -55,9 +55,7 @@ export const CountdownCircle = ({
   const strokeDashoffset = circumference * (1 - progress);
 
   const strokeColor =
-    timeLeft <= 5 * 60 * 1000
-      ? theme.colors.primaryDark
-      : theme.colors.primaryLight;
+    timeLeft <= 5 * 60 * 1000 ? theme.colors.primaryDark : theme.colors.primary;
 
   return (
     <View style={{ width: size, height: size }}>

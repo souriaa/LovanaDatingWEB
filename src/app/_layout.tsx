@@ -5,6 +5,7 @@ import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../../global.css";
+import { InputDateAlertProvider } from "../components/alert-input-date-provider";
 import { AlertProvider } from "../components/alert-provider";
 import { fonts } from "../constants/fonts";
 import { AuthProvider } from "../store/auth";
@@ -36,26 +37,28 @@ export default function Layout() {
         <AuthProvider>
           <AlertProvider>
             <InputAlertProvider>
-              <PaymentProvider>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                  }}
-                >
-                  <Stack.Screen
-                    name="(app)"
-                    options={{
-                      animation: "none",
+              <InputDateAlertProvider>
+                <PaymentProvider>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
                     }}
-                  />
-                  <Stack.Screen
-                    name="(auth)"
-                    options={{
-                      animation: "none",
-                    }}
-                  />
-                </Stack>
-              </PaymentProvider>
+                  >
+                    <Stack.Screen
+                      name="(app)"
+                      options={{
+                        animation: "none",
+                      }}
+                    />
+                    <Stack.Screen
+                      name="(auth)"
+                      options={{
+                        animation: "none",
+                      }}
+                    />
+                  </Stack>
+                </PaymentProvider>
+              </InputDateAlertProvider>
             </InputAlertProvider>
           </AlertProvider>
         </AuthProvider>
