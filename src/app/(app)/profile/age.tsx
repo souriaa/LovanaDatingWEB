@@ -1,3 +1,4 @@
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -189,6 +190,11 @@ export default function Page() {
           </Text>
         </>
       )}
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
+      />
     </View>
   );
 }

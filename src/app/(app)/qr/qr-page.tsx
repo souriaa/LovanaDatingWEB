@@ -1,6 +1,14 @@
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../../../constants/theme";
 import { usePayment } from "../../../store/payment-store";
@@ -19,7 +27,15 @@ export default function QRPage() {
     return null;
   }
 
-  const { amount, type, plan_due_date, paymentId, currency, name } = payment;
+  const {
+    amount,
+    type,
+    plan_due_date,
+    paymentId,
+    currency,
+    name,
+    amountNumber,
+  } = payment;
 
   const formattedAmount = Number(amount).toLocaleString();
 
@@ -44,6 +60,32 @@ export default function QRPage() {
     router.back();
   };
 
+  const scanAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanAnim, {
+          toValue: 1,
+          duration: 3000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanAnim, {
+          toValue: 0,
+          duration: 3000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const scanTranslateY = scanAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [10, 270],
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -58,6 +100,15 @@ export default function QRPage() {
 
       <View style={styles.qrCard}>
         <Image source={{ uri: qrUrl }} style={styles.qrCode} />
+
+        <Animated.View
+          style={[
+            styles.scanBar,
+            {
+              transform: [{ translateY: scanTranslateY }],
+            },
+          ]}
+        />
       </View>
 
       <View style={styles.infoCard}>
@@ -66,6 +117,12 @@ export default function QRPage() {
           <Text style={styles.infoLabel}>Plan name:</Text>
           <Text style={styles.infoValue}>{name}</Text>
         </View>
+        {amountNumber && (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Amount:</Text>
+            <Text style={styles.infoValue}>{amountNumber}</Text>
+          </View>
+        )}
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Type:</Text>
           <Text style={styles.infoValue}>{type}</Text>
@@ -169,5 +226,15 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: "Poppins-SemiBold",
     fontSize: 16,
+  },
+  scanBar: {
+    position: "absolute",
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 4,
+    backgroundColor: theme.colors.textLighterGray,
+    borderRadius: 2,
+    opacity: 0.5,
   },
 });

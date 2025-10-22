@@ -1,7 +1,14 @@
 // File: components/chat/MessageItem.tsx
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { getActivePlanByUserId } from "~/service/profilePlanService";
 import { getProfile } from "~/service/userService";
@@ -47,12 +54,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const { showAlert } = useAlert();
   const { showInputAlert } = useInputAlert();
+  const [isScheduleLoading, setIsScheduleLoading] = useState(false);
 
   useEffect(() => {
     if (item.is_schedule) {
       fetchParticipants();
     }
-  }, []);
+  }, [item]);
 
   useEffect(() => {
     (async () => {
@@ -77,7 +85,31 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
   }, [item.id]);
 
+  useEffect(() => {
+    if (!item.is_schedule) return;
+
+    const channel = supabase
+      .channel("public:message_schedule_participants")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "message_schedule_participants",
+        },
+        (payload) => {
+          fetchParticipants();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [item.id]);
+
   const fetchParticipants = async () => {
+    setIsScheduleLoading(true);
     try {
       const data = await getScheduleParticipantsByMessageId(item.id);
       setParticipants(data);
@@ -93,6 +125,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       setUserDecision(decision);
     } catch (err) {
       console.error("Error fetching participants:", err);
+    } finally {
+      setIsScheduleLoading(false);
     }
   };
 
@@ -267,141 +301,155 @@ Answer in English unless otherwise instructed or answer in language that Additio
             </Text>
           )}
 
-          {participants.length > 0 && (
-            <Text style={styles.scheduleParticipants}>
-              Participants:{" "}
-              {participants.map((p: any, i: number) => (
-                <Text key={p.user_id}>
-                  {p.user_id === userId ? "You" : p.first_name} (
-                  {p.accept_status === true
-                    ? "Accepted"
-                    : p.decide_at !== null && p.accept_status === false
-                      ? "Declined"
-                      : "Pending"}
-                  ){i < participants.length - 1 ? ", " : ""}
-                </Text>
-              ))}
-            </Text>
-          )}
-
-          {userDecision === null ? (
-            <View style={styles.participateButtons}>
-              {" "}
-              <Pressable
-                style={[styles.btn, styles.btnYes]}
-                onPress={handleAccept}
-              >
-                {" "}
-                <Text style={styles.btnText}>Accept</Text>{" "}
-              </Pressable>{" "}
-              <Pressable
-                style={[styles.btn, styles.btnNo]}
-                onPress={handleDecline}
-              >
-                {" "}
-                <Text style={styles.btnText}>Decline</Text>{" "}
-              </Pressable>{" "}
-            </View>
-          ) : userDecision === true ? (
-            allAccepted ? (
-              <Text
-                className="text-sm font-poppins-semibold"
-                style={{ marginTop: 10, color: theme.colors.primaryDark }}
-              >
-                All participants accepted!
-              </Text>
-            ) : allResponded ? (
-              <Text
-                className="text-sm font-poppins-semibold"
-                style={{ marginTop: 10, color: theme.colors.textDarkGray }}
-              >
-                Other have declined this schedule
-              </Text>
-            ) : (
-              <Text style={{ marginTop: 10, color: theme.colors.textDarkGray }}>
-                Waiting for others to respond...
-              </Text>
-            )
+          {isScheduleLoading ? (
+            <ActivityIndicator
+              size="small"
+              color={theme.colors.primaryDark}
+              style={{ marginVertical: 20 }}
+            />
           ) : (
-            <Text style={{ marginTop: 10, color: "#999" }}>
-              You declined this schedule
-            </Text>
-          )}
-          {planIsValid && userDecision === true && allAccepted && (
             <>
-              <Pressable onPress={handleAIRecommendationPress}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginTop: 10,
-                    paddingHorizontal: 8,
-                    paddingVertical: 6,
-                    backgroundColor: "#f0f0f0",
-                    borderRadius: theme.radius.lg,
-                  }}
-                >
-                  <View
-                    style={{
-                      position: "relative",
-                      width: 28,
-                      height: 28,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginRight: 8,
-                    }}
+              {participants.length > 0 && (
+                <Text style={styles.scheduleParticipants}>
+                  Participants:{" "}
+                  {participants.map((p: any, i: number) => (
+                    <Text key={p.user_id}>
+                      {p.user_id === userId ? "You" : p.first_name} (
+                      {p.accept_status === true
+                        ? "Accepted"
+                        : p.decide_at !== null && p.accept_status === false
+                          ? "Declined"
+                          : "Pending"}
+                      ){i < participants.length - 1 ? ", " : ""}
+                    </Text>
+                  ))}
+                </Text>
+              )}
+
+              {userDecision === null ? (
+                <View style={styles.participateButtons}>
+                  {" "}
+                  <Pressable
+                    style={[styles.btn, styles.btnYes]}
+                    onPress={handleAccept}
                   >
-                    <Ionicons
-                      name="chatbubble-ellipses-outline"
-                      size={28}
-                      color={theme.colors.primaryDark}
-                    />
-                    <Text
+                    {" "}
+                    <Text style={styles.btnText}>Accept</Text>{" "}
+                  </Pressable>{" "}
+                  <Pressable
+                    style={[styles.btn, styles.btnNo]}
+                    onPress={handleDecline}
+                  >
+                    {" "}
+                    <Text style={styles.btnText}>Decline</Text>{" "}
+                  </Pressable>{" "}
+                </View>
+              ) : userDecision === true ? (
+                allAccepted ? (
+                  <Text
+                    className="text-sm font-poppins-semibold"
+                    style={{ marginTop: 10, color: theme.colors.primaryDark }}
+                  >
+                    All participants accepted!
+                  </Text>
+                ) : allResponded ? (
+                  <Text
+                    className="text-sm font-poppins-semibold"
+                    style={{ marginTop: 10, color: theme.colors.textDarkGray }}
+                  >
+                    Other have declined this schedule
+                  </Text>
+                ) : (
+                  <Text
+                    style={{ marginTop: 10, color: theme.colors.textDarkGray }}
+                  >
+                    Waiting for others to respond...
+                  </Text>
+                )
+              ) : (
+                <Text style={{ marginTop: 10, color: "#999" }}>
+                  You declined this schedule
+                </Text>
+              )}
+              {planIsValid && userDecision === true && allAccepted && (
+                <>
+                  <Pressable onPress={handleAIRecommendationPress}>
+                    <View
                       style={{
-                        position: "absolute",
-                        top: -4,
-                        right: -4,
-                        fontSize: 8,
-                        color: theme.colors.primaryDark,
-                        backgroundColor: "transparent",
-                        borderRadius: 10,
-                        paddingHorizontal: 2,
-                        fontWeight: "bold",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginTop: 10,
+                        paddingHorizontal: 8,
+                        paddingVertical: 6,
+                        backgroundColor: "#f0f0f0",
+                        borderRadius: theme.radius.lg,
                       }}
                     >
-                      AI
-                    </Text>
-                  </View>
+                      <View
+                        style={{
+                          position: "relative",
+                          width: 28,
+                          height: 28,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginRight: 8,
+                        }}
+                      >
+                        <Ionicons
+                          name="chatbubble-ellipses-outline"
+                          size={28}
+                          color={theme.colors.primaryDark}
+                        />
+                        <Text
+                          style={{
+                            position: "absolute",
+                            top: -4,
+                            right: -4,
+                            fontSize: 8,
+                            color: theme.colors.primaryDark,
+                            backgroundColor: "transparent",
+                            borderRadius: 10,
+                            paddingHorizontal: 2,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          AI
+                        </Text>
+                      </View>
 
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontFamily: "Poppins-Regular",
-                      fontSize: 14,
-                      color: theme.colors.textDark,
-                    }}
-                  >
-                    {!aiRecommendation
-                      ? "Get AI recommendation on date places and ideas!"
-                      : "Reuse?"}
-                  </Text>
-                </View>
-              </Pressable>
+                      <Text
+                        style={{
+                          flex: 1,
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 14,
+                          color: theme.colors.textDark,
+                        }}
+                      >
+                        {!aiRecommendation
+                          ? "Get AI recommendation on date places and ideas!"
+                          : "Reuse?"}
+                      </Text>
+                    </View>
+                  </Pressable>
 
-              {aiRecommendation && (
-                <View
-                  style={{
-                    marginTop: 10,
-                    padding: 10,
-                    backgroundColor: "#f0f0f0",
-                    borderRadius: theme.radius.md,
-                    width: "100%",
-                  }}
-                >
-                  <Text style={{ fontFamily: "Poppins-Regular", fontSize: 14 }}>
-                    {aiRecommendation}
-                  </Text>
-                </View>
+                  {aiRecommendation && (
+                    <View
+                      style={{
+                        marginTop: 10,
+                        padding: 10,
+                        backgroundColor: "#f0f0f0",
+                        borderRadius: theme.radius.md,
+                        width: "100%",
+                      }}
+                    >
+                      <Text
+                        style={{ fontFamily: "Poppins-Regular", fontSize: 14 }}
+                      >
+                        {aiRecommendation}
+                      </Text>
+                    </View>
+                  )}
+                </>
               )}
             </>
           )}

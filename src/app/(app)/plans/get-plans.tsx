@@ -161,99 +161,105 @@ export default function GetPlan() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.contentWeb}>
-        <Header title={`Get ${plan.name}`} mb={0} />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.contentWeb}>
+          <Header title={`Get ${plan.name}`} mb={0} />
 
-        <View style={styles.mainRow}>
-          {/* Left column: Plan Details */}
-          <ScrollView style={styles.leftColumn}>
-            <Text style={styles.subtitleWeb}>{plan.name_subtitle}</Text>
+          <View style={styles.mainRow}>
+            {/* Left column: Plan Details */}
+            <ScrollView style={styles.leftColumn}>
+              <Text style={styles.subtitleWeb}>{plan.name_subtitle}</Text>
 
-            <View style={styles.featuresBoxWeb}>
-              <Text style={styles.featureTitleWeb}>What's Included</Text>
-              <View style={styles.tableWeb}>
-                {plan.features?.map((f: string, idx: number) => (
-                  <View
-                    key={idx}
-                    style={[
-                      styles.tableRowWeb,
-                      idx === plan.features.length - 1 && styles.lastRowWeb,
-                    ]}
-                  >
-                    <Text style={styles.tableCellWeb}>• {f}</Text>
-                  </View>
-                ))}
+              <View style={styles.featuresBoxWeb}>
+                <Text style={styles.featureTitleWeb}>What's Included</Text>
+                <View style={styles.tableWeb}>
+                  {plan.features?.map((f: string, idx: number) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.tableRowWeb,
+                        idx === plan.features.length - 1 && styles.lastRowWeb,
+                      ]}
+                    >
+                      <Text style={styles.tableCellWeb}>• {f}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
 
-          {/* Right column: Pricing & CTA */}
-          <ScrollView
-            style={styles.rightColumn}
-            contentContainerStyle={{ gap: 25 }}
-          >
-            {["week", "month", "year"].map((p) => {
-              const price =
-                p === "week"
-                  ? plan.price_weekly
-                  : p === "month"
-                    ? plan.price_monthly
-                    : plan.price_yearly;
-              const discount =
-                p === "week"
-                  ? plan.price_weekly_discount_percent
-                  : p === "month"
-                    ? plan.price_monthly_discount_percent
-                    : plan.price_yearly_discount_percent;
+            {/* Right column: Pricing & CTA */}
+            <ScrollView
+              style={styles.rightColumn}
+              contentContainerStyle={{ gap: 25 }}
+            >
+              {["week", "month", "year"].map((p) => {
+                const price =
+                  p === "week"
+                    ? plan.price_weekly
+                    : p === "month"
+                      ? plan.price_monthly
+                      : plan.price_yearly;
+                const discount =
+                  p === "week"
+                    ? plan.price_weekly_discount_percent
+                    : p === "month"
+                      ? plan.price_monthly_discount_percent
+                      : plan.price_yearly_discount_percent;
 
-              return (
-                <TouchableOpacity
-                  key={p}
-                  style={[
-                    styles.planCardWeb,
-                    selectedPlan === p && styles.planCardSelectedWeb,
-                  ]}
-                  onPress={() => setSelectedPlan(p)}
-                >
-                  <Text style={styles.planLabelTitleWeb}>1</Text>
-                  <Text style={styles.planLabelWeb}>
-                    {p.charAt(0).toUpperCase() + p.slice(1)}
-                  </Text>
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[
+                      styles.planCardWeb,
+                      selectedPlan === p && styles.planCardSelectedWeb,
+                    ]}
+                    onPress={() => setSelectedPlan(p)}
+                  >
+                    <Text style={styles.planLabelTitleWeb}>1</Text>
+                    <Text style={styles.planLabelWeb}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </Text>
 
-                  {discount > 0 ? (
-                    <View style={{ alignItems: "center" }}>
-                      <Text
-                        style={[styles.planPriceWeb, styles.discountPriceWeb]}
-                      >
+                    {discount > 0 ? (
+                      <View style={{ alignItems: "center" }}>
+                        <Text
+                          style={[styles.planPriceWeb, styles.discountPriceWeb]}
+                        >
+                          {Number(price).toLocaleString()} {plan.currency}
+                        </Text>
+                        <Text
+                          style={[styles.planPriceWeb, { color: "#E53935" }]}
+                        >
+                          {Number(
+                            price * (1 - discount / 100)
+                          ).toLocaleString()}{" "}
+                          {plan.currency}
+                        </Text>
+                        <View style={styles.planDiscountPercentWeb}>
+                          <Text style={styles.planDiscountPercentTextWeb}>
+                            SAVE {discount}%
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={styles.planPriceWeb}>
                         {Number(price).toLocaleString()} {plan.currency}
                       </Text>
-                      <Text style={[styles.planPriceWeb, { color: "#E53935" }]}>
-                        {Number(price * (1 - discount / 100)).toLocaleString()}{" "}
-                        {plan.currency}
-                      </Text>
-                      <View style={styles.planDiscountPercentWeb}>
-                        <Text style={styles.planDiscountPercentTextWeb}>
-                          SAVE {discount}%
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <Text style={styles.planPriceWeb}>
-                      {Number(price).toLocaleString()} {plan.currency}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+          <TouchableOpacity
+            style={styles.continueBtnWeb}
+            onPress={handleContinue}
+          >
+            <Text style={styles.continueTextWeb}>Proceed to Checkout</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.continueBtnWeb}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueTextWeb}>Proceed to Checkout</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -276,9 +282,7 @@ const styles = StyleSheet.create({
   leftColumn: {
     flex: 1,
   },
-  rightColumn: {
-    width: 320,
-  },
+  rightColumn: {},
   subtitleWeb: {
     fontSize: 18,
     color: theme.colors.textDark,
@@ -387,5 +391,11 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "Poppins-SemiBold",
     textAlign: "center",
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 50,
+    flexGrow: 1,
+    backgroundColor: "#fff",
   },
 });

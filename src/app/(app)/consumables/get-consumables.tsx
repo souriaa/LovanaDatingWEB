@@ -151,6 +151,7 @@ export default function GetPlan() {
         currency: selectedPkg.currency,
         name: consumable.name,
         type: "consumable",
+        amountNumber: selectedPkg.quantity,
       });
       router.push("/qr/qr-page");
     } catch (err) {

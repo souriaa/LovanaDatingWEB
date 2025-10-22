@@ -551,6 +551,7 @@ export default function ChatScreen() {
           text: "Unmatch",
           style: "destructive",
           onPress: async () => {
+            await deleteConversationById(conversationId);
             mutate(interactionId, {
               onSuccess: async () => {
                 router.navigate("/matches/");
@@ -571,15 +572,9 @@ export default function ChatScreen() {
 
   const handleDeleteConversation = () => {
     closeSheet();
-
-    const userName =
-      otherUser.first_name || otherUser.last_name
-        ? `${otherUser.first_name || ""} ${otherUser.last_name || ""}`.trim()
-        : "this user";
-
     showAlert({
       title: "Are you sure?",
-      message: `Block and unmatch will block them pernamently`,
+      message: `Block and unmatch will block them PERMANENTLY!`,
       buttons: [
         {
           text: "Cancel",
@@ -590,6 +585,7 @@ export default function ChatScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteConversationById(conversationId);
+            router.navigate("/matches/");
           },
         },
       ],

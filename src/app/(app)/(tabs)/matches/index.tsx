@@ -708,8 +708,6 @@ Hãy trả về mức độ tương thích giữa người đầu tiên và ngư
                       user.id,
                       targetUserId
                     );
-                    console.log(interaction.id);
-
                     showAlert({
                       title: "Are you sure?",
                       message: `Unmatching will delete the match for both you and them`,
@@ -721,20 +719,33 @@ Hãy trả về mức độ tương thích giữa người đầu tiên và ngư
                         {
                           text: "Unmatch",
                           style: "destructive",
-                          onPress: () => {
-                            mutate(interaction.id, {
-                              onSuccess: () => {
-                                router.navigate("/matches/");
-                              },
-                              onError: () => {
-                                showAlert({
-                                  title: "Error",
-                                  message:
-                                    "Something went wrong, please try again later.",
-                                  buttons: [{ text: "OK", style: "cancel" }],
-                                });
-                              },
-                            });
+                          onPress: async () => {
+                            try {
+                              await deleteConversationById(
+                                sheetConversation.id
+                              );
+
+                              mutate(interaction.id, {
+                                onSuccess: () => {
+                                  router.navigate("/matches/");
+                                },
+                                onError: () => {
+                                  showAlert({
+                                    title: "Error",
+                                    message:
+                                      "Something went wrong, please try again later.",
+                                    buttons: [{ text: "OK", style: "cancel" }],
+                                  });
+                                },
+                              });
+                            } catch (error) {
+                              showAlert({
+                                title: "Error",
+                                message:
+                                  "Failed to delete conversation. Please try again.",
+                                buttons: [{ text: "OK", style: "cancel" }],
+                              });
+                            }
                           },
                         },
                       ],
@@ -770,7 +781,7 @@ Hãy trả về mức độ tương thích giữa người đầu tiên và ngư
 
                   showAlert({
                     title: "Are you sure?",
-                    message: `Block and unmatch will block them permanently`,
+                    message: `Block and unmatch will block them PERMANENTLY`,
                     buttons: [
                       {
                         text: "Cancel",

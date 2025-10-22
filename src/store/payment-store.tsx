@@ -7,6 +7,7 @@ type PaymentData = {
   type: "plan" | "consumable";
   name: string;
   plan_due_date?: string;
+  amountNumber: string;
 };
 
 type PaymentContextType = {

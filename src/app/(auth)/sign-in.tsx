@@ -1,12 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, Stack } from "expo-router";
-import { Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { theme } from "../../../constants/theme";
 import { VideoBackground } from "../../components/video-background";
 
 const isMobile =
   typeof navigator !== "undefined" &&
   /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+const { width } = Dimensions.get("window");
+const breakpoint = 600;
 
 export default function Page() {
   return (
@@ -28,7 +38,12 @@ export default function Page() {
           <Ionicons name="logo-android" size={0} color={"#FFFFFF00"} />
 
           {isMobile ? (
-            <View style={styles.downloadContainer}>
+            <View
+              style={[
+                styles.downloadContainer,
+                { flexDirection: width < breakpoint ? "column" : "row" },
+              ]}
+            >
               <Pressable
                 style={[styles.downloadBtn, styles.androidBtn]}
                 onPress={() =>
@@ -118,7 +133,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
   },
   downloadContainer: {
-    flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
     gap: 10,
