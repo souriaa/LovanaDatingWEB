@@ -7,3 +7,6 @@
   font-weight: normal;
   font-style: normal;
 }
+*:focus-visible {
+  outline: none !important;
+}

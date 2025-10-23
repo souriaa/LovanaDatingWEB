@@ -19,7 +19,7 @@ export async function getProfile() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, user_id")
+    .select("id, user_id, first_name")
     .eq("user_id", user.id)
     .single();
 

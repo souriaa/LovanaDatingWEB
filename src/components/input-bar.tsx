@@ -167,6 +167,12 @@ export const InputBar = ({
 
   const closeTooltip = () => setTooltipVisible(false);
 
+  const handleKeyPress = (e: any) => {
+    if (e.nativeEvent.key === "Enter" && !isSending) {
+      onSend();
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={closeTooltip}>
       <View style={styles.inputBar}>
@@ -250,8 +256,9 @@ export const InputBar = ({
           onChangeText={onTextChange}
           placeholder="Message"
           placeholderTextColor={theme.colors.textLighterGray}
-          containerStyle={styles.input}
+          containerStyle={[styles.input, { outline: "none" }]}
           value={value}
+          onKeyPress={handleKeyPress}
         />
 
         <TouchableOpacity

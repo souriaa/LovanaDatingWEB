@@ -483,7 +483,6 @@ Answer in English unless otherwise instructed or answer in language that Additio
               flexDirection: "row",
               alignItems: "center",
               justifyContent: isMine ? "flex-end" : "flex-start",
-              marginVertical: 2,
             }}
           >
             {/* Left button if isMine */}

@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   premiumSubtitle: {
     fontSize: 14,
-    textAlign: "center",
+    textAlign: "justify",
     marginBottom: 10,
     color: theme.colors.textLight,
     fontFamily: "Poppins-SemiBold",

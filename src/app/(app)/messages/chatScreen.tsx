@@ -1,4 +1,5 @@
 import { useInputDateAlert } from "@/components/alert-input-date-provider";
+import { sendPushNotification } from "@/utils/pushNotification";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +12,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { getPushTokensByProfileId } from "~/service/pushNotiService";
+import { getProfile } from "~/service/userService";
 import { theme } from "../../../../constants/theme";
 import { uploadFile } from "../../../../service/imageService";
 import { getInteractionByActorAndTarget } from "../../../../service/interactionService";
@@ -299,6 +302,8 @@ export default function ChatScreen() {
       setReplyingTo(null);
       inputRef.current?.clear();
 
+      inputRef.current?.focus();
+
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMessage.id)) return prev;
         return [...prev, { ...newMessage, reply_to: replyMessage }];
@@ -308,6 +313,37 @@ export default function ChatScreen() {
 
       if (otherUser?.id) {
         await markConversationAsUnseen(conversationId, otherUser.id);
+      }
+
+      const senderProfile = await getProfile();
+
+      if (otherUser?.id) {
+        const tokens = await getPushTokensByProfileId(otherUser.id);
+
+        if (tokens.length > 0) {
+          const senderName =
+            senderProfile?.first_name || conversationInfo?.title || "Someone";
+          await Promise.all(
+            tokens.map((token) =>
+              sendPushNotification({
+                to: token,
+                title: `${senderName} sent you a message 💬`,
+                body:
+                  text.trim() ||
+                  (fileData
+                    ? "📎 Sent an attachment"
+                    : "You have a new message"),
+                data: {
+                  type: "chat_message",
+                  conversationId: conversationId,
+                },
+                sound: "default",
+                priority: "high",
+              })
+            )
+          );
+        } else {
+        }
       }
     } catch (err) {
       console.error("Error sending message:", err.message || err);

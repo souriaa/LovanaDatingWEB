@@ -1,6 +1,8 @@
+import { sendPushNotification } from "@/utils/pushNotification";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { getPushTokensByProfileId } from "~/service/pushNotiService";
 import { getInteractionByActorAndTarget } from "../../../../../service/interactionService";
 import { createConversation } from "../../../../../service/messageService";
 import { getProfile } from "../../../../../service/userService";
@@ -66,7 +68,35 @@ const Page = () => {
 
             if (conversation?.success) {
               const conversationId = conversation.data.id;
-              router.push(`/matches?conversationId=${conversationId}`);
+              try {
+                const tokens = await getPushTokensByProfileId(like.profile.id);
+
+                if (tokens && tokens.length > 0) {
+                  const senderName = currentUser.first_name || "Someone";
+
+                  await Promise.all(
+                    tokens.map((token) =>
+                      sendPushNotification({
+                        to: token,
+                        title: `${senderName} matched with you! 💖`,
+                        body: `Start chatting now!`,
+                        data: {
+                          type: "match",
+                          conversationId: conversationId,
+                        },
+                        sound: "default",
+                        priority: "high",
+                      })
+                    )
+                  );
+                } else {
+                }
+              } catch (notifyErr) {
+                console.error("Error sending match notification:", notifyErr);
+              }
+              router.push(
+                `/messages/chatScreen?conversationId=${conversationId}`
+              );
             } else {
               console.error(
                 "❌ Failed to create conversation:",

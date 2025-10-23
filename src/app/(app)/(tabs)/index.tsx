@@ -1,9 +1,11 @@
+import { sendPushNotification } from "@/utils/pushNotification";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { getProfilePlansByUser } from "../../../../service/profilePlanService";
+import { getPushTokensByProfileId } from "../../../../service/pushNotiService";
 import { getProfile, isProfileComplete } from "../../../../service/userService";
 import { useSignOut } from "../../../api/auth";
 import {
@@ -248,12 +250,39 @@ export default function Page() {
     superlike(
       { profile: profile.id },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           if (hasProfiles && currentIndex < data.length - 1) {
             setCurrentIndex(currentIndex + 1);
           } else if (hasProfiles) {
             queryClient.invalidateQueries({ queryKey: ["profiles"] });
             setCurrentIndex(0);
+          }
+
+          try {
+            const senderProfile = await getProfile();
+            const tokens = await getPushTokensByProfileId(profile.id);
+
+            if (tokens && tokens.length > 0) {
+              const senderName = senderProfile?.first_name || "Someone";
+
+              await Promise.all(
+                tokens.map((token) =>
+                  sendPushNotification({
+                    to: token,
+                    title: `${senderName} superliked you! 💫`,
+                    body: `You just got a Superlike from ${senderName}!`,
+                    data: {
+                      type: "superlike",
+                    },
+                    sound: "default",
+                    priority: "high",
+                  })
+                )
+              );
+            } else {
+            }
+          } catch (notifyErr) {
+            console.error("Error sending Superlike notification:", notifyErr);
           }
         },
         onError: () => {
