@@ -1,6 +1,6 @@
-import { Profile } from "@/types/profile";
 import { FC } from "react";
-import { ScrollView, Text } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { Profile } from "../types/profile";
 import { ProfileAnswer } from "./profile-answer";
 import { ProfileItem } from "./profile-item";
 import { ProfilePhoto } from "./profile-photo";
@@ -33,33 +33,25 @@ export const ProfileView: FC<Props> = ({ profile, myProfile, onLike }) => {
     let photoIndex = 0;
     let answerIndex = 0;
 
-    layout.forEach((item, _) => {
+    layout.forEach((item, index) => {
       if (item === "traits") {
-        elements.push(<ProfileTraits key={item} profile={profile} />);
+        elements.push(
+          <ProfileTraits key={`traits-${index}`} profile={profile} />
+        );
       }
       if (item === "photo" && photoIndex < photos.length) {
-        const item = photos[photoIndex++];
+        const p = photos[photoIndex++];
         elements.push(
-          <ProfileItem
-            key={`p${item.id}`}
-            onLike={onLike}
-            item={item}
-            type="photo"
-          >
-            <ProfilePhoto photo={item} />
+          <ProfileItem key={`p${p.id}`} onLike={onLike} item={p} type="photo">
+            <ProfilePhoto photo={p} />
           </ProfileItem>
         );
       }
       if (item === "answer" && answerIndex < answers.length) {
-        const item = answers[answerIndex++];
+        const a = answers[answerIndex++];
         elements.push(
-          <ProfileItem
-            key={`a${item.id}`}
-            onLike={onLike}
-            item={item}
-            type="answer"
-          >
-            <ProfileAnswer answer={item} />
+          <ProfileItem key={`a${a.id}`} onLike={onLike} item={a} type="answer">
+            <ProfileAnswer answer={a} />
           </ProfileItem>
         );
       }
@@ -67,18 +59,30 @@ export const ProfileView: FC<Props> = ({ profile, myProfile, onLike }) => {
 
     return elements;
   };
+
   return (
     <ScrollView
       className="flex-1"
-      contentContainerClassName="pt-5 pb-28 gap-5"
+      contentContainerClassName="pt-5 pb-28"
       showsVerticalScrollIndicator={false}
     >
       {!myProfile && (
-        <Text className="text-3xl  font-poppins-semibold">
+        <Text className="text-3xl font-poppins-semibold mb-5 text-center md:text-left">
           {profile.first_name}
         </Text>
       )}
-      {generateProfile()}
+
+      {/* ✅ Responsive grid container */}
+      <View className="flex flex-col md:flex-row md:flex-wrap md:justify-center md:gap-6 gap-5">
+        {generateProfile().map((item, index) => (
+          <View
+            key={index}
+            className="w-full md:w-[48%]" // 1 column on mobile, 2 columns on web
+          >
+            {item}
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 };

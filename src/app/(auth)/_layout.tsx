@@ -1,5 +1,5 @@
-import { useAuth } from "@/store/auth";
 import { Redirect, Stack } from "expo-router";
+import { useAuth } from "../../store/auth";
 
 export default function Layout() {
   const { session } = useAuth();
@@ -9,7 +9,7 @@ export default function Layout() {
   }
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="phone" />
       <Stack.Screen name="otp" />

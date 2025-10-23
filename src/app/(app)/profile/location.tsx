@@ -1,11 +1,12 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { LocationView } from "@/components/location-view";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
-import { LocationData } from "@/types/location";
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { LocationView } from "../../../components/location-view";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
+import { LocationData } from "../../../types/location";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();
@@ -52,6 +53,11 @@ export default function Page() {
       <LocationView
         location={selectedLocation}
         onLocationChange={handleLocationChange}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
       />
     </View>
   );

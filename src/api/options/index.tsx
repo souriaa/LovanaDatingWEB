@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
 
 export const usePrompts = () => {
   return useQuery({

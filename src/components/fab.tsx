@@ -1,7 +1,8 @@
-import { cn } from "@/utils/cn";
 import { Ionicons } from "@expo/vector-icons";
-import React, { FC } from "react";
+import { FC } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { theme } from "../../constants/theme";
+import { cn } from "../utils/cn";
 
 interface Props {
   disabled?: boolean;
@@ -11,6 +12,7 @@ interface Props {
   className?: string;
   iconClassName?: string;
   loaderClassName?: string;
+  iconSize?: number;
 }
 
 export const Fab: FC<Props> = ({
@@ -21,22 +23,27 @@ export const Fab: FC<Props> = ({
   className,
   iconClassName,
   loaderClassName,
+  iconSize = 24,
 }) => {
   return (
     <Pressable
       className={cn(
-        "h-16 aspect-square rounded-full justify-center items-center bg-fuchsia-900",
+        "h-16 aspect-square rounded-full justify-center items-center bg-red-900",
         {
           "bg-neutral-200": disabled && !loading,
           "opacity-50": disabled,
         },
         className
       )}
+      style={{ borderWidth: 1, borderColor: theme.colors.textLightGray }}
       onPress={onPress}
       disabled={disabled}
     >
       {loading ? (
-        <ActivityIndicator className={cn(" text-white", loaderClassName)} />
+        <ActivityIndicator
+          color={theme.colors.primaryDark}
+          className={cn(" text-white", loaderClassName)}
+        />
       ) : (
         <View
           className={cn(
@@ -52,6 +59,7 @@ export const Fab: FC<Props> = ({
               { "text-neutral-400": disabled },
               iconClassName
             )}
+            size={iconSize}
           />
         </View>
       )}

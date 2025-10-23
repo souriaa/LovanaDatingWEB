@@ -1,11 +1,12 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { usePets } from "@/api/options";
-import { CheckboxList } from "@/components/checkbox-list";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { usePets } from "../../../api/options";
+import { CheckboxList } from "../../../components/checkbox-list";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();
@@ -29,6 +30,11 @@ export default function Page() {
         options={data}
         onChange={setSelected}
         initialSelection={selected}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
       />
     </View>
   );

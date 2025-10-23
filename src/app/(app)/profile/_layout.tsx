@@ -1,6 +1,7 @@
 import { useIsMutating } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
+import { theme } from "~/constants/theme";
 
 export default function Layout() {
   const isPending = useIsMutating({ mutationKey: ["updateProfile"] });
@@ -9,10 +10,14 @@ export default function Layout() {
     <>
       {!!isPending && (
         <View className="bg-black/50 flex-1 absolute left-0 top-0 right-0 bottom-0 z-10 items-center justify-center">
-          <ActivityIndicator size={"large"} color={"white"} />
+          <ActivityIndicator size={"large"} color={theme.colors.primaryDark} />
         </View>
       )}
-      <Stack></Stack>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
     </>
   );
 }

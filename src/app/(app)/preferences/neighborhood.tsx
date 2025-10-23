@@ -1,11 +1,12 @@
-import { useUpdateLocation } from "@/api/my-profile";
-import { LocationView } from "@/components/location-view";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
-import { LocationData } from "@/types/location";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { useUpdateLocation } from "../../../api/my-profile";
+import { useAlert } from "../../../components/alert-provider";
+import { LocationView } from "../../../components/location-view";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
+import { LocationData } from "../../../types/location";
 
 export default function Page() {
   const { edits } = useEdit();
@@ -15,6 +16,8 @@ export default function Page() {
     neighborhood: edits?.neighborhood || null,
   });
   const { mutate, reset } = useUpdateLocation();
+
+  const { showAlert } = useAlert();
 
   const handleLocationChange = (location: LocationData | null) => {
     if (location) {
@@ -45,10 +48,11 @@ export default function Page() {
             router.back();
           },
           onError: () => {
-            Alert.alert(
-              "Error",
-              "Something went wrong, please try again later."
-            );
+            showAlert({
+              title: "Error",
+              message: "Something went wrong, please try again later",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
             reset();
           },
         }

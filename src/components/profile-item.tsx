@@ -1,6 +1,6 @@
-import { Answer, Photo } from "@/types/profile";
 import { FC, ReactNode } from "react";
 import { View } from "react-native";
+import { Answer, Photo } from "../types/profile";
 import { Fab } from "./fab";
 
 interface Props {
@@ -12,14 +12,15 @@ interface Props {
 
 export const ProfileItem: FC<Props> = ({ children, item, type, onLike }) => {
   return (
-    <View>
-      {children}
+    <View className="relative flex-1">
+      <View className="flex-1">{children}</View>
       {onLike && (
         <Fab
-          className="absolute bottom-5 right-5 bg-white shadow-sm"
+          className="absolute bottom-5 right-5 bg-white"
           iconName="heart-outline"
-          iconClassName="text-fuchsia-900 text-4xl"
+          iconClassName="text-red-900 text-4xl"
           onPress={() => onLike(item.id, type)}
+          iconSize={40}
         />
       )}
     </View>

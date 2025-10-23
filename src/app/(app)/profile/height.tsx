@@ -1,11 +1,12 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import { range } from "lodash";
 import { useState } from "react";
 import { View } from "react-native";
+import { PrivateProfile } from "../../../api/my-profile/types";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 export default function Page() {
   const { edits, setEdits } = useEdit();
@@ -34,6 +35,11 @@ export default function Page() {
           <Picker.Item key={height} label={`${height} cm`} value={height} />
         ))}
       </Picker>
+      <StackBottomV2
+        visible={true}
+        title="Edit Info"
+        onPressBack={handlePress}
+      />
     </View>
   );
 }

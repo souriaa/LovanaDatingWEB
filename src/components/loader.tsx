@@ -1,18 +1,24 @@
 import LottieView from "lottie-react-native";
-import { FC } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
+import { theme } from "~/constants/theme";
 
-interface Props {}
-
-export const Loader: FC<Props> = () => {
-  return (
-    <View className="flex-1 bg-white">
+export const Loader = () => (
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "white",
+    }}
+  >
+    {Platform.OS !== "web" ? (
       <LottieView
         autoPlay
-        // @ts-ignore
-        className="w-full h-full bg-white mt-12"
-        source={require("~/assets/images/loading.json")}
+        style={{ width: 200, height: 200 }}
+        source={require("../../assets/images/loading.json")}
       />
-    </View>
-  );
-};
+    ) : (
+      <ActivityIndicator size="large" color={theme.colors.primaryDark} />
+    )}
+  </View>
+);

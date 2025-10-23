@@ -1,4 +1,3 @@
-import { useMyProfile } from "@/api/my-profile";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { MotiView } from "moti";
@@ -7,17 +6,19 @@ import {
   ActivityIndicator,
   Dimensions,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { theme } from "../../constants/theme";
-import { getLikes } from "../../service/likeService";
 import { getPlans } from "../../service/planService";
-import { getProfile } from "~/service/userService";
 import { getProfilePlansByUser } from "../../service/profilePlanService";
+import { getProfile } from "../../service/userService";
+import { useMyProfile } from "../api/my-profile";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ type PayPlanCardProps = {
   isLast?: boolean;
   onPress?: () => void;
   i: number;
+  isSelected: boolean;
 };
 
 function PayPlanCard({
@@ -42,18 +44,26 @@ function PayPlanCard({
   isLast,
   onPress,
   i,
+  isSelected,
 }: PayPlanCardProps) {
-  const cardWidth = screenWidth * 0.85;
-  const cardColors = [
-    theme.colors.primaryLight,
-    theme.colors.primary,
-    theme.colors.primaryDark,
-  ];
-  const bgColor = cardColors[i % cardColors.length];
+  const bgColor = (() => {
+    switch (title.toLowerCase()) {
+      case "light":
+        return theme.colors.primaryLight;
+      case "premium":
+        return theme.colors.primary;
+      case "lovana":
+        return theme.colors.primaryDark;
+      default:
+        return theme.colors.primaryLight;
+    }
+  })();
 
-  const [upgradeText, setUpgradeText] = useState(`Upgrade from ${weeklyPrice}`);
+  const [upgradeText, setUpgradeText] = useState(`From ${weeklyPrice}`);
   const [loading, setLoading] = useState(true);
   const [activePlan, setActivePlan] = useState(null);
+
+  const inactiveColor = theme.colors.textLightGray;
 
   useEffect(() => {
     const fetchProfilePlan = async () => {
@@ -71,20 +81,20 @@ function PayPlanCard({
             ? new Date(plan.plan_due_date)
             : null;
 
-          setActivePlan(plan.plan_id);
           if (plan.plan_id === planId) {
             if (dueDate && now < dueDate) {
+              setActivePlan(plan.plan_id);
               setUpgradeText(`Plan expired on ${dueDate.toLocaleDateString()}`);
             } else {
-              setUpgradeText(`Upgrade from ${weeklyPrice}`);
+              setUpgradeText(`From ${weeklyPrice}`);
             }
           } else {
-            setUpgradeText(`Upgrade from ${weeklyPrice}`);
+            setUpgradeText(`From ${weeklyPrice}`);
           }
         }
       } catch (err) {
         console.error("fetchProfilePlan error:", err);
-        setUpgradeText(`Upgrade from ${weeklyPrice}`);
+        setUpgradeText(`From ${weeklyPrice}`);
       } finally {
         setLoading(false);
       }
@@ -98,181 +108,213 @@ function PayPlanCard({
       onPress={onPress}
       style={[
         styles.page,
-        { width: cardWidth },
-        isFirst
-          ? { marginLeft: 20 }
-          : isLast
-            ? { marginRight: 20 }
-            : { marginHorizontal: 20 },
+        isFirst ? { marginBottom: 10 } : isLast ? { marginTop: 10 } : {},
       ]}
     >
       <View
         style={[
           styles.premiumBox,
-          { width: cardWidth, backgroundColor: bgColor },
+          { backgroundColor: isSelected ? bgColor : inactiveColor },
+          !isSelected && { opacity: 0.7 },
         ]}
       >
         <Text style={styles.premiumTitle}>{title}</Text>
         <Text style={styles.premiumSubtitle}>{subtitle}</Text>
-        <View
+        <TouchableOpacity
           style={styles.activeBadge}
-          {...(activePlan !== planId
-            ? {
-                onTouchEnd: () =>
-                  router.push(`/plans/get-plans?planId=${planId}`),
-              }
-            : {})}
+          activeOpacity={0.7}
+          disabled={activePlan === planId}
+          onPress={() =>
+            activePlan !== planId &&
+            router.push(`/plans/get-plans?planId=${planId}`)
+          }
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#111827" />
+            <ActivityIndicator size="small" color={theme.colors.primaryDark} />
           ) : (
             <Text style={styles.activeText}>{upgradeText}</Text>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     </Pressable>
   );
 }
 
-export default function MyPayPlan() {
+export default function MyPayPlan({ refreshKey }) {
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: profile } = useMyProfile();
-  const [superLikes, setSuperLikes] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const data = await getPlans();
-        if (!data) return;
+  const fetchPlans = async () => {
+    try {
+      const data = await getPlans();
+      if (!data) return;
 
-        let orderedPlans = [...data];
+      let orderedPlans = [...data];
 
-        // Put the active plan first
-        if (profile?.id) {
-          const profilePlans = await getProfilePlansByUser(profile.id);
-          if (profilePlans && profilePlans.length > 0) {
-            const activePlanId = profilePlans[0].plan_id;
+      if (profile?.id) {
+        const profilePlans = await getProfilePlansByUser(profile.id);
+        if (profilePlans && profilePlans.length > 0) {
+          const plan = profilePlans[0];
+          const planDueDate = new Date(plan.plan_due_date);
+          const now = new Date();
+
+          if (planDueDate > now) {
+            const activePlanId = plan.plan_id;
             orderedPlans = data.sort((a, b) =>
               a.id === activePlanId ? -1 : b.id === activePlanId ? 1 : 0
             );
+          } else {
+            orderedPlans = data;
           }
         }
-
-        setPlans(orderedPlans);
-      } catch (err) {
-        console.error("Error loading plans:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchPlans();
-  }, [profile?.id]);
+      setPlans(orderedPlans);
+    } catch (err) {
+      console.error("Error loading plans:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLikes = async () => {
-      if (!profile?.id) return;
-      try {
-        const data = await getLikes(profile.id);
-        setSuperLikes(data?.super_likes_remaining ?? 0);
-      } catch (err) {
-        console.error("Error loading super likes:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchPlans();
+  }, [profile?.id, refreshKey]);
 
-    fetchLikes();
-  }, [profile?.id]);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchPlans();
+    } catch (err) {
+      console.error("Failed to refresh MyPayPlan:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const lovanaPlan = plans.find((p) => p.name.toLowerCase() === "lovana");
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView>
-        {/* Perks row */}
-        <View style={styles.perksRow}>
-          <View style={styles.perkCard}>
-            <Ionicons name="flash" size={24} color={theme.colors.primary} />
-            <Text style={styles.perkTitle}>SuperSwipe</Text>
-            <Text style={styles.perkSubtitle}>{superLikes}</Text>
-          </View>
-        </View>
-
+    <SafeAreaView className="flex-1 bg-white mt-5">
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Plans */}
-        <View style={{ marginTop: 20 }}>
-          {loading ? (
-            <ActivityIndicator size="large" color={theme.colors.textDark} />
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {plans.map((plan, index) => (
-                <PayPlanCard
-                  key={plan.id}
-                  planId={plan.id}
-                  title={plan.name}
-                  subtitle={plan.name_subtitle}
-                  features={plan.features || []}
-                  weeklyPrice={
-                    Number(plan.price_weekly).toLocaleString() +
-                    " " +
-                    plan.currency
-                  }
-                  i={index}
-                  isFirst={index === 0}
-                  isLast={index === plans.length - 1}
-                  onPress={() => setSelectedIndex(index)}
+        <View style={styles.planContainerContainer}>
+          <View style={styles.planContainer}>
+            {loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <ActivityIndicator
+                  size="large"
+                  color={theme.colors.primaryDark}
                 />
-              ))}
-            </ScrollView>
-          )}
-          {plans.length > 0 && (
-            <MotiView
-              key={selectedIndex}
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: "timing", duration: 500 }}
-              style={styles.comparisonContainer}
-            >
-              <Text style={styles.featuresHeader}>
-                {plans[selectedIndex].name}
-              </Text>
+              </View>
+            ) : (
+              <View style={{ flex: 1, justifyContent: "space-between" }}>
+                {plans.map((plan, index) => (
+                  <PayPlanCard
+                    key={plan.id}
+                    planId={plan.id}
+                    title={plan.name}
+                    subtitle={plan.name_subtitle}
+                    features={plan.features || []}
+                    weeklyPrice={
+                      Number(plan.price_weekly).toLocaleString() +
+                      " " +
+                      plan.currency
+                    }
+                    i={index}
+                    isFirst={index === 0}
+                    isLast={index === plans.length - 1}
+                    onPress={() => setSelectedIndex(index)}
+                    isSelected={selectedIndex === index}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
 
-              {plans[plans.length - 1].features.map((feature, i) => {
-                const selectedPlan = plans[selectedIndex];
-                const hasFeature = selectedPlan.features.includes(feature);
+          <View style={styles.featureTable}>
+            {plans.length > 0 && (
+              <MotiView
+                key={selectedIndex}
+                from={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ type: "timing", duration: 500 }}
+                style={styles.comparisonContainer}
+              >
+                <View style={styles.comparisonContainerContainer}>
+                  <Text style={styles.featuresHeader}>
+                    {plans[selectedIndex].name}
+                  </Text>
 
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.featureRow,
-                      i === plans[plans.length - 1].features.length - 1 && {
-                        borderBottomWidth: 0,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.featureText,
-                        {
-                          color: hasFeature
-                            ? theme.colors.primary
-                            : theme.colors.textLighterGray,
-                        },
-                      ]}
-                    >
-                      {feature}
-                    </Text>
-                    <Ionicons
-                      name={hasFeature ? "checkmark-outline" : ""}
-                      size={22}
-                      color={hasFeature ? theme.colors.primary : ""}
-                    />
-                  </View>
-                );
-              })}
-            </MotiView>
-          )}
+                  {lovanaPlan?.features.map((feature, i) => {
+                    const selectedPlan = plans[selectedIndex];
+                    const hasFeature = selectedPlan.features.includes(feature);
+
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.featureRow,
+                          i === lovanaPlan.features.length - 1 && {
+                            borderBottomWidth: 0,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.featureText,
+                            {
+                              color: !hasFeature
+                                ? theme.colors.textLighterGray
+                                : selectedPlan.name.toLowerCase() === "light"
+                                  ? theme.colors.primaryLight
+                                  : selectedPlan.name.toLowerCase() ===
+                                      "premium"
+                                    ? theme.colors.primary
+                                    : selectedPlan.name.toLowerCase() ===
+                                        "lovana"
+                                      ? theme.colors.primaryDark
+                                      : theme.colors.primary,
+                            },
+                          ]}
+                        >
+                          {feature}
+                        </Text>
+                        <Ionicons
+                          name={hasFeature ? "checkmark-outline" : ""}
+                          size={22}
+                          color={
+                            !hasFeature
+                              ? theme.colors.textLighterGray
+                              : selectedPlan.name.toLowerCase() === "light"
+                                ? theme.colors.primaryLight
+                                : selectedPlan.name.toLowerCase() === "premium"
+                                  ? theme.colors.primary
+                                  : selectedPlan.name.toLowerCase() === "lovana"
+                                    ? theme.colors.primaryDark
+                                    : theme.colors.primary
+                          }
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+              </MotiView>
+            )}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -284,6 +326,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 16,
+    paddingHorizontal: 50,
   },
   perkCard: {
     flex: 1,
@@ -292,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginHorizontal: 4,
-    maxWidth: "50%",
+    maxWidth: "20%",
   },
   perkTitle: {
     fontSize: 14,
@@ -310,6 +353,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingBottom: 16,
     alignItems: "center",
+    width: "100%",
+    flex: 1,
   },
   premiumTitle: {
     fontSize: 20,
@@ -319,10 +364,11 @@ const styles = StyleSheet.create({
   },
   premiumSubtitle: {
     fontSize: 14,
-    textAlign: "center",
+    textAlign: "justify",
     marginBottom: 10,
     color: theme.colors.textLight,
     fontFamily: "Poppins-SemiBold",
+    flex: 1,
   },
   activeBadge: {
     backgroundColor: "white",
@@ -336,9 +382,9 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Bold",
   },
   featuresHeader: {
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: 20,
     fontFamily: "Poppins-Bold",
+    paddingBottom: 10,
   },
   featureRow: {
     flexDirection: "row",
@@ -346,6 +392,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomColor: "#e5e7eb",
     borderBottomWidth: 1,
+    height: 50,
   },
   featureText: {
     fontSize: 14,
@@ -355,12 +402,32 @@ const styles = StyleSheet.create({
   page: {
     justifyContent: "flex-start",
     alignItems: "center",
+    width: "100%",
+    flex: 1,
   },
   comparisonContainer: {
+    display: "flex",
+  },
+  comparisonContainerContainer: {
     backgroundColor: theme.colors.backgroundLighterGray,
     borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  planContainerContainer: {
+    display: "flex",
+    flexDirection: "row",
     marginHorizontal: 20,
+    marginBottom: 50,
+  },
+  planContainer: {
+    flex: 2,
+    margin: 10,
+    marginTop: 0,
+  },
+  featureTable: {
+    flex: 3,
+    margin: 10,
+    marginTop: 0,
   },
 });

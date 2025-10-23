@@ -1,21 +1,28 @@
-import { useLikes, useMatch, useRemoveLike } from "@/api/profiles";
-import { Fab } from "@/components/fab";
-import { ProfileView } from "@/components/profile-view";
-import { transformPublicProfile } from "@/utils/profile";
-import { Image } from "expo-image";
+import { sendPushNotification } from "@/utils/pushNotification";
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Stack, router, useLocalSearchParams } from "expo-router";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { getPushTokensByProfileId } from "~/service/pushNotiService";
+import { getInteractionByActorAndTarget } from "../../../../../service/interactionService";
+import { createConversation } from "../../../../../service/messageService";
+import { getProfile } from "../../../../../service/userService";
+import { useLikes, useMatch, useRemoveLike } from "../../../../api/profiles";
+import { useAlert } from "../../../../components/alert-provider";
+import { Fab } from "../../../../components/fab";
+import { ProfileView } from "../../../../components/profile-view";
+import { transformPublicProfile } from "../../../../utils/profile";
 
 const Page = () => {
   const { id } = useLocalSearchParams();
+
   const { mutate: remove, isPending: removePending } = useRemoveLike();
   const { mutate: match, isPending: matchPending } = useMatch();
+
+  const { showAlert } = useAlert();
 
   const { data } = useLikes();
   const like = data.find((like) => like.id === id);
   let profile;
-
-  console.log(like);
 
   const handleRemove = () => {
     if (like) {
@@ -24,22 +31,102 @@ const Page = () => {
           router.back();
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       });
     }
   };
 
-  const handleMatch = () => {
-    if (like) {
+  const handleMatch = async () => {
+    if (!like) return;
+
+    try {
+      const currentUser = await getProfile();
+      if (!currentUser) {
+        return;
+      }
+
+      const interaction = await getInteractionByActorAndTarget(
+        like.profile.id,
+        currentUser.id
+      );
+
+      const firstMessageSent = interaction?.status_id === 7;
+
       match(like.id, {
-        onSuccess: () => {
-          router.back();
+        onSuccess: async () => {
+          try {
+            const conversation = await createConversation({
+              userIds: [currentUser.id, like.profile.id],
+              isGroup: false,
+              first_message_sent: firstMessageSent,
+            });
+
+            if (conversation?.success) {
+              const conversationId = conversation.data.id;
+              try {
+                const tokens = await getPushTokensByProfileId(like.profile.id);
+
+                if (tokens && tokens.length > 0) {
+                  const senderName = currentUser.first_name || "Someone";
+
+                  await Promise.all(
+                    tokens.map((token) =>
+                      sendPushNotification({
+                        to: token,
+                        title: `${senderName} matched with you! 💖`,
+                        body: `Start chatting now!`,
+                        data: {
+                          type: "match",
+                          conversationId: conversationId,
+                        },
+                        sound: "default",
+                        priority: "high",
+                      })
+                    )
+                  );
+                } else {
+                }
+              } catch (notifyErr) {
+                console.error("Error sending match notification:", notifyErr);
+              }
+              router.push(
+                `/messages/chatScreen?conversationId=${conversationId}`
+              );
+            } else {
+              console.error(
+                "❌ Failed to create conversation:",
+                conversation?.message
+              );
+            }
+          } catch (err) {
+            console.error("Error creating conversation:", err);
+          }
         },
-        onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+        onError: (error) => {
+          if (error?.message?.toLowerCase().includes("no likes remaining")) {
+            showAlert({
+              title: "Out of Likes",
+              message:
+                "You've reached your daily like limit. Likes refresh every day — upgrade to a plan for unlimited likes!",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
+          } else {
+            console.error("Match mutation error:", error);
+            showAlert({
+              title: "Error",
+              message: "Something went wrong. Please try again later.",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
+          }
         },
       });
+    } catch (err) {
+      console.error("Unexpected error:", err);
     }
   };
 
@@ -55,12 +142,19 @@ const Page = () => {
         options={{
           headerLeft: () => (
             <Pressable onPressOut={() => router.back()}>
-              <Text
-                className="text-base font-poppins-medium"
-                suppressHighlighting
-              >
-                All
-              </Text>
+              <View className="flex-row items-center" style={{ marginTop: 20 }}>
+                <Ionicons
+                  name="chevron-back"
+                  className="text-2xl"
+                  suppressHighlighting
+                />
+                <Text
+                  className="text-xl font-poppins-medium"
+                  suppressHighlighting
+                >
+                  All
+                </Text>
+              </View>
             </Pressable>
           ),
           title: "",
@@ -68,38 +162,30 @@ const Page = () => {
         }}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="h-28 bg-neutral-200 overflow-hidden rounded-md ">
-          {like?.photo_url ? (
-            <Image source={like?.photo_url} className="aspect-square w-full" />
-          ) : (
-            <View className="flex-1 justify-center p-5">
-              <Text className="text-xl font-playfair-semibold">
-                {like?.answer_text}
-              </Text>
-            </View>
-          )}
-        </View>
         <ProfileView profile={profile} />
       </ScrollView>
-
-      <Fab
-        className="absolute bottom-5 left-5 bg-white  shadow-sm h-20"
-        iconClassName="text-black text-4xl"
-        iconName="close"
-        onPress={handleRemove}
-        loading={removePending}
-        loaderClassName="text-black"
-        disabled={removePending || matchPending}
-      />
-      <Fab
-        className="absolute bottom-5 right-5 bg-white  shadow-sm h-20"
-        iconClassName="text-black text-4xl"
-        iconName="chatbox-outline"
-        onPress={handleMatch}
-        loading={matchPending}
-        loaderClassName="text-black"
-        disabled={removePending || matchPending}
-      />
+      <View className="absolute bottom-20 w-full flex flex-row justify-center space-x-8">
+        <Fab
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          iconName="close"
+          onPress={handleRemove}
+          loading={removePending}
+          loaderClassName="text-black"
+          disabled={removePending || matchPending}
+          iconSize={40}
+        />
+        <Fab
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          iconName="chatbox-outline"
+          onPress={handleMatch}
+          loading={matchPending}
+          loaderClassName="text-black"
+          disabled={removePending || matchPending}
+          iconSize={40}
+        />
+      </View>
     </View>
   );
 };

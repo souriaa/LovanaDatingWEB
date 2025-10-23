@@ -1,8 +1,8 @@
-import { Option } from "@/api/my-profile/types";
 import Checkbox from "expo-checkbox";
 import React, { useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import colors from "tailwindcss/colors";
+import { Option } from "../api/my-profile/types";
 
 interface Props {
   options: Option[];
@@ -41,7 +41,7 @@ export const RadioList: React.FC<Props> = ({
             <Text className="text-base font-poppins-regular">{item.name}</Text>
             <Checkbox
               value={isChecked}
-              color={isChecked ? colors.fuchsia[950] : colors.neutral[400]}
+              color={isChecked ? colors.red[900] : colors.neutral[400]}
               className="h-5 w-5"
               pointerEvents="none"
             />

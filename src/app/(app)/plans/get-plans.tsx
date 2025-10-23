@@ -1,8 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,16 +8,24 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { theme } from "~/constants/theme";
-import { getPlanById } from "~/service/planService";
-import { getProfile } from "~/service/userService";
-import { supabase } from "@/lib/supabase";
+import { theme } from "../../../../constants/theme";
+import { getPlanById } from "../../../../service/planService";
+import { getProfile } from "../../../../service/userService";
+import { useAlert } from "../../../components/alert-provider";
+import Header from "../../../components/Header";
+import { Loader } from "../../../components/loader";
+import { supabase } from "../../../lib/supabase";
+import { usePayment } from "../../../store/payment-store";
 
 export default function GetPlan() {
   const { planId } = useLocalSearchParams<{ planId: string }>();
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string>("week");
+
+  const { showAlert } = useAlert();
+
+  const { setPayment } = usePayment();
 
   useEffect(() => {
     const fetchPlan = async () => {
@@ -38,7 +44,7 @@ export default function GetPlan() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>
+        <Loader />
       </SafeAreaView>
     );
   }
@@ -54,156 +60,206 @@ export default function GetPlan() {
   const handleContinue = async () => {
     try {
       if (!plan) return;
+
       const {
         data: { user },
         error,
       } = await supabase.auth.getUser();
       if (error || !user) {
-        Alert.alert("Not logged in", "Please log in to continue.");
+        showAlert({
+          title: "Not logged in",
+          message: "Please log in to continue.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
 
       const userId = await getProfile();
 
-      // Determine selected price
       let amount = 0;
-      let dueDate = new Date();
+      let plan_due_date = "";
       if (selectedPlan === "week") {
         amount = plan.price_weekly;
-        dueDate.setDate(dueDate.getDate() + 7);
+        plan_due_date = "1w";
       }
       if (selectedPlan === "month") {
         amount = plan.price_monthly;
-        dueDate.setMonth(dueDate.getMonth() + 1);
+        plan_due_date = "1m";
       }
       if (selectedPlan === "year") {
         amount = plan.price_yearly;
-        dueDate.setFullYear(dueDate.getFullYear() + 1);
+        plan_due_date = "1y";
       }
 
-      const { data, error: insertError } = await supabase
+      const { data: existingPayment, error: checkError } = await supabase
         .from("payments")
-        .insert([
-          {
-            user_id: userId?.id,
-            plan_id: plan.id,
-            status: "pending",
-            plan_due_date: dueDate.toISOString(),
-          },
-        ])
-        .select()
-        .single();
+        .select("id")
+        .eq("user_id", userId?.id)
+        .eq("plan_id", plan.id)
+        .eq("status", "pending")
+        .maybeSingle();
 
-      if (insertError || !data) {
-        console.error("Insert error:", insertError);
-        Alert.alert("Payment Error", "Could not create payment row.");
+      if (checkError) {
+        console.error("Check error:", checkError);
+        showAlert({
+          title: "Payment Error",
+          message: "Could not check existing payment.",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
         return;
       }
+
+      let paymentId;
+
+      if (existingPayment) {
+        paymentId = existingPayment;
+      } else {
+        const { data: newPayment, error: insertError } = await supabase
+          .from("payments")
+          .insert([
+            {
+              user_id: userId?.id,
+              plan_id: plan.id,
+              status: "pending",
+            },
+          ])
+          .select()
+          .single();
+
+        if (insertError || !newPayment) {
+          console.error("Insert error:", insertError);
+          showAlert({
+            title: "Payment Error",
+            message: "Could not query payment row.",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
+          return;
+        }
+
+        paymentId = newPayment;
+      }
+
       router.back();
-      router.push({
-        pathname: "/plans/qr-page",
-        params: {
-          userId: userId?.id,
-          paymentId: data.id,
-          amount: amount.toString(),
-          currency: plan.currency,
-        },
+      setPayment({
+        paymentId: paymentId.id,
+        amount,
+        currency: plan.currency,
+        type: "plan",
+        name: plan.name,
+        plan_due_date,
       });
+      router.push("/qr/qr-page");
     } catch (err) {
       console.error("Error in handleContinue:", err);
-      Alert.alert("Payment Error", "Something went wrong.");
+      showAlert({
+        title: "Payment Error",
+        message: "Could not query payment row.",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Scrollable content */}
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Header */}
-          <Text style={styles.title}>Get {plan.name}</Text>
-          <Text style={styles.subtitle}>{plan.name_subtitle}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.contentWeb}>
+          <Header title={`Get ${plan.name}`} mb={0} />
 
-          {/* Features */}
-          <View style={styles.featuresBox}>
-            <Text style={styles.featureTitle}>Plan includes:</Text>
-            <View style={styles.table}>
-              {plan.features?.map((f: string, idx: number) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.tableRow,
-                    idx === plan.features.length - 1 && styles.lastRow,
-                  ]}
-                >
-                  <Text style={styles.tableCell}>{f}</Text>
+          <View style={styles.mainRow}>
+            {/* Left column: Plan Details */}
+            <ScrollView style={styles.leftColumn}>
+              <Text style={styles.subtitleWeb}>{plan.name_subtitle}</Text>
+
+              <View style={styles.featuresBoxWeb}>
+                <Text style={styles.featureTitleWeb}>What's Included</Text>
+                <View style={styles.tableWeb}>
+                  {plan.features?.map((f: string, idx: number) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.tableRowWeb,
+                        idx === plan.features.length - 1 && styles.lastRowWeb,
+                      ]}
+                    >
+                      <Text style={styles.tableCellWeb}>• {f}</Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </View>
+            </ScrollView>
+
+            {/* Right column: Pricing & CTA */}
+            <ScrollView
+              style={styles.rightColumn}
+              contentContainerStyle={{ gap: 25 }}
+            >
+              {["week", "month", "year"].map((p) => {
+                const price =
+                  p === "week"
+                    ? plan.price_weekly
+                    : p === "month"
+                      ? plan.price_monthly
+                      : plan.price_yearly;
+                const discount =
+                  p === "week"
+                    ? plan.price_weekly_discount_percent
+                    : p === "month"
+                      ? plan.price_monthly_discount_percent
+                      : plan.price_yearly_discount_percent;
+
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[
+                      styles.planCardWeb,
+                      selectedPlan === p && styles.planCardSelectedWeb,
+                    ]}
+                    onPress={() => setSelectedPlan(p)}
+                  >
+                    <Text style={styles.planLabelTitleWeb}>1</Text>
+                    <Text style={styles.planLabelWeb}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </Text>
+
+                    {discount > 0 ? (
+                      <View style={{ alignItems: "center" }}>
+                        <Text
+                          style={[styles.planPriceWeb, styles.discountPriceWeb]}
+                        >
+                          {Number(price).toLocaleString()} {plan.currency}
+                        </Text>
+                        <Text
+                          style={[styles.planPriceWeb, { color: "#E53935" }]}
+                        >
+                          {Number(
+                            price * (1 - discount / 100)
+                          ).toLocaleString()}{" "}
+                          {plan.currency}
+                        </Text>
+                        <View style={styles.planDiscountPercentWeb}>
+                          <Text style={styles.planDiscountPercentTextWeb}>
+                            SAVE {discount}%
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={styles.planPriceWeb}>
+                        {Number(price).toLocaleString()} {plan.currency}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
-
-          {/* Prices */}
-        </ScrollView>
-
-        {/* Bottom fixed section */}
-        <ScrollView
-          horizontal
-          contentContainerStyle={styles.planRow}
-          showsHorizontalScrollIndicator={false}
-        >
           <TouchableOpacity
-            style={[
-              styles.planCard,
-              { marginLeft: 10 },
-              selectedPlan === "week" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("week")}
+            style={styles.continueBtnWeb}
+            onPress={handleContinue}
           >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Week</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_weekly).toLocaleString() + " " + plan.currency}
-            </Text>
+            <Text style={styles.continueTextWeb}>Proceed to Checkout</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === "month" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("month")}
-          >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Month</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_monthly).toLocaleString() +
-                " " +
-                plan.currency}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              selectedPlan === "year" && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan("year")}
-          >
-            <Text style={styles.planLabelTitle}>1</Text>
-            <Text style={styles.planLabel}>Year</Text>
-            <Text style={styles.planPrice}>
-              {Number(plan.price_yearly).toLocaleString() + " " + plan.currency}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        <View style={styles.bottomSection}>
-          <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-            <Text style={styles.continueText}>Continue</Text>
-          </TouchableOpacity>
-          {/* <Text style={styles.footer}></Text> */}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -211,131 +267,135 @@ export default function GetPlan() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.primaryDark,
+    backgroundColor: theme.colors.textLight,
   },
-  scroll: {
-    padding: 20,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 22,
-    fontFamily: "Poppins-Bold",
-    marginBottom: 6,
-    color: theme.colors.textLight,
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 16,
-    color: theme.colors.textLight,
-    fontFamily: "Poppins-Regular",
-  },
-  featuresBox: {
-    width: "100%",
-    marginBottom: 20,
-  },
-  featureTitle: {
-    fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
-    color: theme.colors.textLight,
-  },
-  featureItem: {
-    fontSize: 14,
-    marginVertical: 4,
-    fontFamily: "Poppins-Regular",
-    color: theme.colors.textLight,
-  },
-  planRow: {
-    marginBottom: 80,
-    height: 160,
+  contentWeb: {
+    flex: 1,
+    padding: 50,
     paddingTop: 20,
   },
-  planCard: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    marginHorizontal: 8,
-    width: 160,
-    borderWidth: 1,
-    borderColor: "#FFFFFF00",
+  mainRow: {
+    flexDirection: "row",
+    gap: 50,
+    paddingTop: 50,
   },
-  planLabelTitle: {
-    fontSize: 24,
-    fontFamily: "Poppins-SemiBold",
-  },
-  planLabel: {
-    fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
-  },
-  planPrice: {
-    fontSize: 16,
-    marginTop: 6,
-    fontFamily: "Poppins-Bold",
-    textAlign: "center",
-  },
-  continueBtn: {
-    backgroundColor: "#111827",
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-  continueText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "Poppins-Bold",
-  },
-  footer: {
-    fontSize: 11,
-    textAlign: "center",
-    color: theme.colors.textLight,
-    fontFamily: "Poppins-SemiBold",
-    lineHeight: 16,
-  },
-  content: {
+  leftColumn: {
     flex: 1,
-    justifyContent: "space-between",
   },
-  bottomSection: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    backgroundColor: theme.colors.primaryDark,
+  rightColumn: {},
+  subtitleWeb: {
+    fontSize: 18,
+    color: theme.colors.textDark,
+    fontFamily: "Poppins-Regular",
+    lineHeight: 24,
+    marginBottom: 25,
   },
-  table: {
+  featuresBoxWeb: {
     width: "100%",
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
+    marginBottom: 30,
   },
-  tableRow: {
+  featureTitleWeb: {
+    fontSize: 16,
+    color: theme.colors.primaryDark,
+    marginBottom: 15,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    fontFamily: "Poppins-SemiBold",
+  },
+  tableWeb: {
+    width: "100%",
+    borderRadius: 10,
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  tableRowWeb: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
   },
-  tableBullet: {
-    fontSize: 14,
-    marginRight: 8,
-    color: theme.colors.textLight,
-    fontFamily: "Poppins-SemiBold",
-  },
-  tableCell: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-    color: theme.colors.textLight,
-  },
-  lastRow: {
+  lastRowWeb: {
     borderBottomWidth: 0,
   },
-  planCardSelected: {
+  tableCellWeb: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.textDark,
+    lineHeight: 22,
+    fontFamily: "Poppins-Regular",
+  },
+  planCardWeb: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    alignItems: "center",
+    paddingVertical: 25,
+    paddingHorizontal: 20,
+    width: "100%",
     borderWidth: 1,
-    borderColor: theme.colors.textDark,
+    borderColor: "#ddd",
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    transition: "all 0.2s",
+  },
+  planCardSelectedWeb: {
+    borderColor: theme.colors.primaryDark,
+    shadowOpacity: 0.15,
+    borderWidth: 2,
+  },
+  planLabelTitleWeb: {
+    fontSize: 26,
+    fontFamily: "Poppins-Bold",
+    marginBottom: 6,
+  },
+  planLabelWeb: {
+    fontSize: 16,
+    fontFamily: "Poppins-SemiBold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  planPriceWeb: { fontSize: 20, fontFamily: "Poppins-Bold" },
+  discountPriceWeb: {
+    textDecorationLine: "line-through",
+    color: "#9E9E9E",
+    fontSize: 14,
+    marginBottom: 4,
+    fontFamily: "Poppins-Regular",
+  },
+  planDiscountPercentWeb: {
+    backgroundColor: "#FFEAEA",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  planDiscountPercentTextWeb: {
+    fontSize: 13,
+    color: "#E53935",
+    fontFamily: "Poppins-SemiBold",
+  },
+  continueBtnWeb: {
+    backgroundColor: theme.colors.primaryDark,
+    paddingVertical: 18,
+    borderRadius: 35,
+    alignSelf: "center",
+    width: "50%",
+    marginTop: 50,
+  },
+  continueTextWeb: {
+    color: "#fff",
+    fontSize: 17,
+    fontFamily: "Poppins-SemiBold",
+    textAlign: "center",
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 50,
+    flexGrow: 1,
+    backgroundColor: "#fff",
   },
 });

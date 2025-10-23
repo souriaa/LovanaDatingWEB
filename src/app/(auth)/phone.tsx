@@ -1,21 +1,22 @@
-import { useSignInWithOtp } from "@/api/auth";
-import { Fab } from "@/components/fab";
-import { StackHeader } from "@/components/stack-header";
-import { router, useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import colors from "tailwindcss/colors";
+import { useSignInWithOtp } from "../../api/auth";
+import { Fab } from "../../components/fab";
+import { StackHeader } from "../../components/stack-header";
 
 export default function Page() {
-  const [method, setMethod] = useState<"phone" | "email">("phone");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const phoneRef = useRef<TextInput>(null);
@@ -29,152 +30,145 @@ export default function Page() {
     reset,
   } = useSignInWithOtp();
 
-  const handleInputChange = (text: string) => {
-    if (isError) reset();
-    if (method === "phone") setPhone(text);
-    else setEmail(text);
-  };
-
   const isValid = useMemo(() => {
-    if (method === "phone") {
-      return /^\+[1-9]\d{1,14}$/.test(phone);
-    } else {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-  }, [method, phone, email]);
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const phoneValid = /^0\d{9}$/.test(phone);
+    return validEmail && phoneValid;
+  }, [phone, email]);
 
   const handleSubmit = () => {
-    if (method === "phone") {
-      signInWithOtp(
-        { phone },
-        {
-          onSuccess: () =>
-            router.push({
-              pathname: "/otp",
-              params: { phone },
-            }),
-        }
-      );
-    } else {
-      signInWithOtp(
-        { email },
-        {
-          onSuccess: () =>
-            router.push({
-              pathname: "/otp",
-              params: { email },
-            }),
-        }
-      );
-    }
+    if (!isValid) return;
+    signInWithOtp(
+      { email, phone },
+      {
+        onSuccess: () =>
+          router.push({
+            pathname: "/otp",
+            params: { email },
+          }),
+      }
+    );
   };
-
-  useFocusEffect(() => {
-    if (method === "phone") {
-      phoneRef.current?.focus();
-    } else {
-      emailRef.current?.focus();
-    }
-  });
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white p-5"
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={100}
     >
       <StackHeader />
       <StatusBar barStyle={"dark-content"} />
-      <View className="flex-1 justify-center">
-        {/* Toggle Method */}
-        <View className="flex-row mb-6">
-          <Pressable
-            className={`flex-1 py-3 border-b-2 ${
-              method === "phone" ? "border-black" : "border-gray-200"
-            }`}
-            onPress={() => setMethod("phone")}
-          >
-            <Text
-              className={`text-center font-poppins-semibold ${
-                method === "phone" ? "text-black" : "text-gray-400"
-              }`}
-            >
-              Phone
-            </Text>
-          </Pressable>
-          <Pressable
-            className={`flex-1 py-3 border-b-2 ${
-              method === "email" ? "border-black" : "border-gray-200"
-            }`}
-            onPress={() => setMethod("email")}
-          >
-            <Text
-              className={`text-center font-poppins-semibold ${
-                method === "email" ? "text-black" : "text-gray-400"
-              }`}
-            >
-              Email
-            </Text>
-          </Pressable>
-        </View>
+      <Ionicons name="star-outline" size={0} />
 
-        {/* Title */}
-        <View className="flex-1">
-          <Text className="text-4xl font-playfair-semibold">
-            {method === "phone"
-              ? "What's your phone number?"
-              : "What's your email address?"}
+      <View style={styles.innerContainer}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.heading}>
+            What's your email and phone number?
           </Text>
 
-          <View className="h-28" />
-
-          {/* Input */}
-          {method === "phone" ? (
-            <TextInput
-              className="border-b h-16 text-2xl font-poppins-semibold"
-              style={
-                Platform.OS === "ios" && {
-                  lineHeight: undefined,
-                }
-              }
-              selectionColor={colors.black}
-              keyboardType="phone-pad"
-              textContentType="telephoneNumber"
-              autoFocus={true}
-              value={phone}
-              onChangeText={handleInputChange}
-              maxLength={16}
-              ref={phoneRef}
-            />
-          ) : (
-            <TextInput
-              className="border-b h-16 text-2xl font-poppins-semibold"
-              selectionColor={colors.black}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={handleInputChange}
-              ref={emailRef}
-            />
-          )}
-
-          {isError && (
-            <Text className="text-red-500 text-sm text-center mt-4">
-              {error.message}
-            </Text>
-          )}
-        </View>
-
-        {/* Submit */}
-        <View className="items-end">
-          <Fab
-            disabled={!isValid || isPending}
-            onPress={handleSubmit}
-            loading={isPending}
+          {/* Email Input */}
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            selectionColor={colors.black}
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={(text) => {
+              if (isError) reset();
+              setEmail(text);
+            }}
+            ref={emailRef}
+            placeholder="mail@example.com"
+            placeholderTextColor="grey"
           />
-        </View>
+
+          {/* Phone Input */}
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            selectionColor={colors.black}
+            keyboardType="phone-pad"
+            textContentType="telephoneNumber"
+            value={phone}
+            onChangeText={(text) => {
+              if (isError) reset();
+              setPhone(text);
+            }}
+            maxLength={16}
+            ref={phoneRef}
+            placeholder="0123456789"
+            placeholderTextColor="grey"
+          />
+
+          {isError && <Text style={styles.errorText}>{error.message}</Text>}
+          <View style={styles.buttonContainer}>
+            <Fab
+              disabled={!isValid || isPending}
+              onPress={handleSubmit}
+              loading={isPending}
+            />
+          </View>
+        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    width: "100vw",
+    height: "100vh",
+  },
+  innerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: "5vw",
+    maxWidth: 600,
+    alignSelf: "center",
+    width: "100%",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    width: "100%",
+  },
+  heading: {
+    fontSize: 36,
+    fontFamily: "PlayfairDisplay-SemiBold",
+    marginBottom: 40,
+    textAlign: "center",
+  },
+  label: {
+    color: "#6b7280", // gray-500
+    fontFamily: "Poppins-Medium",
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    height: 60,
+    fontSize: 22,
+    fontFamily: "Poppins-SemiBold",
+    marginBottom: 24,
+    width: "100%",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 16,
+  },
+  buttonContainer: {
+    alignItems: "center",
+  },
+});

@@ -1,7 +1,7 @@
-import { ProfileView } from "@/components/profile-view";
-import { useEdit } from "@/store/edit";
-import { transformPrivateProfile } from "@/utils/profile";
 import { Text, View } from "react-native";
+import { ProfileView } from "../../../../components/profile-view";
+import { useEdit } from "../../../../store/edit";
+import { transformPrivateProfile } from "../../../../utils/profile";
 
 export default function Page() {
   const { edits } = useEdit();

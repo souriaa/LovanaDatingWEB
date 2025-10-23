@@ -1,6 +1,6 @@
-import { useSignOut } from "@/api/auth";
-import { StackHeaderV2 } from "@/components/stack-header-v2";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useSignOut } from "../../../api/auth";
+import { StackHeaderV2 } from "../../../components/stack-header-v2";
 
 const Page = () => {
   const { mutate } = useSignOut();

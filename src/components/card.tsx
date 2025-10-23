@@ -1,4 +1,4 @@
-import React, { FC, forwardRef } from "react";
+import { FC, forwardRef } from "react";
 import {
   Pressable,
   PressableProps,
@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { theme } from "~/constants/theme";
+import { theme } from "../../constants/theme";
 
 interface Props extends PressableProps {
   title: string;
@@ -43,9 +43,10 @@ const styles = StyleSheet.create({
   card: {
     paddingHorizontal: 12,
     borderRadius: 50,
-    backgroundColor: "#fff",
     paddingTop: 6,
     paddingBottom: 4,
+    width: 150,
+    backgroundColor: theme.colors.backgroundGray,
   },
   cardSelected: {
     backgroundColor: theme.colors.primaryDark,

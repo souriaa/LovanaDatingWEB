@@ -1,12 +1,14 @@
-import { useUpdateEthnicityPreferences } from "@/api/my-profile";
-import { Option, PrivateProfile } from "@/api/my-profile/types";
-import { useEthnicities } from "@/api/options";
-import { CheckboxList } from "@/components/checkbox-list";
-import { StackHeaderV4 } from "@/components/stack-header-v4";
-import { useEdit } from "@/store/edit";
+import { StackBottomV2 } from "@/components/stack-bottom-v2";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
+import { useUpdateEthnicityPreferences } from "../../../api/my-profile";
+import { Option, PrivateProfile } from "../../../api/my-profile/types";
+import { useEthnicities } from "../../../api/options";
+import { useAlert } from "../../../components/alert-provider";
+import { CheckboxList } from "../../../components/checkbox-list";
+import { StackHeaderV4 } from "../../../components/stack-header-v4";
+import { useEdit } from "../../../store/edit";
 
 const Page = () => {
   const { edits, setEdits } = useEdit();
@@ -17,6 +19,8 @@ const Page = () => {
 
   const { mutate, reset } = useUpdateEthnicityPreferences();
 
+  const { showAlert } = useAlert();
+
   const handlePress = () => {
     setEdits({ ...edits, ethnicity_preferences: selected } as PrivateProfile);
     mutate(
@@ -26,7 +30,11 @@ const Page = () => {
           router.back();
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later.");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
           reset();
           router.back();
         },
@@ -41,6 +49,11 @@ const Page = () => {
         options={data}
         initialSelection={selected}
         onChange={setSelected}
+      />
+      <StackBottomV2
+        visible={true}
+        title="Edit Filter"
+        onPressBack={handlePress}
       />
     </View>
   );

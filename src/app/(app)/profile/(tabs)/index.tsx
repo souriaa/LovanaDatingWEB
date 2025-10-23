@@ -1,10 +1,10 @@
-import { AnswerList } from "@/components/answer-list";
-import { List } from "@/components/list";
-import { PhotoGrid } from "@/components/photo-grid";
-import { useEdit } from "@/store/edit";
-import { identity } from "@/utils/identity";
-import { vitals } from "@/utils/vitals";
 import { ScrollView, Text, View } from "react-native";
+import { AnswerList } from "../../../../components/answer-list";
+import { List } from "../../../../components/list";
+import { PhotoGrid } from "../../../../components/photo-grid";
+import { useEdit } from "../../../../store/edit";
+import { identity } from "../../../../utils/identity";
+import { vitals } from "../../../../utils/vitals";
 
 export default function Page() {
   const { edits, gridActive } = useEdit();
@@ -32,7 +32,7 @@ export default function Page() {
         <AnswerList profile={edits} />
       </View>
       <View className="pl-5 gap-10">
-        <List title="My Vitals" data={vitals} profile={edits} />
+        <List title="My Infomation" data={vitals} profile={edits} />
         <List title="Identity" data={identity} profile={edits} />
       </View>
     </ScrollView>

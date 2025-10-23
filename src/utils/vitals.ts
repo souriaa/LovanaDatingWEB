@@ -1,5 +1,5 @@
-import { PrivateProfile } from "@/api/my-profile/types";
-import { age } from "@/utils/age";
+import { PrivateProfile } from "../api/my-profile/types";
+import { age } from "../utils/age";
 
 export const vitals = [
   {
@@ -23,13 +23,13 @@ export const vitals = [
     },
     route: "/profile/height",
   },
-  {
-    title: "Location",
-    getValue: (profile: PrivateProfile) => {
-      return profile?.neighborhood || "None";
-    },
-    route: "/profile/location",
-  },
+  // {
+  //   title: "Location",
+  //   getValue: (profile: PrivateProfile) => {
+  //     return profile?.neighborhood || "None";
+  //   },
+  //   route: "/profile/location",
+  // },
   {
     title: "Ethnicity",
     getValue: (profile: PrivateProfile) => {

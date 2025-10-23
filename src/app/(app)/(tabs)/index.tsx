@@ -1,24 +1,31 @@
+import { sendPushNotification } from "@/utils/pushNotification";
+import { useQueryClient } from "@tanstack/react-query";
+import * as Location from "expo-location";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { ScrollView, View } from "react-native";
+import { getProfilePlansByUser } from "../../../../service/profilePlanService";
+import { getPushTokensByProfileId } from "../../../../service/pushNotiService";
+import { getProfile, isProfileComplete } from "../../../../service/userService";
+import { useSignOut } from "../../../api/auth";
 import {
   useLikeProfile,
   useProfiles,
   useReviewProfiles,
   useSkipProfile,
-} from "@/api/profiles";
-import { Empty } from "@/components/empty";
-import { Fab } from "@/components/fab";
-import { Loader } from "@/components/loader";
-import { ProfileView } from "@/components/profile-view";
-import { useRefreshOnFocus } from "@/hooks/refetch";
-import { supabase } from "@/lib/supabase";
-import { transformPublicProfile } from "@/utils/profile";
-import { Ionicons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import * as Location from "expo-location";
-import { Link, router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+  useSuperlikeProfile,
+} from "../../../api/profiles";
+import { useAlert } from "../../../components/alert-provider";
+import { Empty } from "../../../components/empty";
+import { Fab } from "../../../components/fab";
+import { Loader } from "../../../components/loader";
+import { ProfileView } from "../../../components/profile-view";
+import { useRefreshOnFocus } from "../../../hooks/refetch";
+import { supabase } from "../../../lib/supabase";
+import { transformPublicProfile } from "../../../utils/profile";
 
 export default function Page() {
+  const { mutate: signOut } = useSignOut();
   const { data, isFetching, error, refetch } = useProfiles();
   useRefreshOnFocus(refetch);
 
@@ -26,13 +33,57 @@ export default function Page() {
   const { mutate: skip, isPending: skipPending } = useSkipProfile();
   const { mutate: review, isPending: reviewPending } = useReviewProfiles();
   const { mutate: like, isPending: likePending } = useLikeProfile();
+  const { mutate: superlike, isPending: superlikePending } =
+    useSuperlikeProfile();
+  const [loading, setLoading] = useState(true);
+  const [canUsePremium, setCanUsePremium] = useState(false);
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+  const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
+
+  const { showAlert } = useAlert();
 
   const hasProfiles = data && data.length > 0;
 
   const profile = hasProfiles
     ? transformPublicProfile(data[currentIndex])
     : null;
+
+  useEffect(() => {
+    const fetchProfilePlan = async () => {
+      try {
+        const profile = await getProfile();
+        if (!profile?.id) return;
+
+        const profilePlans = await getProfilePlansByUser(profile.id);
+
+        if (profilePlans && profilePlans.length > 0) {
+          const now = new Date();
+          const validPlans = profilePlans.filter((plan) => {
+            if (!plan.plan_due_date) return true;
+            const dueDate = new Date(plan.plan_due_date);
+            return now <= dueDate;
+          });
+
+          if (validPlans.length > 0) {
+            const plan = validPlans[0];
+            setCanUsePremium(plan.plan_id !== 1);
+          } else {
+            setCanUsePremium(false);
+          }
+        } else {
+          setCanUsePremium(false);
+        }
+      } catch (err) {
+        console.error("fetchProfilePlan error:", err);
+        setCanUsePremium(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfilePlan();
+  }, []);
 
   useEffect(() => {
     const updateProfileWithLocation = async () => {
@@ -42,20 +93,43 @@ export default function Page() {
           error: authError,
         } = await supabase.auth.getUser();
         if (authError || !user) {
-          console.log("❌ No user found:", authError);
           return;
         }
 
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          console.log("Location permission not granted");
+          setLocationGranted(false);
           return;
         }
+
+        setLocationGranted(true);
 
         const { coords } = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = coords;
 
-        console.log("Got location:", latitude, longitude);
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+        const data = await res.json();
+
+        // console.log("Got location:", latitude, longitude);
+        // console.log("Country:", data.address.country);
+
+        // if (data.address.country !== "Vietnam") {
+        //   showAlert({
+        //     title: "Access Forbidden",
+        //     message:
+        //       "Logging in from outside Vietnam is not allowed. Please contact the developer.",
+        //     buttons: [
+        //       {
+        //         text: "OK",
+        //         style: "cancel",
+        //         onPress: () => signOut(),
+        //       },
+        //     ],
+        //   });
+        //   return;
+        // }
 
         const { error: updateError } = await supabase
           .from("profiles")
@@ -77,6 +151,25 @@ export default function Page() {
     updateProfileWithLocation();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      const checkProfile = async () => {
+        setLoading(true);
+        try {
+          const complete = await isProfileComplete();
+          setProfileComplete(complete);
+        } catch (error) {
+          console.error("Failed to check profile completeness:", error);
+          setProfileComplete(false);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      checkProfile();
+    }, [isFetching])
+  );
+
   const handleSkip = () => {
     if (profile) {
       skip(profile?.id, {
@@ -91,7 +184,11 @@ export default function Page() {
           }
         },
         onError: () => {
-          Alert.alert("Error", "Something went wrong, please try again later");
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
         },
       });
     }
@@ -104,8 +201,13 @@ export default function Page() {
           queryKey: ["profiles"],
         });
       },
+
       onError: () => {
-        Alert.alert("Error", "Something went wrong, please try again later");
+        showAlert({
+          title: "Error",
+          message: "Something went wrong, please try again later",
+          buttons: [{ text: "OK", style: "cancel" }],
+        });
       },
     });
   };
@@ -130,17 +232,77 @@ export default function Page() {
             }
           },
           onError: () => {
-            Alert.alert(
-              "Error",
-              "Something went wrong, please try again later"
-            );
+            showAlert({
+              title: "Out of Likes",
+              message:
+                "You've reached your daily like limit. Likes refresh automatically every day — upgrade to a plan for unlimited likes!",
+              buttons: [{ text: "OK", style: "cancel" }],
+            });
           },
         }
       );
     }
   };
 
-  if (isFetching || skipPending || reviewPending || likePending) {
+  const handleSuperlike = () => {
+    if (!profile) return;
+
+    superlike(
+      { profile: profile.id },
+      {
+        onSuccess: async () => {
+          if (hasProfiles && currentIndex < data.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+          } else if (hasProfiles) {
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
+            setCurrentIndex(0);
+          }
+
+          try {
+            const senderProfile = await getProfile();
+            const tokens = await getPushTokensByProfileId(profile.id);
+
+            if (tokens && tokens.length > 0) {
+              const senderName = senderProfile?.first_name || "Someone";
+
+              await Promise.all(
+                tokens.map((token) =>
+                  sendPushNotification({
+                    to: token,
+                    title: `${senderName} superliked you! 💫`,
+                    body: `You just got a Superlike from ${senderName}!`,
+                    data: {
+                      type: "superlike",
+                    },
+                    sound: "default",
+                    priority: "high",
+                  })
+                )
+              );
+            } else {
+            }
+          } catch (notifyErr) {
+            console.error("Error sending Superlike notification:", notifyErr);
+          }
+        },
+        onError: () => {
+          showAlert({
+            title: "Error",
+            message: "Something went wrong, please try again later",
+            buttons: [{ text: "OK", style: "cancel" }],
+          });
+        },
+      }
+    );
+  };
+
+  if (
+    isFetching ||
+    skipPending ||
+    reviewPending ||
+    likePending ||
+    superlikePending
+  ) {
     return <Loader />;
   }
 
@@ -155,34 +317,67 @@ export default function Page() {
     );
   }
 
+  if (locationGranted === false) {
+    return (
+      <Empty
+        title="Location Required"
+        subTitle="We need your location to show nearby matches. Please enable location access in your settings."
+      />
+    );
+  }
+
+  if (profileComplete === false) {
+    return (
+      <Empty
+        title="Complete Your Profile"
+        subTitle="You need to fill out your personal information and add at least one photo before you can start matching."
+        primaryText="Update Profile"
+        onPrimaryPress={() => router.push("/profile")}
+      />
+    );
+  }
+
   if (!hasProfiles) {
     return (
       <Empty
         title="You've seen everyone for now"
-        subTitle="Try changing your filters so more people match your criteria - or check back later!"
+        subTitle="Try changing your filters..."
         primaryText="Change filters"
         secondaryText="Review skipped profiles"
         onPrimaryPress={() => router.push("/preferences")}
         onSecondaryPress={handleReview}
+        secondaryDisabled={!canUsePremium}
       />
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-5">
-        <Link href={"/preferences"} suppressHighlighting>
-          <Ionicons name="options-outline" className="text-3xl" />
-        </Link>
+    <View className="flex-1 bg-white items-center">
+      <ScrollView
+        className="flex-1 px-5 w-full"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {profile && <ProfileView profile={profile} onLike={handleLike} />}
       </ScrollView>
-      <Fab
-        onPress={handleSkip}
-        iconName="close"
-        className="bg-white shadow-sm active:h-[4.75rem] h-20 absolute bottom-5 left-5"
-        iconClassName="text-black text-4xl"
-        loaderClassName="text-black"
-      />
+      <View className="absolute bottom-20 w-full flex flex-row justify-center space-x-8">
+        <Fab
+          onPress={handleSkip}
+          iconName="close"
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-black text-4xl"
+          loaderClassName="text-black"
+          iconSize={40}
+        />
+        <Fab
+          onPress={handleSuperlike}
+          iconName="star"
+          className="bg-white h-20 active:h-[4.75rem] rounded-full"
+          iconClassName="text-red-900 text-4xl"
+          loaderClassName="text-black"
+          iconSize={40}
+        />
+      </View>
     </View>
   );
 }

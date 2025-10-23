@@ -1,13 +1,16 @@
-import { Answer, PrivateProfile } from "@/api/my-profile/types";
-import { useEdit } from "@/store/edit";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FC, useEffect, useState } from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { DraggableGrid } from "react-native-draggable-grid";
+import { theme } from "~/constants/theme";
+import { deleteProfileAnswer } from "../../service/profileAnswerService";
+import { Answer, PrivateProfile } from "../api/my-profile/types";
+import { useEdit } from "../store/edit";
 
 type Item = {
   key: string;
-  answer: Answer;
+  answer: Answer | null;
   disabledDrag?: boolean;
   disabledReSorted?: boolean;
 };
@@ -19,6 +22,7 @@ interface Props {
   margin?: number;
   height?: number;
   slots?: number;
+  containerWidth?: number;
 }
 
 export const AnswerList: FC<Props> = ({
@@ -28,66 +32,79 @@ export const AnswerList: FC<Props> = ({
   margin = 10,
   height = 120,
   slots = 3,
+  containerWidth,
 }) => {
-  const width = Dimensions.get("window").width - margin * 2;
-  const size = width / columns - spacing;
+  const actualContainerWidth =
+    containerWidth ?? Dimensions.get("window").width * 0.66 - margin * 2;
+
+  const itemWidth = (actualContainerWidth - (columns - 1) * spacing) / columns;
 
   const [data, setData] = useState<Item[]>([]);
   const { setEdits: setMyProfileChanges, setGridActive } = useEdit();
 
+  const rows = Math.ceil(data.length / columns) || 1;
+  const containerHeight = rows * height + (rows - 1) * spacing;
+
   useEffect(() => {
-    if (!data.length) {
-      const initialData: Item[] = Array(slots)
-        .fill(null)
-        .map((_, index) => {
-          const answer = profile?.answers[index] || null;
-          return {
-            key: index.toString(),
-            answer: answer,
-            disabledDrag: answer === null,
-            disabledReSorted: answer === null,
-          };
-        });
-      setData(initialData);
-    } else {
-      const newData = data.map((item, index) => {
-        const answer = profile?.answers[index] || null;
+    const newData: Item[] = Array(slots)
+      .fill(null)
+      .map((_, index) => {
+        const answer = profile?.answers?.[index] || null;
         return {
-          ...item,
-          answer: answer,
-          disabledDrag: answer === null,
-          disabledReSorted: answer === null,
+          key: index.toString(),
+          answer,
+          disabledDrag: !answer,
+          disabledReSorted: !answer,
         };
       });
-      setData(newData);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+    setData(newData);
+  }, [profile, slots]);
 
   const renderItem = (item: Item) => {
     return (
       <View
+        key={item.key}
         style={{
-          width: size,
-          height: height,
+          width: itemWidth,
+          height,
           paddingVertical: spacing / 2,
         }}
-        key={item.key}
       >
         {item.answer ? (
-          <View className="flex-1 rounded-md overflow-hidden border border-neutral-200 p-5">
-            <Text className="text-base font-poppins-regular">
-              {item.answer.question}
-            </Text>
-            <Text
-              className="text-base font-poppins-regular text-neutral-400"
-              numberOfLines={3}
-            >
-              {item.answer.answer_text}
-            </Text>
+          <View className="flex-1 rounded-md overflow-hidden border border-neutral-200 p-5 flex-row items-center justify-between">
+            <View className="flex-1 pr-2">
+              <Text className="text-base font-poppins-regular">
+                {item.answer.question}
+              </Text>
+              <Text
+                className="text-base font-poppins-regular text-neutral-400"
+                numberOfLines={3}
+              >
+                {item.answer.answer_text}
+              </Text>
+            </View>
+
+            {item.answer && !item.answer.id.startsWith("temp_") && (
+              <TouchableOpacity onPress={() => handleDelete(item)}>
+                <Ionicons name="trash-outline" size={20} color="grey" />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
-          <View className="flex-1 rounded-md border border-red-600 border-dashed" />
+          <TouchableOpacity
+            onPress={onItemPress}
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: theme.colors.primaryDark,
+              borderStyle: "dashed",
+              borderRadius: 8,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="add" size={32} color={theme.colors.primaryDark} />
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -95,18 +112,17 @@ export const AnswerList: FC<Props> = ({
 
   const onDragRelease = (data: Item[]) => {
     const answers = data
-      .map((item, index) => {
-        return {
-          ...item.answer,
-          answer_order: index,
-        };
-      })
-      .filter((item) => item.answer_text != null);
+      .map((item, index) => ({
+        ...item.answer,
+        answer_order: index,
+      }))
+      .filter((item) => item && item.answer_text != null);
 
     setMyProfileChanges({
       ...profile,
       answers,
     });
+
     setData(data);
     setGridActive(false);
   };
@@ -127,27 +143,48 @@ export const AnswerList: FC<Props> = ({
     } else {
       router.push("/(app)/prompts");
     }
-    return;
+  };
+
+  const handleDelete = async (item: Item) => {
+    if (!item.answer) return;
+
+    const answerId = item.answer.id;
+
+    const newData = data.filter((d) => d.key !== item.key);
+    setData(newData);
+
+    const updatedAnswers = newData
+      .filter((i) => i.answer && !i.answer.id.startsWith("temp_"))
+      .map((i, index) => ({ ...i.answer, answer_order: index }));
+
+    setMyProfileChanges({ ...profile, answers: updatedAnswers });
+
+    if (!answerId.startsWith("temp_")) {
+      try {
+        await deleteProfileAnswer(answerId);
+      } catch (err) {
+        console.error("deleteProfileAnswer error:", err);
+      }
+    }
   };
 
   return (
-    <View>
-      <View
-        style={{
-          width: width,
-          alignSelf: "center",
-        }}
-      >
-        <DraggableGrid
-          numColumns={1}
-          renderItem={renderItem}
-          data={data}
-          onDragRelease={onDragRelease}
-          onDragItemActive={onDragItemActive}
-          onItemPress={onItemPress}
-          itemHeight={120}
-        />
-      </View>
+    <View
+      style={{
+        width: actualContainerWidth,
+        alignSelf: "center",
+        height: containerHeight,
+      }}
+    >
+      <DraggableGrid
+        numColumns={columns}
+        renderItem={renderItem}
+        data={data}
+        onDragRelease={onDragRelease}
+        onDragItemActive={onDragItemActive}
+        onItemPress={onItemPress}
+        itemHeight={height}
+      />
     </View>
   );
 };
