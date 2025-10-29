@@ -1,3 +1,5 @@
+import { useAlert } from "@/components/alert-provider";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
@@ -16,6 +18,7 @@ import { usePayment } from "../../../store/payment-store";
 export default function QRPage() {
   const router = useRouter();
   const { payment } = usePayment();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (!payment) {
@@ -85,6 +88,55 @@ export default function QRPage() {
     inputRange: [0, 1],
     outputRange: [10, 270],
   });
+
+  useEffect(() => {
+    if (!paymentId || !type) {
+      return;
+    }
+
+    const handleSuccessPayload = (payload: any) => {
+      if (payload.new && payload.new.status === "success") {
+        router.replace("/lovana");
+      }
+      showAlert({
+        title: "Success",
+        message: "Transaction complete!",
+        buttons: [{ text: "OK", style: "cancel" }],
+      });
+    };
+
+    const handleSubscriptionStatus = (status: string, err?: Error) => {
+      if (status === "CHANNEL_ERROR") {
+        console.error("Supabase channel error:", err);
+      }
+      if (status === "SUBSCRIBED") {
+      }
+    };
+
+    const isPlan = type === "plan";
+    const tableName = isPlan ? "payments" : "consumable_payments";
+    const channelName = isPlan
+      ? `payment_status:${paymentId}`
+      : `consumable_payment_status:${paymentId}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: tableName,
+          filter: `id=eq.${paymentId}`,
+        },
+        handleSuccessPayload
+      )
+      .subscribe(handleSubscriptionStatus);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [paymentId, router, type]);
 
   return (
     <SafeAreaView style={styles.container}>

@@ -97,8 +97,6 @@ export default function GetPlan() {
         plan_due_date = "1y";
       }
 
-      console.log(amount);
-
       const { data: existingPayment, error: checkError } = await supabase
         .from("payments")
         .select("id")
