@@ -90,7 +90,9 @@ export default function GetPlan() {
         return;
       }
 
-      const amount = selectedPkg.price;
+      const amount =
+        selectedPkg.price -
+        selectedPkg.price * (selectedPkg.discount_percent / 100);
 
       const { data: existingPayment, error: selectError } = await supabase
         .from("consumable_payments")
