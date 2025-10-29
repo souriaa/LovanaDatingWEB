@@ -79,17 +79,25 @@ export default function GetPlan() {
       let amount = 0;
       let plan_due_date = "";
       if (selectedPlan === "week") {
-        amount = plan.price_weekly;
+        amount =
+          plan.price_weekly -
+          plan.price_weekly * (plan.price_weekly_discount_percent / 100);
         plan_due_date = "1w";
       }
       if (selectedPlan === "month") {
-        amount = plan.price_monthly;
+        amount =
+          plan.price_monthly -
+          plan.price_monthly * (plan.price_monthly_discount_percent / 100);
         plan_due_date = "1m";
       }
       if (selectedPlan === "year") {
-        amount = plan.price_yearly;
+        amount =
+          plan.price_yearly -
+          plan.price_yearly * (plan.price_yearly_discount_percent / 100);
         plan_due_date = "1y";
       }
+
+      console.log(amount);
 
       const { data: existingPayment, error: checkError } = await supabase
         .from("payments")
@@ -238,7 +246,25 @@ export default function GetPlan() {
                         </Text>
                         <View style={styles.planDiscountPercentWeb}>
                           <Text style={styles.planDiscountPercentTextWeb}>
-                            SAVE {discount}%
+                            {p == "week"
+                              ? "DISCOUNT " + discount + "%"
+                              : "DISCOUNT " +
+                                discount +
+                                "% " +
+                                "AND ADDITIONAL ~25% "}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : p == "month" || p == "year" ? (
+                      <View style={{ alignItems: "center" }}>
+                        <Text style={styles.planPriceWeb}>
+                          {Number(price).toLocaleString()} {plan.currency}
+                        </Text>
+                        <View style={styles.planDiscountPercentWeb}>
+                          <Text style={styles.planDiscountPercentTextWeb}>
+                            {p == "month"
+                              ? "SAVE ~25% FROM WEEKLY PLAN"
+                              : "SAVE ~25% FROM MONTHLY PLAN"}
                           </Text>
                         </View>
                       </View>
